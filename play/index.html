@@ -38,6 +38,35 @@
         justify-content: center;
       }
 
+      /* ---- Portrait nudge ---- */
+      #rotate-hint {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        background: #1a0f2e;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        color: #b892e0;
+        font-size: 16px;
+        text-align: center;
+        padding: 40px;
+      }
+      #rotate-hint .rotate-icon {
+        font-size: 52px;
+        animation: spin90 1.4s ease-in-out infinite alternate;
+      }
+      @keyframes spin90 {
+        from { transform: rotate(-45deg); }
+        to   { transform: rotate(45deg); }
+      }
+      /* Show only on touch devices in portrait with very limited height */
+      @media (pointer: coarse) and (orientation: portrait) and (max-width: 600px) {
+        #rotate-hint { display: flex; }
+      }
+
       /* ---- Virtual gamepad (injected by touchControls.js on touch devices) ---- */
       #tc {
         position: fixed;
@@ -136,6 +165,12 @@
   <body>
     <div id="game"></div>
     <div class="loading" id="loading"><div class="dot"></div>Loading Swiirl…</div>
+
+    <!-- Portrait nudge — only shown on narrow screens in portrait orientation -->
+    <div id="rotate-hint">
+      <div class="rotate-icon">⟳</div>
+      <p>Rotate your phone to landscape for the best experience</p>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <script type="module" src="./src/main.js"></script>
   </body>
