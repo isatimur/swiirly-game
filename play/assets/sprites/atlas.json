@@ -1,0 +1,90 @@
+{
+  "image": "swiirl-sheet.png",
+  "frames": {
+    "idle": {
+      "file": "idle.png",
+      "w": 280,
+      "h": 320
+    },
+    "walk_1": {
+      "file": "walk_1.png",
+      "w": 280,
+      "h": 320
+    },
+    "walk_2": {
+      "file": "walk_2.png",
+      "w": 280,
+      "h": 320
+    },
+    "walk_3": {
+      "file": "walk_3.png",
+      "w": 280,
+      "h": 320
+    },
+    "walk_4": {
+      "file": "walk_4.png",
+      "w": 280,
+      "h": 320
+    },
+    "run_1": {
+      "file": "run_1.png",
+      "w": 280,
+      "h": 320
+    },
+    "run_2": {
+      "file": "run_2.png",
+      "w": 280,
+      "h": 320
+    },
+    "run_3": {
+      "file": "run_3.png",
+      "w": 280,
+      "h": 320
+    },
+    "run_4": {
+      "file": "run_4.png",
+      "w": 280,
+      "h": 320
+    },
+    "jump": {
+      "file": "jump.png",
+      "w": 280,
+      "h": 320
+    },
+    "fall": {
+      "file": "fall.png",
+      "w": 280,
+      "h": 320
+    },
+    "skid": {
+      "file": "skid.png",
+      "w": 280,
+      "h": 320
+    },
+    "crouch": {
+      "file": "crouch.png",
+      "w": 280,
+      "h": 320
+    },
+    "collect": {
+      "file": "collect.png",
+      "w": 280,
+      "h": 320
+    },
+    "hurt": {
+      "file": "hurt.png",
+      "w": 280,
+      "h": 320
+    },
+    "celebrate": {
+      "file": "celebrate.png",
+      "w": 280,
+      "h": 320
+    },
+    "bounce": {
+      "file": "bounce.png",
+      "w": 280,
+      "h": 320
+    }
+  }
+}

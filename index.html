@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Swiirl — Fight incompetence. Bring insights from communities to brands.</title>
+    <meta name="description" content="Swiirl is a community insights platform. Now also a side-scrolling platformer where Swiirl fights incompetence and delivers what communities really want — to the brands who need to hear it." />
+    <meta property="og:title" content="Swiirl — Fight incompetence" />
+    <meta property="og:description" content="A side-scrolling platformer about delivering community insights to brands." />
+    <meta property="og:image" content="/play/assets/sprites/celebrate.png" />
+    <link rel="icon" type="image/png" href="/play/favicon.png" />
+    <style>
+      :root {
+        --deep:    #1a0f2e;
+        --deep-2:  #2a1846;
+        --grape:   #5c3ba3;
+        --violet:  #8b63c9;
+        --lilac:   #b892e0;
+        --mist:    #dcc7f2;
+        --fog:     #eee6f5;
+        --gold:    #ffd24a;
+        --gold-2:  #fff6cc;
+        --pink:    #ff8fbe;
+        --green:   #7bd389;
+        --blue:    #7dc4ff;
+        --ink:     #eee6f5;
+        --ink-dim: #b892e0;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      body {
+        background: var(--deep);
+        color: var(--ink);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Inter", "Helvetica Neue", sans-serif;
+        font-feature-settings: "ss01", "cv11";
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      img { display: block; max-width: 100%; }
+
+      /* Backdrop: deep purple with starfield + soft moon glow. */
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background:
+          radial-gradient(900px 600px at 80% 10%, rgba(255, 210, 74, 0.18), transparent 60%),
+          radial-gradient(1200px 700px at 10% 110%, rgba(184, 146, 224, 0.18), transparent 60%),
+          linear-gradient(160deg, var(--deep) 0%, var(--deep-2) 60%, var(--grape) 100%);
+      }
+      .backdrop::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(1px 1px at 12% 18%, #fff 0%, transparent 50%),
+          radial-gradient(1px 1px at 28% 62%, #fff 0%, transparent 50%),
+          radial-gradient(1px 1px at 41% 24%, rgba(255,255,255,0.7) 0%, transparent 50%),
+          radial-gradient(1px 1px at 56% 80%, #fff 0%, transparent 50%),
+          radial-gradient(1px 1px at 72% 14%, rgba(255,255,255,0.6) 0%, transparent 50%),
+          radial-gradient(1px 1px at 84% 46%, #fff 0%, transparent 50%),
+          radial-gradient(1px 1px at 92% 72%, rgba(255,255,255,0.7) 0%, transparent 50%),
+          radial-gradient(1px 1px at 18% 82%, #fff 0%, transparent 50%);
+        opacity: 0.6;
+      }
+
+      /* Layout shell. */
+      .shell { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+      /* Top nav */
+      nav {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 24px 0;
+      }
+      nav .brand {
+        display: flex; align-items: center; gap: 12px;
+        font-weight: 800; letter-spacing: 0.18em; font-size: 16px;
+      }
+      nav .brand .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+      nav .links { display: flex; gap: 28px; font-size: 14px; color: var(--ink-dim); }
+      nav .links a { color: inherit; text-decoration: none; transition: color .2s; }
+      nav .links a:hover { color: var(--ink); }
+
+      /* Buttons. */
+      .btn {
+        display: inline-flex; align-items: center; gap: 10px;
+        padding: 14px 28px; border-radius: 999px;
+        font-weight: 800; letter-spacing: 0.08em; font-size: 15px;
+        text-transform: uppercase; text-decoration: none;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      }
+      .btn-primary {
+        background: linear-gradient(180deg, #ffd24a 0%, #f5a800 100%);
+        color: #4a2700;
+        box-shadow: 0 12px 32px rgba(255, 210, 74, 0.35), inset 0 -3px 0 rgba(0,0,0,0.15);
+      }
+      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(255, 210, 74, 0.5); }
+      .btn-secondary {
+        background: rgba(255,255,255,0.08);
+        color: var(--ink);
+        border: 1px solid rgba(184, 146, 224, 0.4);
+      }
+      .btn-secondary:hover { background: rgba(255,255,255,0.14); }
+
+      /* HERO */
+      .hero {
+        min-height: calc(100vh - 90px);
+        display: grid; grid-template-columns: 1.1fr 1fr;
+        align-items: center; gap: 40px;
+        padding: 40px 0 80px;
+      }
+      .hero h1 {
+        font-size: clamp(48px, 7vw, 96px);
+        line-height: 0.95; letter-spacing: -0.03em;
+        font-weight: 900; margin-bottom: 20px;
+      }
+      .hero h1 .accent { color: var(--gold); display: block; }
+      .hero .lede {
+        font-size: clamp(18px, 1.7vw, 22px);
+        color: var(--mist);
+        max-width: 540px;
+        margin-bottom: 36px;
+      }
+      .hero .lede strong { color: var(--gold); font-weight: 700; }
+      .hero .ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+
+      .hero-art {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        max-width: 520px;
+        justify-self: end;
+      }
+      .hero-art .glow {
+        position: absolute; inset: 8% 8%;
+        background: radial-gradient(circle, var(--gold) 0%, transparent 65%);
+        opacity: 0.35; filter: blur(40px);
+        animation: pulse 4s ease-in-out infinite;
+      }
+      .hero-art img {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        object-fit: contain;
+        animation: bob 3.2s ease-in-out infinite;
+        filter: drop-shadow(0 30px 50px rgba(0,0,0,0.5));
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.35; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.05); }
+      }
+      @keyframes bob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-16px); }
+      }
+
+      /* SECTION shared. */
+      .section { padding: 100px 0; }
+      .section h2 {
+        font-size: clamp(32px, 4vw, 56px);
+        font-weight: 900; letter-spacing: -0.02em;
+        margin-bottom: 16px;
+      }
+      .section .eyebrow {
+        font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase;
+        color: var(--gold); margin-bottom: 14px; font-weight: 700;
+      }
+      .section .deck {
+        font-size: 18px; color: var(--mist); max-width: 640px; margin-bottom: 56px;
+      }
+
+      /* FEATURES */
+      .features {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+      }
+      .feature {
+        background: rgba(184, 146, 224, 0.08);
+        border: 1px solid rgba(184, 146, 224, 0.2);
+        border-radius: 24px;
+        padding: 32px 28px;
+        transition: transform .2s ease, border-color .2s ease, background .2s ease;
+      }
+      .feature:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 210, 74, 0.35);
+        background: rgba(184, 146, 224, 0.12);
+      }
+      .feature .ico {
+        width: 56px; height: 56px; border-radius: 16px;
+        display: grid; place-items: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+        background: linear-gradient(135deg, rgba(255, 210, 74, 0.25), rgba(184, 146, 224, 0.18));
+        border: 1px solid rgba(255, 210, 74, 0.25);
+      }
+      .feature h3 {
+        font-size: 20px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em;
+      }
+      .feature p { color: var(--ink-dim); font-size: 15px; line-height: 1.6; }
+
+      /* STORY */
+      .story {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+      }
+      .story-art {
+        background: rgba(184, 146, 224, 0.08);
+        border: 1px solid rgba(184, 146, 224, 0.2);
+        border-radius: 32px;
+        padding: 40px;
+        position: relative;
+      }
+      .story-art .row {
+        display: flex; gap: 24px; justify-content: center; align-items: end;
+      }
+      .story-art .row img { width: 110px; }
+      .story-art .row.cap {
+        margin-top: 20px;
+        font-size: 12px; letter-spacing: 0.2em; color: var(--ink-dim);
+        text-transform: uppercase;
+      }
+      .story-art .row.cap span { width: 110px; text-align: center; }
+      .story p { font-size: 17px; color: var(--mist); margin-bottom: 18px; line-height: 1.7; }
+      .story p:last-child { margin-bottom: 0; }
+      .story p strong { color: var(--ink); }
+
+      /* CONTROLS */
+      .controls {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;
+      }
+      .control {
+        background: rgba(184, 146, 224, 0.06);
+        border: 1px solid rgba(184, 146, 224, 0.18);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex; align-items: center; gap: 16px;
+      }
+      .key {
+        display: inline-grid; place-items: center;
+        min-width: 44px; min-height: 36px; padding: 0 10px;
+        background: linear-gradient(180deg, #fff 0%, #c9b8e0 100%);
+        color: var(--deep);
+        border-radius: 8px;
+        font-weight: 800; font-size: 13px;
+        box-shadow: 0 3px 0 #5c3ba3, inset 0 -2px 0 rgba(0,0,0,0.15);
+      }
+      .control .label { font-size: 14px; color: var(--mist); }
+
+      /* CTA BAND */
+      .cta-band {
+        margin: 60px 0 40px;
+        background: linear-gradient(135deg, rgba(255, 210, 74, 0.08), rgba(255, 143, 190, 0.08));
+        border: 1px solid rgba(255, 210, 74, 0.3);
+        border-radius: 32px;
+        padding: 60px 40px;
+        text-align: center;
+      }
+      .cta-band h2 { margin-bottom: 14px; }
+      .cta-band p { color: var(--mist); font-size: 18px; margin-bottom: 28px; }
+
+      /* FOOTER */
+      footer {
+        padding: 40px 0 60px;
+        border-top: 1px solid rgba(184, 146, 224, 0.15);
+        margin-top: 40px;
+        font-size: 13px; color: var(--ink-dim);
+        display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-between;
+        align-items: center;
+      }
+      footer .stack { display: flex; gap: 24px; align-items: center; }
+      footer a { color: var(--ink-dim); text-decoration: none; }
+      footer a:hover { color: var(--ink); }
+
+      /* Responsive */
+      @media (max-width: 880px) {
+        .hero { grid-template-columns: 1fr; text-align: center; padding: 24px 0 60px; }
+        .hero-art { justify-self: center; max-width: 320px; }
+        .hero .ctas { justify-content: center; }
+        .features { grid-template-columns: 1fr; }
+        .story { grid-template-columns: 1fr; gap: 36px; }
+        .section { padding: 60px 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="backdrop"></div>
+
+    <div class="shell">
+      <nav>
+        <div class="brand">
+          <span class="dot"></span>
+          <span>SWIIRL</span>
+        </div>
+        <div class="links">
+          <a href="#features">Features</a>
+          <a href="#story">Story</a>
+          <a href="#controls">Controls</a>
+          <a class="btn btn-secondary" href="/play/">PLAY</a>
+        </div>
+      </nav>
+
+      <!-- HERO -->
+      <header class="hero">
+        <div>
+          <h1>
+            Fight incompetence.
+            <span class="accent">Deliver insights.</span>
+          </h1>
+          <p class="lede">
+            A side-scrolling platformer where <strong>Swiirl</strong> charges past jargon-blobs,
+            stomps gut-feel ghosts, and brings what real communities want — back to the brands
+            who keep guessing.
+          </p>
+          <div class="ctas">
+            <a class="btn btn-primary" href="/play/">▸ Play Now</a>
+            <a class="btn btn-secondary" href="#story">Read the Story</a>
+          </div>
+        </div>
+        <div class="hero-art">
+          <div class="glow"></div>
+          <img src="/play/assets/sprites/celebrate.png" alt="Swiirl celebrating" />
+        </div>
+      </header>
+
+      <!-- FEATURES -->
+      <section class="section" id="features">
+        <div class="eyebrow">What's in the box</div>
+        <h2>A platformer with a point of view.</h2>
+        <p class="deck">Sixty seconds of running and jumping in, you're stomping a jargon-blob.
+          Two minutes in, you've out-flown the gut-feel ghosts and pocketed the community signals.
+          Three minutes in, the brand finally <em>gets it</em>.</p>
+
+        <div class="features">
+          <div class="feature">
+            <div class="ico">🎯</div>
+            <h3>Insights, not coins</h3>
+            <p>Yellow orbs are real signals from the community. Collect twelve and the brand-meter
+              fills — the brand will only listen once you've actually <em>listened</em> first.</p>
+          </div>
+          <div class="feature">
+            <div class="ico">👾</div>
+            <h3>Incompetence enemies</h3>
+            <p>Jargon-blobs patrol with "SYNERGY" stamped on their faces. Gut-feel ghosts float
+              through walls. The Incompetence Manager guards the boss arena. Three stomps each.</p>
+          </div>
+          <div class="feature">
+            <div class="ico">⚡</div>
+            <h3>Community signals</h3>
+            <p>Three power-ups — <em>Speed</em>, <em>Shield</em>, <em>Growth</em> — each amplifies
+              what Swiirl can already do. Pick them up, watch the cooldown ring count down.</p>
+          </div>
+          <div class="feature">
+            <div class="ico">🏃</div>
+            <h3>Snappy controls</h3>
+            <p>Cut-on-release variable jump. Coyote time. Jump buffer. Double-jump for chaining
+              platforms. Feels right within ten seconds.</p>
+          </div>
+          <div class="feature">
+            <div class="ico">🎨</div>
+            <h3>Hand-rendered hero</h3>
+            <p>Every animation frame extracted from the official Swiirl character sheet —
+              walk, run, jump, fall, skid, crouch, hurt, celebrate.</p>
+          </div>
+          <div class="feature">
+            <div class="ico">🏁</div>
+            <h3>Brand reveal cutscene</h3>
+            <p>End the level with a confetti payoff: Swiirl hands the brand twelve insights
+              and the brand says "<em>Oh! THAT's what the community wants.</em>"</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- STORY -->
+      <section class="section" id="story">
+        <div class="story">
+          <div>
+            <div class="eyebrow">The mission</div>
+            <h2>Why the game exists.</h2>
+            <p>Swiirl is a real product — a community insights platform that helps brands
+              understand what people actually want, instead of guessing.</p>
+            <p>This is that mission, in platformer form. <strong>Swiirl runs through Community
+              Park, picks up the signals nobody bothered to listen to, and delivers them to the
+              brand at the end.</strong></p>
+            <p>Every enemy is a thing communities have actually had to deal with: jargon dressed
+              as strategy, gut-feel decisions, paperwork that buries the truth, and the
+              well-dressed manager who's never met a customer.</p>
+            <p>Beat them all, and the brand finally gets it.</p>
+          </div>
+          <div class="story-art">
+            <div class="row">
+              <img src="/play/assets/sprites/idle.png" alt="Swiirl idle" />
+              <img src="/play/assets/world/insight.png" alt="Insight orb" style="width: 60px; padding-bottom: 30px;" />
+              <img src="/play/assets/world/brand.png" alt="The brand" />
+            </div>
+            <div class="row cap">
+              <span>Swiirl</span>
+              <span style="width:60px">+</span>
+              <span>The brand</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTROLS -->
+      <section class="section" id="controls">
+        <div class="eyebrow">Keyboard</div>
+        <h2>Pick it up in five seconds.</h2>
+        <p class="deck">Desktop only for now (canvas scales gracefully on smaller screens).</p>
+        <div class="controls">
+          <div class="control"><span class="key">← →</span><span class="label">Move</span></div>
+          <div class="control"><span class="key">Shift</span><span class="label">Run</span></div>
+          <div class="control"><span class="key">Space</span><span class="label">Jump · ×2 for double-jump</span></div>
+          <div class="control"><span class="key">↓</span><span class="label">Crouch</span></div>
+          <div class="control"><span class="key">R</span><span class="label">Restart level</span></div>
+          <div class="control"><span class="key">M</span><span class="label">Mute / unmute</span></div>
+        </div>
+      </section>
+
+      <!-- BIG CTA -->
+      <section class="cta-band">
+        <div class="eyebrow">Three minutes</div>
+        <h2>The brand is waiting.</h2>
+        <p>One polished level. Twelve insights to find. Confetti at the end.</p>
+        <a class="btn btn-primary" href="/play/">▸ Play Community Park</a>
+      </section>
+
+      <footer>
+        <div class="stack">
+          <span class="dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--gold);"></span>
+          <span>Swiirl · 2026</span>
+        </div>
+        <div class="stack">
+          <a href="/play/">Play</a>
+          <a href="#features">Features</a>
+          <a href="#story">Story</a>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

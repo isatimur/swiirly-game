@@ -1,0 +1,83 @@
+// Loads every asset the game needs, then hands off to the Menu scene.
+// Shows a small progress bar.
+
+const SWIIRL_FRAMES = [
+  "idle",
+  "walk_1", "walk_2", "walk_3", "walk_4",
+  "run_1", "run_2", "run_3", "run_4",
+  "jump", "fall", "skid", "crouch", "collect", "hurt", "celebrate", "bounce",
+];
+
+const WORLD_IMAGES = [
+  "tile_ground", "tile_grass", "tile_platform", "tile_brick",
+  "cloud", "sparkle",
+  "enemy_jargon_blob", "enemy_ghost", "enemy_paperwork", "enemy_boss",
+  "projectile_paper",
+  "insight", "signal_speed", "signal_shield", "signal_growth",
+  "brand", "brand_happy",
+  "bg_far", "bg_mid", "bg_near", "bg_tower",
+];
+
+export class BootScene extends Phaser.Scene {
+  constructor() { super("Boot"); }
+
+  preload() {
+    const { width, height } = this.scale;
+    const barW = 380;
+    const barH = 6;
+    const cx = width / 2;
+    const cy = height / 2 + 40;
+
+    const fill = this.add.rectangle(cx - barW / 2, cy, 0, barH, 0xb892e0).setOrigin(0, 0.5);
+    const track = this.add.rectangle(cx, cy, barW, barH, 0xffffff, 0.12).setOrigin(0.5).setDepth(-1);
+    const label = this.add.text(cx, cy - 24, "loading swiirl", {
+      fontFamily: "system-ui, -apple-system, sans-serif",
+      fontSize: "18px",
+      color: "#dcc7f2",
+    }).setOrigin(0.5);
+
+    this.load.on("progress", (v) => {
+      fill.width = barW * v;
+    });
+    this.load.on("complete", () => {
+      label.setText("ready");
+      track.setAlpha(0);
+      fill.setAlpha(0);
+    });
+
+    // Swiirl character frames.
+    for (const k of SWIIRL_FRAMES) {
+      this.load.image(k, `assets/sprites/${k}.png`);
+    }
+    // World assets.
+    for (const k of WORLD_IMAGES) {
+      this.load.image(k, `assets/world/${k}.png`);
+    }
+  }
+
+  create() {
+    this.registerAnimations();
+    this.scene.start("Menu");
+  }
+
+  registerAnimations() {
+    const a = this.anims;
+
+    if (!a.exists("walk")) {
+      a.create({
+        key: "walk",
+        frames: [{ key: "walk_1" }, { key: "walk_2" }, { key: "walk_3" }, { key: "walk_4" }],
+        frameRate: 9,
+        repeat: -1,
+      });
+    }
+    if (!a.exists("run")) {
+      a.create({
+        key: "run",
+        frames: [{ key: "run_1" }, { key: "run_2" }, { key: "run_3" }, { key: "run_4" }],
+        frameRate: 13,
+        repeat: -1,
+      });
+    }
+  }
+}
