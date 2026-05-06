@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- Base href fixes asset resolution when the page is served at /play
+         (no trailing slash, via Vercel's cleanUrls). Without this, every
+         relative path resolves against / instead of /play/, and every
+         asset 404s. -->
+    <base href="/play/" />
     <title>Swiirl — Community Park</title>
     <link rel="icon" type="image/png" href="./favicon.png" />
     <style>

@@ -50,10 +50,8 @@ export class HUDScene extends Phaser.Scene {
     this.signalY = 80;
 
     // ----- HOOKS -----
-    // Listeners live on the Game scene's emitter, so we have to detach them
-    // when the HUD is shut down (otherwise stale callbacks fire on a destroyed
-    // text object the next time Game restarts).
-    const game = this.scene.get("Game");
+    // All HUD-bound events travel on this.game.events (the persistent Phaser.Game
+    // bus) so they survive Game scene restarts without HUD losing its listeners.
     const handlers = {
       "level-loaded": (data) => {
         this.brandThreshold = data.brandThreshold;
@@ -79,9 +77,9 @@ export class HUDScene extends Phaser.Scene {
       "signal-broken": (kind) => this.removeSignalIcon(kind),
       "muted-changed": (muted) => this.flashCenter(muted ? "MUTED" : "SOUND ON"),
     };
-    for (const [evt, fn] of Object.entries(handlers)) game.events.on(evt, fn);
+    for (const [evt, fn] of Object.entries(handlers)) this.game.events.on(evt, fn);
     this.events.once("shutdown", () => {
-      for (const [evt, fn] of Object.entries(handlers)) game.events.off(evt, fn);
+      for (const [evt, fn] of Object.entries(handlers)) this.game.events.off(evt, fn);
     });
   }
 

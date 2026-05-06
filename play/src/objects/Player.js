@@ -76,7 +76,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       });
     }
     SFX.signal();
-    this.scene.events.emit("signal-active", kind, dur);
+    this.scene.game.events.emit("signal-active", kind, dur);
   }
 
   hasSignal(kind) {
@@ -89,14 +89,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (this.hasSignal("shield")) {
       this.signals.shield = 0;
-      this.scene.events.emit("signal-broken", "shield");
+      this.scene.game.events.emit("signal-broken", "shield");
       this.flash(0x7dc4ff);
       this._invulnUntil = now + 600;
       return false;
     }
     if (this.hasSignal("growth")) {
       this.signals.growth = 0;
-      this.scene.events.emit("signal-broken", "growth");
+      this.scene.game.events.emit("signal-broken", "growth");
       this.scene.tweens.add({ targets: this, scale: PLAYER.spriteScale, duration: 150, ease: "Quad.easeOut" });
       this.flash(0x7bd389);
       this._invulnUntil = now + 800;
@@ -110,9 +110,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     SFX.hurt();
     const dir = (this.x < fromX) ? -1 : 1;
     this.setVelocity(PHYSICS.knockback.x * dir, PHYSICS.knockback.y);
-    this.scene.events.emit("player-hurt", this.lives);
+    this.scene.game.events.emit("player-hurt", this.lives);
     if (this.lives <= 0) {
-      this.scene.events.emit("player-died");
+      this.scene.game.events.emit("player-died");
     }
     return true;
   }
@@ -128,9 +128,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     SFX.collect();
     if (this.insights > 0 && this.insights % PLAYER.insightToLife === 0) {
       this.lives += 1;
-      this.scene.events.emit("life-gained", this.lives);
+      this.scene.game.events.emit("life-gained", this.lives);
     }
-    this.scene.events.emit("insight-changed", this.insights);
+    this.scene.game.events.emit("insight-changed", this.insights);
   }
 
   bounceOnEnemy() {
@@ -196,7 +196,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (k === "growth") {
           this.scene.tweens.add({ targets: this, scale: PLAYER.spriteScale, duration: 200 });
         }
-        this.scene.events.emit("signal-broken", k);
+        this.scene.game.events.emit("signal-broken", k);
       }
     }
 

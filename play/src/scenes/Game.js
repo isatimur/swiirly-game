@@ -160,8 +160,8 @@ export class GameScene extends Phaser.Scene {
     // Hidden dev shortcut: Q jumps right next to the brand with the meter full.
     this.input.keyboard.on("keydown-Q", () => {
       this.player.insights = this.level.insightsRequired;
-      this.events.emit("insight-changed", this.player.insights);
-      this.events.emit("brand-meter", 1, this.player.insights, this.level.insightsRequired);
+      this.game.events.emit("insight-changed", this.player.insights);
+      this.game.events.emit("brand-meter", 1, this.player.insights, this.level.insightsRequired);
       // Place Swiirl directly inside the brand's body so the next overlap
       // check fires the cutscene immediately.
       this.player.setPosition(this.level.brandPos.x, GROUND_TOP_Y - 60);
@@ -175,21 +175,35 @@ export class GameScene extends Phaser.Scene {
     });
 
     // ----- HUD wire-up -----
-    this.events.emit("level-loaded", {
+    // Events emitted on this.game.events (persistent Phaser-level bus) so HUD
+    // survives scene restarts without losing its listeners.
+    this.game.events.emit("level-loaded", {
       level: lvl.name,
       lives: this.player.lives,
       insights: this.player.insights,
       brandThreshold: lvl.insightsRequired,
     });
+
+    // Launch HUD if it was stopped (e.g. by the R-restart path), otherwise bring to front.
+    if (!this.scene.isActive("HUD")) {
+      this.scene.launch("HUD");
+    }
     this.scene.bringToTop("HUD");
 
-    // Hurt → emit
-    this.events.on("player-hurt", (lives) => {
+    // Internal camera reactions to player events (also on the global bus).
+    const onPlayerHurt = (lives) => {
+      if (!this.cameras?.main) return;
       this.cameras.main.shake(160, 0.006);
       if (lives > 0) this.cameras.main.flash(180, 255, 60, 60);
+    };
+    const onPlayerDied = () => this.gameOver();
+    this.game.events.on("player-hurt", onPlayerHurt);
+    this.game.events.once("player-died", onPlayerDied);
+    // Clean up when this scene instance shuts down so stale handlers don't fire.
+    this.events.once("shutdown", () => {
+      this.game.events.off("player-hurt", onPlayerHurt);
+      this.game.events.off("player-died", onPlayerDied);
     });
-
-    this.events.on("player-died", () => this.gameOver());
 
     // ----- LEVEL TITLE banner -----
     this.showActBanner("Act 1 — Community Park");
@@ -197,13 +211,15 @@ export class GameScene extends Phaser.Scene {
     this.act = 1;
 
     // Restart hooks
-    this.input.keyboard.on("keydown-R", () => this.scene.restart());
+    this.input.keyboard.on("keydown-R", () => {
+      // Stop HUD before restarting so it launches fresh and re-wires listeners.
+      this.scene.stop("HUD");
+      this.scene.restart();
+    });
     this.input.keyboard.on("keydown-M", () => {
-      const { toggleMuted } = this.audioMuteImport ?? {};
-      // dynamic import to avoid coupling
       import("../audio.js").then((m) => {
         const muted = m.toggleMuted();
-        this.events.emit("muted-changed", muted);
+        this.game.events.emit("muted-changed", muted);
       });
     });
   }
@@ -252,7 +268,7 @@ export class GameScene extends Phaser.Scene {
 
   updateBrandMeter() {
     const ratio = Math.min(1, this.player.insights / this.level.insightsRequired);
-    this.events.emit("brand-meter", ratio, this.player.insights, this.level.insightsRequired);
+    this.game.events.emit("brand-meter", ratio, this.player.insights, this.level.insightsRequired);
     if (ratio >= 1 && this.brandQuestionMark.text === "?") {
       this.brandQuestionMark.setText("!");
       this.brandQuestionMark.setColor("#3a7c47");
@@ -419,7 +435,7 @@ export class GameScene extends Phaser.Scene {
       this.player.setAlpha(0);
       this.cameras.main.flash(120, 255, 60, 60);
       this.player.lives = Math.max(0, this.player.lives - 1);
-      this.events.emit("player-hurt", this.player.lives);
+      this.game.events.emit("player-hurt", this.player.lives);
       if (this.player.lives <= 0) {
         this.gameOver();
       } else {
