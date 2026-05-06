@@ -1,4 +1,5 @@
 import { VIEW } from "./config.js";
+import { initTouchControls } from "./touchControls.js";
 import { BootScene } from "./scenes/Boot.js";
 import { MenuScene } from "./scenes/Menu.js";
 import { GameScene } from "./scenes/Game.js";
@@ -33,6 +34,7 @@ const config = {
   scene: [BootScene, MenuScene, GameScene, HUDScene, LevelCompleteScene, GameOverScene],
 };
 
+initTouchControls();
 const game = new Phaser.Game(config);
 
 // Hide the HTML loader the moment Phaser starts booting.

@@ -14,6 +14,7 @@
 
 import { PHYSICS, PLAYER, SIGNAL_DURATIONS } from "../config.js";
 import { SFX } from "../audio.js";
+import { TOUCH } from "../touchControls.js";
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
@@ -235,22 +236,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this._wasGrounded = grounded;
 
     // ---- INPUT ----
-    const left = this._cursors.left.isDown || this._keys.A.isDown;
-    const right = this._cursors.right.isDown || this._keys.D.isDown;
-    const down = this._cursors.down.isDown || this._keys.S.isDown;
-    const running = this._cursors.shift.isDown || this._keys.SHIFT.isDown;
+    const left    = this._cursors.left.isDown  || this._keys.A.isDown || TOUCH.left;
+    const right   = this._cursors.right.isDown || this._keys.D.isDown || TOUCH.right;
+    const down    = this._cursors.down.isDown  || this._keys.S.isDown;
+    // Touch always runs (no Shift key on mobile).
+    const running = this._cursors.shift.isDown || this._keys.SHIFT.isDown || (TOUCH.left || TOUCH.right);
     const jumpJustPressed =
       Phaser.Input.Keyboard.JustDown(this._cursors.space) ||
       Phaser.Input.Keyboard.JustDown(this._cursors.up) ||
       Phaser.Input.Keyboard.JustDown(this._keys.W) ||
-      Phaser.Input.Keyboard.JustDown(this._keys.SPACE);
+      Phaser.Input.Keyboard.JustDown(this._keys.SPACE) ||
+      TOUCH.jumpJustDown;
     const jumpHeld = this._cursors.space.isDown || this._cursors.up.isDown ||
-                     this._keys.W.isDown || this._keys.SPACE.isDown;
+                     this._keys.W.isDown || this._keys.SPACE.isDown ||
+                     TOUCH.jumpDown;
     const jumpJustReleased =
       Phaser.Input.Keyboard.JustUp(this._cursors.space) ||
       Phaser.Input.Keyboard.JustUp(this._cursors.up) ||
       Phaser.Input.Keyboard.JustUp(this._keys.W) ||
       Phaser.Input.Keyboard.JustUp(this._keys.SPACE);
+
+    // Consume touch jump-just-down after reading so it fires for exactly one frame.
+    if (TOUCH.jumpJustDown) TOUCH.jumpJustDown = false;
 
     if (jumpJustPressed) this._jumpRequestedAt = time;
 

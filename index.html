@@ -268,14 +268,32 @@
       footer a { color: var(--ink-dim); text-decoration: none; }
       footer a:hover { color: var(--ink); }
 
-      /* Responsive */
+      /* Responsive — tablet */
       @media (max-width: 880px) {
         .hero { grid-template-columns: 1fr; text-align: center; padding: 24px 0 60px; }
         .hero-art { justify-self: center; max-width: 320px; }
         .hero .ctas { justify-content: center; }
-        .features { grid-template-columns: 1fr; }
+        .features { grid-template-columns: repeat(2, 1fr); }
         .story { grid-template-columns: 1fr; gap: 36px; }
         .section { padding: 60px 0; }
+      }
+      /* Responsive — phone */
+      @media (max-width: 560px) {
+        .shell { padding: 16px; }
+        nav .links a:not(.btn) { display: none; }
+        nav .links { gap: 0; }
+        .hero { min-height: auto; padding: 16px 0 48px; }
+        .hero h1 { font-size: clamp(36px, 11vw, 52px); }
+        .hero .ctas { flex-direction: column; align-items: center; }
+        .hero .ctas .btn { width: 100%; justify-content: center; }
+        .hero-art { max-width: 240px; }
+        .features { grid-template-columns: 1fr; }
+        .section { padding: 48px 0; }
+        .cta-band { padding: 40px 20px; border-radius: 20px; }
+        .story-art { padding: 24px; }
+        .story-art .row img { width: 80px; }
+        footer { flex-direction: column; gap: 12px; text-align: center; }
+        footer .stack { justify-content: center; }
       }
     </style>
   </head>
@@ -400,16 +418,17 @@
 
       <!-- CONTROLS -->
       <section class="section" id="controls">
-        <div class="eyebrow">Keyboard</div>
+        <div class="eyebrow">Controls</div>
         <h2>Pick it up in five seconds.</h2>
-        <p class="deck">Desktop only for now (canvas scales gracefully on smaller screens).</p>
+        <p class="deck">Keyboard on desktop, on-screen buttons on mobile. Touch always runs — no Shift needed.</p>
         <div class="controls">
-          <div class="control"><span class="key">← →</span><span class="label">Move</span></div>
-          <div class="control"><span class="key">Shift</span><span class="label">Run</span></div>
-          <div class="control"><span class="key">Space</span><span class="label">Jump · ×2 for double-jump</span></div>
+          <div class="control"><span class="key">← →</span><span class="label">Move / run</span></div>
+          <div class="control"><span class="key">Shift</span><span class="label">Run (desktop)</span></div>
+          <div class="control"><span class="key">Space</span><span class="label">Jump · ×2 double-jump</span></div>
           <div class="control"><span class="key">↓</span><span class="label">Crouch</span></div>
           <div class="control"><span class="key">R</span><span class="label">Restart level</span></div>
           <div class="control"><span class="key">M</span><span class="label">Mute / unmute</span></div>
+          <div class="control"><span class="key" style="font-size:18px">📱</span><span class="label">← → ▲ on-screen pad (touch)</span></div>
         </div>
       </section>
 
