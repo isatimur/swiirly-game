@@ -28,8 +28,19 @@ export const level1 = {
   // Spawn 100px above the ground so the level intro shows Swiirl falling in.
   spawn: { x: 100, y: GROUND_Y - 100 },
   brandPos: { x: 7180, y: GROUND_Y },
-  miniBoss: { x: 6500, y: GROUND_Y },
+  miniBoss: { x: 6500, y: GROUND_Y, health: 3 },
   insightsRequired: 12,
+  bossArenaStart: 6200,
+
+  actTriggers: [
+    { x: 2700, banner: "Act 2 — Sharing Signals" },
+    { x: 6000, banner: "Act 3 — The Incompetence Manager" },
+  ],
+  checkpoints: [
+    { after: 1500, respawnX: 1500 },
+    { after: 2700, respawnX: 3300 },
+    { after: 5500, respawnX: 5800 },
+  ],
 
   // ============================================================================
   // TERRAIN
@@ -156,7 +167,6 @@ export const level1 = {
     { x: 6600, y: 130, scale: 1.0 },
   ],
 
-  bossArenaStart: 6200,
 };
 
 export const TILE_SIZE = TILE;

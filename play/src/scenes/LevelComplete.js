@@ -6,7 +6,7 @@ export class LevelCompleteScene extends Phaser.Scene {
   constructor() { super("LevelComplete"); }
 
   init(data) {
-    this.payload = data || { insights: 0, lives: 3, levelName: "Community Park" };
+    this.payload = data || { insights: 0, lives: 3, levelName: "Community Park", levelNum: 1 };
   }
 
   create() {
@@ -109,8 +109,9 @@ export class LevelCompleteScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
+    const isLastLevel = !this.payload.levelNum || this.payload.levelNum >= 3;
     const press = this.add.text(width / 2, height - 80,
-      "press   SPACE   to play again", {
+      isLastLevel ? "press   SPACE   to play again" : "press   SPACE   for next level", {
       fontFamily: "system-ui, sans-serif",
       fontSize: "16px",
       color: "#dcc7f2",
@@ -121,7 +122,8 @@ export class LevelCompleteScene extends Phaser.Scene {
     const restart = () => {
       this.cameras.main.fadeOut(400, 26, 15, 46);
       this.time.delayedCall(420, () => {
-        this.scene.start("Game");
+        const nextLevel = isLastLevel ? 1 : this.payload.levelNum + 1;
+        this.scene.start("Game", { level: nextLevel });
         this.scene.launch("HUD");
       });
     };

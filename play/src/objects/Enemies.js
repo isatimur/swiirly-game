@@ -35,9 +35,9 @@ class EnemyBase extends Phaser.Physics.Arcade.Sprite {
 export class JargonBlob extends EnemyBase {
   constructor(scene, x, y, range = 120) {
     super(scene, x, y, "enemy_jargon_blob");
-    // Sprite 80x64, origin (0.5, 1). Body anchored to sprite bottom so the
-    // blob actually rests on the ground (body bottom == sprite bottom).
-    this.body.setSize(60, 44).setOffset(10, 20);
+    // Sprite 80x64, origin (0.5, 1). Trimmed hitbox keeps collision fair and
+    // leaves headroom so the player can just-barely jump over from ground.
+    this.body.setSize(52, 36).setOffset(14, 28);
     this.setVelocityX(-60);
     this.minX = x - range;
     this.maxX = x + range;
@@ -63,8 +63,8 @@ export class JargonBlob extends EnemyBase {
 export class GutFeelGhost extends EnemyBase {
   constructor(scene, x, y, range = 80) {
     super(scene, x, y, "enemy_ghost");
-    // Sprite 64x80. Body bottom-aligned to sprite bottom.
-    this.body.setSize(48, 60).setOffset(8, 20);
+    // Sprite 64x80. Trimmed hitbox so player can hop over from below.
+    this.body.setSize(40, 48).setOffset(12, 32);
     this.body.setAllowGravity(false);
     this.startX = x;
     this.startY = y;
@@ -128,13 +128,13 @@ export class PaperworkPile extends EnemyBase {
 }
 
 export class IncompetenceManager extends EnemyBase {
-  constructor(scene, x, y) {
+  constructor(scene, x, y, health = 3) {
     super(scene, x, y, "enemy_boss");
     this.setScale(1.05);
     // Sprite 120x140. Body 80x110, bottom-aligned.
     this.body.setSize(80, 110).setOffset(20, 30);
     this.body.setMaxVelocity(180, 1400);
-    this.health = 3;
+    this.health = health;
     this.scoreValue = 0;
     this.facing = -1;
     this.setVelocityX(-90);

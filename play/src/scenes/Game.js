@@ -7,14 +7,22 @@ import { JargonBlob, GutFeelGhost, PaperworkPile, IncompetenceManager } from "..
 import { Insight, CommunitySignal } from "../objects/Collectibles.js";
 import { Brand } from "../objects/Brand.js";
 import { level1, TILE_SIZE, GROUND_TOP_Y } from "../levels/level1.js";
+import { level2 } from "../levels/level2.js";
+import { level3 } from "../levels/level3.js";
 import { SFX } from "../audio.js";
+
+const LEVELS = { 1: level1, 2: level2, 3: level3 };
 
 export class GameScene extends Phaser.Scene {
   constructor() { super("Game"); }
 
+  init(data) {
+    this.levelNum = data?.level ?? 1;
+  }
+
   create() {
     this.cameras.main.fadeIn(400, 26, 15, 46);
-    const lvl = level1;
+    const lvl = LEVELS[this.levelNum] ?? level1;
     this.level = lvl;
 
     this.physics.world.setBounds(0, 0, lvl.width, lvl.height);
@@ -46,6 +54,17 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
+    // ----- LEVEL ATMOSPHERE -----
+    if (this.levelNum === 2) {
+      // Corporate Maze — cool blue-gray office tone
+      this.cameras.main.setBackgroundColor("#0d1825");
+      [this.bgFar, this.bgMid, this.bgNear, this.bgTower].forEach(bg => bg.setTint(0x7090c0));
+    } else if (this.levelNum === 3) {
+      // Brand HQ — warm amber/red high-stakes tone
+      this.cameras.main.setBackgroundColor("#1a0805");
+      [this.bgFar, this.bgMid, this.bgNear, this.bgTower].forEach(bg => bg.setTint(0xc08060));
+    }
+
     // ----- TERRAIN -----
     this.platforms = this.physics.add.staticGroup();
     for (const t of lvl.terrain) {
@@ -56,6 +75,13 @@ export class GameScene extends Phaser.Scene {
       } else if (t.kind === "brick") {
         this.buildBrick(t.x, t.y);
       }
+    }
+
+    // Tint tiles to match the level's atmosphere.
+    if (this.levelNum === 2) {
+      this.platforms.getChildren().forEach(tile => tile.setTint(0x9ab0cc));
+    } else if (this.levelNum === 3) {
+      this.platforms.getChildren().forEach(tile => tile.setTint(0xcc9070));
     }
 
     // World floor (catch falls into pits).
@@ -89,7 +115,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Mini-boss (spawned but inactive until player crosses arena boundary).
-    this.boss = new IncompetenceManager(this, lvl.miniBoss.x, lvl.miniBoss.y);
+    this.boss = new IncompetenceManager(this, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3);
     this.bossActive = false;
     this.boss.setVisible(false);
     this.boss.body.enable = false;
@@ -175,20 +201,22 @@ export class GameScene extends Phaser.Scene {
     });
 
     // ----- HUD wire-up -----
-    // Events emitted on this.game.events (persistent Phaser-level bus) so HUD
-    // survives scene restarts without losing its listeners.
-    this.game.events.emit("level-loaded", {
-      level: lvl.name,
-      lives: this.player.lives,
-      insights: this.player.insights,
-      brandThreshold: lvl.insightsRequired,
-    });
-
-    // Launch HUD if it was stopped (e.g. by the R-restart path), otherwise bring to front.
+    // Launch HUD first so its create() runs and registers event listeners before
+    // we emit level-loaded. The 50ms delay ensures the HUD scene has fully created.
     if (!this.scene.isActive("HUD")) {
       this.scene.launch("HUD");
     }
     this.scene.bringToTop("HUD");
+
+    // Deferred so HUD's create() has finished registering game.events listeners.
+    this.time.delayedCall(50, () => {
+      this.game.events.emit("level-loaded", {
+        level: lvl.name,
+        lives: this.player.lives,
+        insights: this.player.insights,
+        brandThreshold: lvl.insightsRequired,
+      });
+    });
 
     // Internal camera reactions to player events (also on the global bus).
     const onPlayerHurt = (lives) => {
@@ -206,15 +234,15 @@ export class GameScene extends Phaser.Scene {
     });
 
     // ----- LEVEL TITLE banner -----
-    this.showActBanner("Act 1 — Community Park");
+    this.showActBanner("Act 1 — " + lvl.name);
 
-    this.act = 1;
+    this.actTriggerIdx = 0;
 
     // Restart hooks
     this.input.keyboard.on("keydown-R", () => {
       // Stop HUD before restarting so it launches fresh and re-wires listeners.
       this.scene.stop("HUD");
-      this.scene.restart();
+      this.scene.restart({ level: this.levelNum });
     });
     this.input.keyboard.on("keydown-M", () => {
       import("../audio.js").then((m) => {
@@ -375,6 +403,7 @@ export class GameScene extends Phaser.Scene {
         insights: this.player.insights,
         lives: this.player.lives,
         levelName: this.level.name,
+        levelNum: this.levelNum,
       });
     });
   }
@@ -419,14 +448,16 @@ export class GameScene extends Phaser.Scene {
         this.bossActive = true;
         this.boss.setVisible(true);
         this.boss.body.enable = true;
-        this.showActBanner("Act 3 — The Incompetence Manager");
       }
     }
 
-    // Act banners.
-    if (this.act === 1 && this.player.x > 2700) {
-      this.act = 2;
-      this.showActBanner("Act 2 — Sharing Signals");
+    // Act banners from level data.
+    if (this.level.actTriggers && this.actTriggerIdx < this.level.actTriggers.length) {
+      const next = this.level.actTriggers[this.actTriggerIdx];
+      if (this.player.x > next.x) {
+        this.actTriggerIdx++;
+        this.showActBanner(next.banner);
+      }
     }
 
     // Pit / fall-out.
@@ -439,12 +470,14 @@ export class GameScene extends Phaser.Scene {
       if (this.player.lives <= 0) {
         this.gameOver();
       } else {
-        // Respawn at last reasonable checkpoint (act start).
+        // Respawn at last reached checkpoint.
         this.time.delayedCall(500, () => {
           let respawnX = this.level.spawn.x;
-          if (this.player.x > 5500) respawnX = 5800;
-          else if (this.player.x > 2700) respawnX = 3300;
-          else if (this.player.x > 1500) respawnX = 1500;
+          if (this.level.checkpoints) {
+            for (const cp of this.level.checkpoints) {
+              if (this.player.x > cp.after) respawnX = cp.respawnX;
+            }
+          }
           this.player.setPosition(respawnX, GROUND_TOP_Y - 100);
           this.player.setVelocity(0, 0);
           this.player.body.enable = true;
