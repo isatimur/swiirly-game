@@ -2,6 +2,7 @@ import { VIEW } from "./config.js";
 import { initTouchControls } from "./touchControls.js";
 import { BootScene } from "./scenes/Boot.js";
 import { MenuScene } from "./scenes/Menu.js";
+import { CharacterSelectScene } from "./scenes/CharacterSelect.js";
 import { GameScene } from "./scenes/Game.js";
 import { HUDScene } from "./scenes/HUD.js";
 import { LevelCompleteScene } from "./scenes/LevelComplete.js";
@@ -31,11 +32,12 @@ const config = {
       fps: 120,
     },
   },
-  scene: [BootScene, MenuScene, GameScene, HUDScene, LevelCompleteScene, GameOverScene],
+  scene: [BootScene, MenuScene, CharacterSelectScene, GameScene, HUDScene, LevelCompleteScene, GameOverScene],
 };
 
 initTouchControls();
 const game = new Phaser.Game(config);
+if (typeof window !== "undefined") window.game = game;
 
 // Hide the HTML loader the moment Phaser starts booting.
 game.events.once("ready", () => {

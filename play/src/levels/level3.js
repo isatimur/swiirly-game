@@ -7,6 +7,7 @@ const GROUND_Y = 656;
 const ground   = (x1, x2)       => ({ kind: "ground",   x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles) => ({ kind: "platform",  x, y,  w: wTiles  });
 const brick    = (x, y)         => ({ kind: "brick",     x, y               });
+const windZone = (x, y, w, h, force) => ({ kind: "windZone", x, y, w, h, force });
 
 const LOW  = 70;
 const MID  = 200;
@@ -51,26 +52,28 @@ export const level3 = {
     platform(2600, GROUND_Y - 300, 4),
     brick(2850, GROUND_Y - 130),
     brick(2914, GROUND_Y - 130),
-    // pit 3000–3400
+    // pit 3000–3400 — gusty winds blowing BACKWARD make this a real test
+    windZone(3000, GROUND_Y - 360, 400, 360, -280),
     ground(3400, 4600),
     platform(3600, GROUND_Y - 140, 3),
     platform(3900, GROUND_Y - 280, 4),
     platform(4300, GROUND_Y - 360, 3),
 
     // --- Act 2 ---
-    // pit 4600–5100
+    // pit 4600–5100 — tailwind to help cross the gap
+    windZone(4600, GROUND_Y - 360, 500, 360, 240),
     ground(5100, 6400),
     platform(5300, GROUND_Y - 160, 3),
     platform(5600, GROUND_Y - 300, 4),
     platform(5950, GROUND_Y - 360, 3),
-    brick(5200, GROUND_Y - 200),
-    brick(5264, GROUND_Y - 200),
+    brick(5200, GROUND_Y - 220),
+    brick(5264, GROUND_Y - 220),
     brick(5200, GROUND_Y - 360),
     brick(5264, GROUND_Y - 360),
     ground(6400, 7200),
     platform(6600, GROUND_Y - 220, 3),
     platform(6900, GROUND_Y - 340, 4),
-    brick(6750, GROUND_Y - 180),
+    brick(6750, GROUND_Y - 220),
     brick(6814, GROUND_Y - 300),
 
     // pit 7200–7600

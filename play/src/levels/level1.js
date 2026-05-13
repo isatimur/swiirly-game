@@ -14,6 +14,7 @@ const GROUND_Y = 656;
 const ground   = (x1, x2)         => ({ kind: "ground", x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles)   => ({ kind: "platform", x, y, w: wTiles });
 const brick    = (x, y)           => ({ kind: "brick", x, y });
+const bouncePad = (x, y)          => ({ kind: "bouncePad", x, y });
 
 // Pickup-altitude shorthand. "low" = walk-through, "mid" = single jump,
 // "high" = chain-jump from a platform.
@@ -34,7 +35,7 @@ export const level1 = {
 
   actTriggers: [
     { x: 2700, banner: "Act 2 — Sharing Signals" },
-    { x: 6000, banner: "Act 3 — The Incompetence Manager" },
+    { x: 6000, banner: "Act 3 — Hot-Take Hank" },
   ],
   checkpoints: [
     { after: 1500, respawnX: 1500 },
@@ -57,10 +58,12 @@ export const level1 = {
     ground(1500, 2400),
     platform(2000, GROUND_Y - 170, 3),
     platform(2300, GROUND_Y - 290, 3),
+    bouncePad(1640, GROUND_Y - 64),  // springboard up to the high platforms
     // pit 2400–3200
     ground(2600, 3200),
+    bouncePad(2820, GROUND_Y - 64),  // alt-route up after the arch gate
     brick(2620, GROUND_Y - 120),
-    brick(2780, GROUND_Y - 180),
+    brick(2780, GROUND_Y - 220),
     brick(2960, GROUND_Y - 120),
 
     // ---- ACT 2 (vertical platforming) ----
@@ -70,11 +73,11 @@ export const level1 = {
     platform(4100, GROUND_Y - 240, 3),
     platform(4350, GROUND_Y - 130, 3),
     ground(4500, 5400),
-    brick(4900, GROUND_Y - 180),
-    brick(4964, GROUND_Y - 180),
-    brick(5028, GROUND_Y - 180),
-    brick(4900, GROUND_Y - 320),
-    brick(5028, GROUND_Y - 320),
+    brick(4900, GROUND_Y - 220),
+    brick(4964, GROUND_Y - 220),
+    brick(5028, GROUND_Y - 220),
+    brick(4836, GROUND_Y - 320),
+    brick(5092, GROUND_Y - 320),
 
     // pit 5400–5800
     ground(5500, 5800),

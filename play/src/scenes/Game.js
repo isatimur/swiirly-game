@@ -3,15 +3,28 @@
 
 import { VIEW, PHYSICS, PLAYER } from "../config.js";
 import { Player } from "../objects/Player.js";
-import { JargonBlob, GutFeelGhost, PaperworkPile, IncompetenceManager } from "../objects/Enemies.js";
+import { JargonBlob, GutFeelGhost, PaperworkPile, IncompetenceManager, DeadlineBot, BossBase, makeBoss } from "../objects/Enemies.js";
 import { Insight, CommunitySignal } from "../objects/Collectibles.js";
 import { Brand } from "../objects/Brand.js";
+import { Effects } from "../objects/Effects.js";
+import { Combo } from "../objects/Combo.js";
 import { level1, TILE_SIZE, GROUND_TOP_Y } from "../levels/level1.js";
 import { level2 } from "../levels/level2.js";
 import { level3 } from "../levels/level3.js";
+import { level4 } from "../levels/level4.js";
+import { level5 } from "../levels/level5.js";
 import { SFX } from "../audio.js";
 
-const LEVELS = { 1: level1, 2: level2, 3: level3 };
+const FLAVOR_QUOTES = {
+  "Community Park":     "Where ideas first take root.",
+  "Corporate Maze":     "Bureaucracy fights back.",
+  "Brand HQ":           "Inside every decision, a deadline.",
+  "Boardroom Battle":   "Every meeting is a maze.",
+  "Data Lake":          "Drown the noise. Surface the signal.",
+  "Executive Summit":   "The final pitch. No second drafts.",
+};
+
+const LEVELS = { 1: level1, 2: level2, 3: level3, 4: level4, 5: level5 };
 
 export class GameScene extends Phaser.Scene {
   constructor() { super("Game"); }
@@ -24,6 +37,11 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.fadeIn(400, 26, 15, 46);
     const lvl = LEVELS[this.levelNum] ?? level1;
     this.level = lvl;
+    this._levelStartTime = this.time.now;
+
+    // VFX manager + combo state.
+    this.effects = new Effects(this);
+    this.combo = new Combo(this, 2200);
 
     this.physics.world.setBounds(0, 0, lvl.width, lvl.height);
     this.cameras.main.setBounds(0, 0, lvl.width, lvl.height);
@@ -42,6 +60,11 @@ export class GameScene extends Phaser.Scene {
     this.bgTower = this.add.tileSprite(0, 0, VIEW.width, VIEW.height, "bg_tower")
       .setOrigin(0).setScrollFactor(0).setDepth(-85).setAlpha(0);
 
+    this.bgDataLake = this.add.tileSprite(0, 0, VIEW.width, VIEW.height, "bg_data_lake")
+      .setOrigin(0).setScrollFactor(0).setDepth(-80).setAlpha(0);
+    this.bgExecutive = this.add.tileSprite(0, 0, VIEW.width, VIEW.height, "bg_executive")
+      .setOrigin(0).setScrollFactor(0).setDepth(-80).setAlpha(0);
+
     // Drifting clouds (in-world, not scroll-fixed).
     for (const c of lvl.clouds) {
       const cloud = this.add.image(c.x, c.y, "cloud").setScale(c.scale).setAlpha(0.85).setDepth(-50);
@@ -54,6 +77,9 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
+    // ----- AMBIENT PARTICLES (per-level flair) -----
+    this.spawnAmbientParticles(this.levelNum);
+
     // ----- LEVEL ATMOSPHERE -----
     if (this.levelNum === 2) {
       // Corporate Maze — cool blue-gray office tone
@@ -63,10 +89,26 @@ export class GameScene extends Phaser.Scene {
       // Brand HQ — warm amber/red high-stakes tone
       this.cameras.main.setBackgroundColor("#1a0805");
       [this.bgFar, this.bgMid, this.bgNear, this.bgTower].forEach(bg => bg.setTint(0xc08060));
+    } else if (this.levelNum === 4) {
+      // Data Lake — dark teal server-room
+      this.cameras.main.setBackgroundColor("#050e12");
+      [this.bgFar, this.bgMid, this.bgTower].forEach(bg => bg.setTint(0x408090));
+      this.bgNear.setAlpha(0);
+      this.bgDataLake.setAlpha(1).setTint(0x40a0a8);
+    } else if (this.levelNum === 5) {
+      // Executive Summit — dark blue-gray steel
+      this.cameras.main.setBackgroundColor("#080a14");
+      [this.bgFar, this.bgMid, this.bgTower].forEach(bg => bg.setTint(0x6070c0));
+      this.bgNear.setAlpha(0);
+      this.bgExecutive.setAlpha(1).setTint(0x9090b8);
     }
 
     // ----- TERRAIN -----
     this.platforms = this.physics.add.staticGroup();
+    this.bouncePads = this.physics.add.staticGroup();
+    this.conveyors = this.physics.add.staticGroup();
+    this.windZones = [];        // Array of { x, y, w, h, force, particles[] }
+    this.fallingShardSpawners = []; // Array of { interval, lastSpawn, xRange }
     for (const t of lvl.terrain) {
       if (t.kind === "ground") {
         this.buildGround(t.x, t.w);
@@ -74,6 +116,18 @@ export class GameScene extends Phaser.Scene {
         this.buildPlatform(t.x, t.y, t.w);
       } else if (t.kind === "brick") {
         this.buildBrick(t.x, t.y);
+      } else if (t.kind === "bouncePad") {
+        this.buildBouncePad(t.x, t.y);
+      } else if (t.kind === "conveyor") {
+        this.buildConveyor(t.x, t.y, t.w, t.dir ?? 1);
+      } else if (t.kind === "windZone") {
+        this.buildWindZone(t.x, t.y, t.w, t.h, t.force ?? 220);
+      } else if (t.kind === "fallingShards") {
+        this.fallingShardSpawners.push({
+          x1: t.x1, x2: t.x2,
+          interval: t.interval ?? 2200,
+          lastSpawn: 0,
+        });
       }
     }
 
@@ -82,6 +136,10 @@ export class GameScene extends Phaser.Scene {
       this.platforms.getChildren().forEach(tile => tile.setTint(0x9ab0cc));
     } else if (this.levelNum === 3) {
       this.platforms.getChildren().forEach(tile => tile.setTint(0xcc9070));
+    } else if (this.levelNum === 4) {
+      this.platforms.getChildren().forEach(tile => tile.setTint(0x60a0b0));
+    } else if (this.levelNum === 5) {
+      this.platforms.getChildren().forEach(tile => tile.setTint(0x8090c8));
     }
 
     // World floor (catch falls into pits).
@@ -105,17 +163,22 @@ export class GameScene extends Phaser.Scene {
     // ----- ENEMIES -----
     this.enemies = this.physics.add.group();
     this.projectiles = this.physics.add.group({ allowGravity: false });
+    // Player-side attacks (melee hitboxes + thrown bolts). Kept in their own
+    // group so we can route them through overlap handlers against the enemy
+    // and boss groups independently from incoming projectiles.
+    this.playerAttacks = this.physics.add.group({ allowGravity: false });
 
     for (const e of lvl.enemies) {
       let enemy;
       if (e.type === "jargon_blob") enemy = new JargonBlob(this, e.x, e.y, e.range);
       else if (e.type === "ghost") enemy = new GutFeelGhost(this, e.x, e.y, e.range);
       else if (e.type === "paperwork") enemy = new PaperworkPile(this, e.x, e.y, this.projectiles);
+      else if (e.type === "deadline_bot") enemy = new DeadlineBot(this, e.x, e.y, null, e.range);
       if (enemy) this.enemies.add(enemy);
     }
 
     // Mini-boss (spawned but inactive until player crosses arena boundary).
-    this.boss = new IncompetenceManager(this, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3);
+    this.boss = makeBoss(this, this.levelNum, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3);
     this.bossActive = false;
     this.boss.setVisible(false);
     this.boss.body.enable = false;
@@ -144,7 +207,14 @@ export class GameScene extends Phaser.Scene {
     });
 
     // ----- PLAYER -----
-    this.player = new Player(this, lvl.spawn.x, lvl.spawn.y);
+    // Pick up the character chosen on the Select screen (or fall back to default).
+    const chosenChar = this.registry.get("character") ?? null;
+    this.player = new Player(this, lvl.spawn.x, lvl.spawn.y, chosenChar);
+
+    // Inject player reference into DeadlineBots (spawned before player existed).
+    this.enemies.getChildren().forEach(e => {
+      if (e instanceof DeadlineBot) e.player = this.player;
+    });
 
     // ----- COLLISIONS -----
     this.physics.add.collider(this.player, this.platforms);
@@ -152,11 +222,46 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.boss, this.platforms);
     this.physics.add.collider(this.projectiles, this.platforms, (p) => p.destroy());
 
+    // Bouncy mushrooms — boost the player's jump when landed on from above.
+    this.physics.add.collider(this.player, this.bouncePads, (player, pad) => {
+      // Only trigger when landing (not when grazing the side).
+      if (player.body.velocity.y >= 0 && player.body.touching.down) {
+        player.setVelocityY(-820);
+        player._isJumping = true;
+        player._jumpsRemaining = (PHYSICS.maxJumps ?? 2);
+        SFX.jump();
+        this.effects.dustPuff(pad.x, pad.y - 14, { color: 0x7bd389, count: 6, scale: 0.9, ms: 380 });
+        this.effects.squashAndStretch(player, "jump");
+        // Squash the pad as feedback.
+        this.tweens.add({
+          targets: pad, scaleY: 0.55, duration: 80, yoyo: true, ease: "Quad.easeOut",
+        });
+      }
+    });
+    this.physics.add.collider(this.enemies, this.bouncePads);
+    this.physics.add.collider(this.boss, this.bouncePads);
+
+    // Conveyors are solid platforms — collide normally. Force is applied in update().
+    this.physics.add.collider(this.player, this.conveyors);
+    this.physics.add.collider(this.enemies, this.conveyors);
+    this.physics.add.collider(this.boss, this.conveyors);
+    this.physics.add.collider(this.projectiles, this.conveyors, (p) => p.destroy());
+
     this.physics.add.overlap(this.player, this.insights, (player, insight) => {
-      this.spawnSparkles(insight.x, insight.y);
+      this.combo.bump("insight");
+      const c = this.combo.count;
+      this.effects.sparkleBurst(insight.x, insight.y, 8 + Math.min(c, 8), 0xffd24a);
+      this.effects.insightFlyToHUD(insight.x, insight.y, 64, 22);
+      const ix = insight.x, iy = insight.y;
       insight.destroy();
-      this.player.collectInsight(1);
+      // Multiplier-aware collect — falls back to 1 if combo is fresh.
+      this.player.collectInsight(this.combo.multiplier);
       this.updateBrandMeter();
+      // Custom audio replaces the default chord on first collect.
+      SFX.collectAt(c);
+      if (c >= 3) {
+        this.effects.comboFloat(ix, iy - 24, `+${this.combo.multiplier} ×${c}!`, "#ffd24a");
+      }
     });
     this.physics.add.overlap(this.player, this.signals, (player, sig) => {
       sig.destroy();
@@ -171,6 +276,53 @@ export class GameScene extends Phaser.Scene {
     });
     this.physics.add.overlap(this.player, this.brand, () => this.handleBrandTouch());
 
+    // ----- PLAYER ATTACKS → ENEMIES / BOSS / PROJECTILES -----
+    // CRITICAL: side-effects (VFX, SFX, freezeFrame) ONLY run when the
+    // damage call returns a real hit. Piercing hitboxes overlap every frame
+    // for their lifetime; without this gate, 14+ freezeFrame calls per attack
+    // would re-pause physics on every resume and hang the boss fight.
+    this.physics.add.overlap(this.playerAttacks, this.enemies, (atk, enemy) => {
+      if (!atk.active || !enemy.active || enemy.dead) return;
+      const result = enemy.takePlayerHit(atk.damage ?? 1, this.player.x, atk.attackId ?? "atk");
+      if (!result) {
+        // Pierce hitbox that's already hit this enemy — destroy non-pierce as before.
+        if (!atk.pierce) atk.destroy();
+        return;
+      }
+      const killed = result === "killed";
+      this.effects.stompPoof(enemy.x, enemy.y - 24);
+      this.combo.bump(killed ? "stomp" : "hit");
+      const c = this.combo.count;
+      if (killed) SFX.stompAt(c);
+      else SFX.attackConfirm?.();
+      this.player.onAttackConfirm(enemy.x);
+      if (!atk.pierce) atk.destroy();
+    });
+    this.physics.add.overlap(this.playerAttacks, this.boss, (atk, boss) => {
+      if (!atk.active || boss.dead || !this.bossActive) return;
+      const result = boss.takePlayerHit(atk.damage ?? 1, this.player.x, atk.attackId ?? "atk");
+      if (!result) {
+        if (!atk.pierce) atk.destroy();
+        return;
+      }
+      this.effects.sparkleBurst(boss.x, boss.y - 60, 10, 0xffd24a);
+      this.effects.punchZoom(0.04, 180);
+      SFX.attackConfirm?.();
+      this.player.onAttackConfirm(boss.x);
+      if (!atk.pierce) atk.destroy();
+    });
+    // Guardian parry: shieldBash hitboxes destroy incoming projectiles on touch.
+    this.physics.add.overlap(this.playerAttacks, this.projectiles, (atk, proj) => {
+      if (!atk.parry || !atk.active || !proj.active) return;
+      this.effects.sparkleBurst(proj.x, proj.y, 8, 0xffd24a);
+      proj.destroy();
+      SFX.parry?.();
+    });
+    // Stop player attacks at solid walls (looks unfair if they pass through).
+    this.physics.add.collider(this.playerAttacks, this.platforms, (atk) => {
+      if (atk.attackId === "bolt") atk.destroy();
+    });
+
     // ----- CAMERA -----
     this.cameras.main.startFollow(this.player, true, 0.15, 0.1);
     this.cameras.main.setDeadzone(VIEW.width * 0.3, VIEW.height * 0.4);
@@ -181,6 +333,14 @@ export class GameScene extends Phaser.Scene {
       R: Phaser.Input.Keyboard.KeyCodes.R,
       P: Phaser.Input.Keyboard.KeyCodes.P,
       M: Phaser.Input.Keyboard.KeyCodes.M,
+    });
+
+    // Hidden dev shortcut: B teleports player into the boss arena (boss alive).
+    this.input.keyboard.on("keydown-B", () => {
+      const arenaX = this.level.bossArenaStart + 100;
+      this.player.setPosition(arenaX, GROUND_TOP_Y - 100);
+      this.player.setVelocity(0, 0);
+      this.player._invulnUntil = this.time.now + 1500;
     });
 
     // Hidden dev shortcut: Q jumps right next to the brand with the meter full.
@@ -216,25 +376,61 @@ export class GameScene extends Phaser.Scene {
         insights: this.player.insights,
         brandThreshold: lvl.insightsRequired,
       });
+      const ch = this.player.character;
+      if (ch) {
+        this.game.events.emit("persona-bind", {
+          name: ch.name,
+          attackHint: ch.attackHint,
+          color: ch.color,
+        });
+      }
     });
 
     // Internal camera reactions to player events (also on the global bus).
     const onPlayerHurt = (lives) => {
       if (!this.cameras?.main) return;
-      this.cameras.main.shake(160, 0.006);
+      this.cameras.main.shake(220, 0.008);
       if (lives > 0) this.cameras.main.flash(180, 255, 60, 60);
+      this.combo?.reset();
+      this.game.events.emit("damage-flash");
     };
     const onPlayerDied = () => this.gameOver();
+    const onBossDefeated = ({ x, y }) => {
+      this.effects.slowMo(0.25, 180, 320, 700);
+      this.effects.bossShockwave(x, y);
+      this.time.delayedCall(120, () => this.effects.stompPoof(x - 30, y - 20));
+      this.time.delayedCall(220, () => this.effects.stompPoof(x + 40, y - 40));
+      this.time.delayedCall(360, () => this.effects.sparkleBurst(x, y, 24, 0xffd24a));
+      this.time.delayedCall(420, () => this.effects.radialFlash(0xffd24a, 0.35, 480));
+      SFX.bossKill();
+    };
     this.game.events.on("player-hurt", onPlayerHurt);
     this.game.events.once("player-died", onPlayerDied);
+    this.game.events.once("boss-defeated", onBossDefeated);
     // Clean up when this scene instance shuts down so stale handlers don't fire.
     this.events.once("shutdown", () => {
       this.game.events.off("player-hurt", onPlayerHurt);
       this.game.events.off("player-died", onPlayerDied);
+      this.game.events.off("boss-defeated", onBossDefeated);
     });
 
-    // ----- LEVEL TITLE banner -----
-    this.showActBanner("Act 1 — " + lvl.name);
+    // ----- LEVEL INTRO CINEMATIC -----
+    const cam = this.cameras.main;
+    cam.setZoom(0.92);
+    this.physics.pause();
+    this.player.body.allowGravity = false;
+    this.tweens.add({ targets: cam, zoom: 1.0, duration: 700, ease: "Quad.easeOut" });
+
+    this.time.delayedCall(220, () => {
+      const quote = FLAVOR_QUOTES[lvl.name] ?? "Deliver the insight.";
+      this.game.events.emit("level-intro", { name: lvl.name, num: this.levelNum, quote });
+      SFX.levelStart();
+    });
+    this.time.delayedCall(1500, () => {
+      this.physics.resume();
+      this.player.body.allowGravity = true;
+      this.showActBanner("Act 1 — " + lvl.name);
+    });
 
     this.actTriggerIdx = 0;
 
@@ -269,6 +465,8 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < wTiles; i++) {
       const tx = x + i * TILE_SIZE;
       const p = this.platforms.create(tx + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_platform");
+      p.body.setSize(TILE_SIZE, 10);
+      p.body.setOffset(0, 14);
       p.refreshBody();
     }
   }
@@ -276,6 +474,156 @@ export class GameScene extends Phaser.Scene {
   buildBrick(x, y) {
     const b = this.platforms.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_brick");
     b.refreshBody();
+  }
+
+  buildBouncePad(x, y) {
+    const p = this.bouncePads.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_platform");
+    p.setTint(0x7bd389);  // signature green
+    p.body.setSize(TILE_SIZE, 14);
+    p.body.setOffset(0, 10);
+    p.refreshBody();
+    // Idle pulse animation so the player can recognize it at a glance.
+    this.tweens.add({
+      targets: p,
+      scaleY: 1.08,
+      duration: 700,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  /** Conveyor belt — orange platform that pushes anything standing on it horizontally. */
+  buildConveyor(x, y, wTiles, dir) {
+    for (let i = 0; i < wTiles; i++) {
+      const tx = x + i * TILE_SIZE;
+      const p = this.conveyors.create(tx + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_platform");
+      p.setTint(0xff9d4a);  // orange — signature for "industrial"
+      p.body.setSize(TILE_SIZE, 12);
+      p.body.setOffset(0, 12);
+      p.refreshBody();
+      p.beltDir = dir;
+      // Marching-arrow visual on top so the direction is unmistakable.
+      const arrowChar = dir > 0 ? "▶" : "◀";
+      const arrow = this.add.text(tx + TILE_SIZE / 2, y + 18, arrowChar, {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "16px",
+        fontStyle: "900",
+        color: "#ffffff",
+      }).setOrigin(0.5).setDepth(3).setAlpha(0.85);
+      // Slide the arrow in its tile direction, looping for a "moving belt" feel.
+      this.tweens.add({
+        targets: arrow,
+        x: arrow.x + dir * 24,
+        duration: 600,
+        repeat: -1,
+        ease: "Linear",
+        onRepeat: () => { arrow.x = tx + TILE_SIZE / 2 - dir * 12; },
+      });
+    }
+  }
+
+  /**
+   * Per-level ambient particle effects (atmospheric flair, screen-fixed).
+   * Each level gets a distinct vibe through drifting visual elements.
+   */
+  spawnAmbientParticles(levelNum) {
+    const VIEW_W = this.cameras.main.width;
+    const VIEW_H = this.cameras.main.height;
+    const cfg = ({
+      1: { color: 0xffe6a0, count: 12, shape: "dot",   size: 3, speed: 30, msMin: 8000, msMax: 14000, dirX: 1, gravity: 18 },   // pollen drifting right
+      2: { color: 0xdcc7f2, count: 10, shape: "rect",  size: 6, speed: 50, msMin: 9000, msMax: 14000, dirX: 1, gravity: 12 },   // floating papers
+      3: { color: 0xffe6a0, count: 6,  shape: "ray",   size: 80, speed: 0,  msMin: 4000, msMax: 7000,  dirX: 0, gravity: 0  },   // god rays
+      4: { color: 0x40e0c0, count: 18, shape: "dot",   size: 2, speed: 55, msMin: 4000, msMax: 8000,  dirX: 1, gravity: -30 }, // data bits rising
+      5: { color: 0xffd24a, count: 14, shape: "spark", size: 3, speed: 40, msMin: 3000, msMax: 6000,  dirX: 0, gravity: 60 },   // sparks falling
+    })[levelNum];
+    if (!cfg) return;
+
+    const spawn = (initial = false) => {
+      const p = (() => {
+        if (cfg.shape === "rect") {
+          return this.add.rectangle(0, 0, cfg.size, cfg.size * 0.6, cfg.color, 0.6);
+        } else if (cfg.shape === "ray") {
+          return this.add.rectangle(0, 0, 4, cfg.size, cfg.color, 0.18).setRotation(0.18);
+        }
+        return this.add.circle(0, 0, cfg.size, cfg.color, 0.8);
+      })().setScrollFactor(0).setDepth(-30);
+
+      const startX = initial ? Phaser.Math.Between(0, VIEW_W) : (cfg.dirX > 0 ? -20 : VIEW_W + 20);
+      const startY = Phaser.Math.Between(20, VIEW_H - 60);
+      p.x = startX; p.y = startY;
+      const ms = Phaser.Math.Between(cfg.msMin, cfg.msMax);
+      const endX = cfg.dirX > 0 ? VIEW_W + 30 : (cfg.dirX < 0 ? -30 : startX + Phaser.Math.Between(-40, 40));
+      const endY = startY + (cfg.gravity ?? 0) * (ms / 1000);
+      this.tweens.add({
+        targets: p,
+        x: endX, y: endY,
+        alpha: { from: 0.0, to: 0.7, ease: "Sine.easeInOut" },
+        duration: ms,
+        ease: "Linear",
+        onComplete: () => { p.destroy(); spawn(false); },
+      });
+    };
+    for (let i = 0; i < cfg.count; i++) spawn(true);
+  }
+
+  /** L5 — falling glass shard. Telegraphs with ground marker, then crashes down.
+   *  Damages on contact, dissolves with sparks on impact. */
+  spawnFallingShard(spawner) {
+    const px = Phaser.Math.Between(spawner.x1, spawner.x2);
+    // Only spawn near the player so off-screen shards aren't wasted.
+    if (Math.abs(px - this.player.x) > this.cameras.main.width * 0.7) return;
+    const startY = Math.max(0, this.cameras.main.worldView.y - 40);
+    // Ground marker telegraph — red dot pulsing where the shard will land.
+    const marker = this.add.circle(px, GROUND_TOP_Y - 4, 8, 0xff5c5c, 0.9).setDepth(40);
+    this.tweens.add({
+      targets: marker, scale: 1.6, alpha: 0.3,
+      duration: 280, yoyo: true, repeat: 2,
+      onComplete: () => marker.destroy(),
+    });
+    // Spawn shard projectile after telegraph.
+    this.time.delayedCall(700, () => {
+      if (!this.projectiles || this.player.body.enable === false) return;
+      const shard = this.projectiles.create(px, startY, "projectile_paper");
+      shard.setTint(0xc0e0ff);
+      shard.setScale(0.7);
+      shard.body.setAllowGravity(true);
+      shard.body.setVelocityY(380);
+      shard.body.setSize(20, 24);
+      this.tweens.add({ targets: shard, angle: 720, duration: 1200, repeat: -1 });
+      this.time.delayedCall(2400, () => { if (shard.active) shard.destroy(); });
+    });
+  }
+
+  /** Wind zone — invisible-ish rectangle that pushes the player horizontally
+   *  while inside. Visualized with drifting particles. */
+  buildWindZone(x, y, w, h, force) {
+    const zone = { x, y, w, h, force };
+    this.windZones.push(zone);
+    // Visual: animated streak particles drifting in the wind direction.
+    const dir = Math.sign(force) || 1;
+    const colorHex = 0xb8e0ff;
+    for (let i = 0; i < 8; i++) {
+      const px = x + Math.random() * w;
+      const py = y + Math.random() * h;
+      const streak = this.add.rectangle(px, py, 18, 2, colorHex, 0.6).setDepth(4);
+      this.tweens.add({
+        targets: streak,
+        x: dir > 0 ? x + w + 30 : x - 30,
+        alpha: 0,
+        duration: 1200 + Math.random() * 800,
+        repeat: -1,
+        delay: Math.random() * 1200,
+        onRepeat: () => {
+          streak.x = dir > 0 ? x - 30 : x + w + 30;
+          streak.y = y + Math.random() * h;
+          streak.alpha = 0.6;
+        },
+      });
+    }
+    // Subtle bordering rectangle so the zone is at least partly visible.
+    const border = this.add.rectangle(x + w / 2, y + h / 2, w, h, colorHex, 0.04).setDepth(2);
+    border.setStrokeStyle(1, colorHex, 0.18);
   }
 
   spawnSparkles(x, y, count = 6) {
@@ -307,12 +655,29 @@ export class GameScene extends Phaser.Scene {
   handleEnemyCollision(enemy) {
     if (enemy.dead) return;
     const player = this.player;
-    const stomping = player.body.velocity.y > 80 &&
-      (player.y - 8) < (enemy.y - enemy.displayHeight * 0.4);
+    // Active-attack grace: if the player has an attack hitbox out *right now*,
+    // the same physics step will (almost always) also fire the playerAttacks→
+    // enemies overlap that resolves the encounter. Skipping side-touch damage
+    // here prevents the "killed it AND took damage" double-resolve.
+    if (this.time.now < (player._attackUntil ?? 0)) return;
+    // Stomp rule: position-only — if your feet are above the enemy's upper half,
+    // you stomp. No velocity gate (apex-of-jump no longer hurts you when you're
+    // clearly above the target). Predictable and readable.
+    const stomping = (player.y - 4) < (enemy.y - enemy.displayHeight * 0.5);
     if (stomping) {
-      this.spawnSparkles(enemy.x, enemy.y - 30, 10);
+      this.combo.bump("stomp");
+      const c = this.combo.count;
+      this.effects.stompPoof(enemy.x, enemy.y - 30);
+      this.effects.punchZoom(0.04, 200);
+      this.effects.freezeFrame(60);
+      this.effects.shake(0.005, 100);
       enemy.defeat();
       player.bounceOnEnemy();
+      SFX.stompAt(c);
+      this.effects.squashAndStretch(player, "stomp");
+      if (c >= 2) {
+        this.effects.comboFloat(enemy.x, enemy.y - 50, `${c}× CHAIN!`, "#ff6b9d");
+      }
       return;
     }
     // While invulnerable, just nudge the player away — don't try to damage.
@@ -327,14 +692,32 @@ export class GameScene extends Phaser.Scene {
   handleBossCollision() {
     if (this.boss.dead) return;
     const player = this.player;
-    const stomping = player.body.velocity.y > 80 &&
-      (player.y - 8) < (this.boss.y - this.boss.displayHeight * 0.5);
+    // Active-attack grace: if the player has an attack hitbox out *right now*,
+    // skip side-touch damage. The playerAttacks-vs-boss overlap is the path
+    // that should resolve this encounter.
+    if (this.time.now < (player._attackUntil ?? 0)) return;
+    // While invulnerable, nudge away but don't try to damage.
+    if (this.time.now < player._invulnUntil) {
+      const dir = (player.x < this.boss.x) ? -1 : 1;
+      player.setVelocityX(dir * 220);
+      return;
+    }
+    // Position-only stomp rule (matches handleEnemyCollision).
+    const stomping = (player.y - 4) < (this.boss.y - this.boss.displayHeight * 0.55);
     if (stomping) {
-      this.spawnSparkles(this.boss.x, this.boss.y - 60, 14);
+      this.effects.sparkleBurst(this.boss.x, this.boss.y - 60, 14, 0xffd24a);
+      this.effects.stompPoof(this.boss.x, this.boss.y - 60);
+      this.effects.punchZoom(0.05, 220);
+      this.effects.freezeFrame(80);
       const defeated = this.boss.takeStompHit();
       player.bounceOnEnemy();
+      this.effects.squashAndStretch(player, "stomp");
       if (defeated) {
-        this.showActBanner("Incompetence defeated. Insights ready.");
+        // boss-defeated event is emitted from takeStompHit() which triggers
+        // the cinematic sequence below (subscribed in create()).
+        this.time.delayedCall(900, () => this.showActBanner("INSIGHTS UNLOCKED!"));
+      } else {
+        SFX.stompAt(0);
       }
     } else {
       player.takeDamage(this.boss.x);
@@ -404,6 +787,9 @@ export class GameScene extends Phaser.Scene {
         lives: this.player.lives,
         levelName: this.level.name,
         levelNum: this.levelNum,
+        insightsCollected: this.player.insights,
+        totalInsights: this.level.insights.length,
+        time: Math.floor((this.time.now - this._levelStartTime) / 1000),
       });
     });
   }
@@ -439,6 +825,8 @@ export class GameScene extends Phaser.Scene {
     this.bgMid.tilePositionX = cam.scrollX * 0.25;
     this.bgNear.tilePositionX = cam.scrollX * 0.5;
     this.bgTower.tilePositionX = cam.scrollX * 0.4;
+    if (this.bgDataLake.alpha > 0)  this.bgDataLake.tilePositionX  = cam.scrollX * 0.5;
+    if (this.bgExecutive.alpha > 0) this.bgExecutive.tilePositionX = cam.scrollX * 0.5;
 
     // Crossfade to tower bg when entering the boss arena.
     if (this.player.x > this.level.bossArenaStart) {
@@ -448,6 +836,11 @@ export class GameScene extends Phaser.Scene {
         this.bossActive = true;
         this.boss.setVisible(true);
         this.boss.body.enable = true;
+        // Announce the boss to HUD + show name banner.
+        this.game.events.emit("boss-name", this.boss.displayName ?? "INCOMPETENCE MANAGER");
+        this.showActBanner(this.boss.displayName ?? "BOSS");
+        // Initialize boss bar with full health.
+        this.game.events.emit("boss-health", { current: this.boss.health, max: this.boss.maxHealth });
       }
     }
 
@@ -457,6 +850,69 @@ export class GameScene extends Phaser.Scene {
       if (this.player.x > next.x) {
         this.actTriggerIdx++;
         this.showActBanner(next.banner);
+      }
+    }
+
+    // Insight magnetism — orbs gravitate toward the player when nearby.
+    if (this.insights && this.player.body.enable) {
+      const px = this.player.x, py = this.player.y - 30;
+      const R = 130 * (this.player._charMagnetMul ?? 1), R2 = R * R;
+      this.insights.getChildren().forEach(orb => {
+        if (!orb.active) return;
+        const dx = px - orb.x, dy = py - orb.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < R2 && d2 > 64) {
+          const f = (1 - Math.sqrt(d2) / R) * 0.22;
+          orb.x += dx * f;
+          orb.y += dy * f;
+        }
+      });
+    }
+
+    // Combo decay (auto-resets after inactivity).
+    this.combo?.update(time);
+
+    // ----- HAZARDS -----
+    // Conveyor belts: push anything standing on them.
+    if (this.conveyors && this.player.body.enable) {
+      const px = this.player.x;
+      const py = this.player.y;
+      const grounded = this.player.body.blocked.down || this.player.body.touching.down;
+      if (grounded) {
+        for (const belt of this.conveyors.getChildren()) {
+          if (!belt.body) continue;
+          const left = belt.body.x;
+          const right = belt.body.x + belt.body.width;
+          const beltTop = belt.body.y;
+          if (px < left - 4 || px > right + 4) continue;
+          if (Math.abs(py - beltTop) > 12) continue;
+          // Add belt-direction velocity component on top of player's own input.
+          this.player.body.velocity.x += belt.beltDir * 220 * (dt / 1000) * 6;
+          this.player.body.velocity.x = Phaser.Math.Clamp(this.player.body.velocity.x, -560, 560);
+          break;
+        }
+      }
+    }
+
+    // Wind zones: continuously push the player while they're inside the zone.
+    if (this.windZones && this.windZones.length > 0 && this.player.body.enable) {
+      const px = this.player.x;
+      const py = this.player.y;
+      for (const w of this.windZones) {
+        if (px >= w.x && px <= w.x + w.w && py >= w.y && py <= w.y + w.h) {
+          this.player.body.velocity.x += w.force * (dt / 1000);
+          this.player.body.velocity.x = Phaser.Math.Clamp(this.player.body.velocity.x, -640, 640);
+        }
+      }
+    }
+
+    // Falling shard spawners (L5).
+    if (this.fallingShardSpawners && this.fallingShardSpawners.length > 0) {
+      for (const sp of this.fallingShardSpawners) {
+        if (time - sp.lastSpawn > sp.interval) {
+          sp.lastSpawn = time;
+          this.spawnFallingShard(sp);
+        }
       }
     }
 

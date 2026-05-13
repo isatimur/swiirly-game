@@ -46,6 +46,9 @@ export const PHYSICS = {
   coyoteTime: 110,
   jumpBuffer: 130,
 
+  slideDuration: 400,   // ms — how long a slide lasts
+  slideDecel: 1800,     // px/s² — friction during slide
+
   // Damage feedback.
   knockback: { x: 360, y: -520 },
   invulnDuration: 1300,
@@ -62,6 +65,7 @@ export const PLAYER = {
   // Hitbox in source-image pixels (the 280x320 canvas), bottom-center.
   // Tighter than the visible character so the fluffy hat doesn't trigger hits.
   hitbox: { width: 110, height: 200, offsetX: 85, offsetY: 120 },
+  slideHitbox: { width: 110, height: 100, offsetX: 85, offsetY: 220 },
 };
 
 export const SIGNAL_DURATIONS = {

@@ -87,19 +87,81 @@ export class LevelCompleteScene extends Phaser.Scene {
     bubble.setAlpha(0);
     this.tweens.add({ targets: bubble, alpha: 1, y: bubbleY - 10, duration: 600, delay: 600, ease: "Back.easeOut" });
 
-    // Stats panel.
-    const panelY = height - 140;
-    this.add.text(width / 2, panelY,
-      `${this.payload.insights}  insights collected     ${this.payload.lives}  ♥  remaining`, {
+    // ----- RANK -----
+    const collected = this.payload.insightsCollected ?? this.payload.insights ?? 0;
+    const total = this.payload.totalInsights ?? collected;
+    const lives = this.payload.lives ?? 0;
+    const time = this.payload.time ?? null;
+    const ratio = total > 0 ? collected / total : 0;
+
+    let rank, rankColor, rankBg;
+    if (ratio >= 0.95 && lives >= 3) { rank = "S"; rankColor = "#ffd24a"; rankBg = "#5C3BA3"; }
+    else if (ratio >= 0.80)          { rank = "A"; rankColor = "#7bd389"; rankBg = "#1a4d2e"; }
+    else if (ratio >= 0.60)          { rank = "B"; rankColor = "#7dc4ff"; rankBg = "#1a3d5c"; }
+    else                             { rank = "C"; rankColor = "#dcc7f2"; rankBg = "#3a2a55"; }
+
+    // Rank badge — circle with letter, scales in with bounce. Placed above
+    // the stats line so it never overlaps.
+    const rankCenterY = height / 2 + 150;
+    const rankCircle = this.add.circle(width / 2, rankCenterY, 52, Phaser.Display.Color.HexStringToColor(rankBg).color, 1)
+      .setStrokeStyle(5, 0xffffff).setScale(0).setAlpha(0);
+    const rankText = this.add.text(width / 2, rankCenterY, rank, {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "20px",
+      fontSize: "64px",
+      fontStyle: "900",
+      color: rankColor,
+    }).setOrigin(0.5).setScale(0).setAlpha(0);
+    const rankLabel = this.add.text(width / 2, rankCenterY - 64, "RANK", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "11px",
+      fontStyle: "700",
+      color: "#dcc7f2",
+      letterSpacing: 6,
+    }).setOrigin(0.5).setAlpha(0);
+
+    this.tweens.add({
+      targets: [rankCircle, rankText],
+      scale: 1.4, alpha: 1,
+      duration: 380, delay: 1100, ease: "Back.easeOut",
+      onComplete: () => {
+        this.tweens.add({ targets: [rankCircle, rankText], scale: 1.0, duration: 180, ease: "Quad.easeOut" });
+      },
+    });
+    this.tweens.add({ targets: rankLabel, alpha: 0.9, duration: 280, delay: 1480 });
+
+    // S-rank confetti bonus.
+    if (rank === "S") {
+      this.time.delayedCall(1300, () => {
+        for (let i = 0; i < 24; i++) {
+          const angle = (i / 24) * Math.PI * 2;
+          const dist = Phaser.Math.Between(40, 160);
+          const c = this.add.circle(width / 2, rankCenterY, 4, 0xffd24a, 1);
+          this.tweens.add({
+            targets: c,
+            x: width / 2 + Math.cos(angle) * dist,
+            y: rankCenterY + Math.sin(angle) * dist,
+            scale: 0.2, alpha: 0,
+            duration: 700, ease: "Cubic.easeOut",
+            onComplete: () => c.destroy(),
+          });
+        }
+      });
+    }
+
+    // Stats panel — moved up, includes time + insights ratio.
+    const panelY = height - 130;
+    const timeStr = time != null ? `${Math.floor(time / 60)}:${String(time % 60).padStart(2, "0")}` : "--:--";
+    this.add.text(width / 2, panelY,
+      `${collected}/${total}  insights     ${timeStr}  time     ${lives}  ♥  remaining`, {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "18px",
       color: "#ffffff",
       stroke: "#5C3BA3",
       strokeThickness: 4,
     }).setOrigin(0.5);
 
     if (this._isNewBest) {
-      this.add.text(width / 2, height - 110, "★  NEW BEST  ★", {
+      this.add.text(width / 2, height - 105, "★  NEW BEST  ★", {
         fontFamily: "system-ui, sans-serif",
         fontSize: "18px",
         color: "#FFD24A",
@@ -109,7 +171,7 @@ export class LevelCompleteScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    const isLastLevel = !this.payload.levelNum || this.payload.levelNum >= 3;
+    const isLastLevel = !this.payload.levelNum || this.payload.levelNum >= 5;
     const press = this.add.text(width / 2, height - 80,
       isLastLevel ? "press   SPACE   to play again" : "press   SPACE   for next level", {
       fontFamily: "system-ui, sans-serif",

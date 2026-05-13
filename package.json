@@ -7,7 +7,8 @@
   "scripts": {
     "extract-sprites": "node tools/extract-sprites.mjs",
     "generate-world": "node tools/generate-world.mjs",
-    "build-assets": "npm run extract-sprites && npm run generate-world",
+    "build-sprite-guide": "node tools/build-sprite-guide.mjs",
+    "build-assets": "npm run extract-sprites && npm run generate-world && npm run build-sprite-guide",
     "dev": "serve -l 3000 .",
     "start": "serve -l 3000 ."
   },

@@ -7,6 +7,8 @@ const GROUND_Y = 656;
 const ground   = (x1, x2)       => ({ kind: "ground",   x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles) => ({ kind: "platform",  x, y,  w: wTiles  });
 const brick    = (x, y)         => ({ kind: "brick",     x, y               });
+const bouncePad = (x, y)        => ({ kind: "bouncePad", x, y               });
+const conveyor = (x, y, wTiles, dir) => ({ kind: "conveyor", x, y, w: wTiles, dir });
 
 const LOW  = 70;
 const MID  = 200;
@@ -48,24 +50,27 @@ export const level2 = {
     ground(1800, 2800),
     platform(2100, GROUND_Y - 170, 4),
     platform(2400, GROUND_Y - 320, 3),
+    bouncePad(1900, GROUND_Y - 64),  // helps reach the high platform at -320
+    conveyor(2300, GROUND_Y - 250, 4, 1),   // forward-pushing belt at altitude
     brick(2600, GROUND_Y - 140),
     brick(2664, GROUND_Y - 140),
 
     // --- Act 2 ---
     // pit 2800–3200
     ground(3200, 4400),
-    platform(3350, GROUND_Y - 130, 3),
+    conveyor(3700, GROUND_Y - 200, 3, -1),  // BACKWARD belt — challenge!
+    platform(3350, GROUND_Y - 140, 3),
     platform(3650, GROUND_Y - 260, 4),
     platform(4000, GROUND_Y - 360, 3),
     platform(4300, GROUND_Y - 260, 3),
-    brick(3850, GROUND_Y - 180),
+    brick(3850, GROUND_Y - 220),
     brick(3914, GROUND_Y - 300),
     ground(4500, 5800),
-    brick(4800, GROUND_Y - 200),
-    brick(4864, GROUND_Y - 200),
-    brick(4928, GROUND_Y - 200),
-    brick(4800, GROUND_Y - 360),
-    brick(4928, GROUND_Y - 360),
+    brick(4800, GROUND_Y - 220),
+    brick(4864, GROUND_Y - 220),
+    brick(4928, GROUND_Y - 220),
+    brick(4736, GROUND_Y - 360),
+    brick(4992, GROUND_Y - 360),
     platform(5200, GROUND_Y - 230, 3),
     platform(5500, GROUND_Y - 340, 3),
 

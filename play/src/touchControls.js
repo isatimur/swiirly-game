@@ -3,10 +3,12 @@
 // Exports a TOUCH state object read by Player.js each preUpdate frame.
 
 export const TOUCH = {
-  left:         false,
-  right:        false,
-  jumpDown:     false, // currently held
-  jumpJustDown: false, // set on press, cleared by Player after one frame
+  left:           false,
+  right:          false,
+  jumpDown:       false, // currently held
+  jumpJustDown:   false, // set on press, cleared by Player after one frame
+  attackDown:     false, // currently held (used for Spark's heavy charge)
+  attackJustDown: false, // set on press, cleared by Player after one frame
 };
 
 export function initTouchControls() {
@@ -22,11 +24,13 @@ export function initTouchControls() {
   const btnL = mkBtn("tc-btn tc-l", "←", "Move left");
   const btnR = mkBtn("tc-btn tc-r", "→", "Move right");
   const btnJ = mkBtn("tc-btn tc-j", "▲", "Jump");
+  const btnA = mkBtn("tc-btn tc-atk", "✦", "Attack");
 
   dpad.appendChild(btnL);
   dpad.appendChild(btnR);
   overlay.appendChild(dpad);
   overlay.appendChild(btnJ);
+  overlay.appendChild(btnA);
 
   wire(btnL,
     () => { TOUCH.left = true; },
@@ -39,6 +43,10 @@ export function initTouchControls() {
   wire(btnJ,
     () => { TOUCH.jumpDown = true; TOUCH.jumpJustDown = true; },
     () => { TOUCH.jumpDown = false; }
+  );
+  wire(btnA,
+    () => { TOUCH.attackDown = true; TOUCH.attackJustDown = true; },
+    () => { TOUCH.attackDown = false; }
   );
 }
 

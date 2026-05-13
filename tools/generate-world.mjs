@@ -318,10 +318,129 @@ const sparkleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="1
 </svg>`;
 await svgToPng(sparkleSvg, "sparkle.png", 16, 16);
 
+// ============================================================================
+// NEW ENEMY — DeadlineBot (80×80)
+// Boxy robot, clock-face head, red urgent eyes, 3-light chest panel.
+// ============================================================================
+const deadlineBotSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <defs>
+    <linearGradient id="bd" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a52"/><stop offset="1" stop-color="#2a2a30"/>
+    </linearGradient>
+    <radialGradient id="ey" cx="50%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#ff6633"/><stop offset="1" stop-color="#cc2200"/>
+    </radialGradient>
+  </defs>
+  <rect x="18" y="62" width="12" height="18" fill="#2a2a30" rx="2"/>
+  <rect x="50" y="62" width="12" height="18" fill="#2a2a30" rx="2"/>
+  <rect x="14" y="74" width="20" height="6" fill="#1a1a20" rx="2"/>
+  <rect x="46" y="74" width="20" height="6" fill="#1a1a20" rx="2"/>
+  <rect x="14" y="34" width="52" height="32" fill="url(#bd)" stroke="#555560" stroke-width="2" rx="4"/>
+  <rect x="22" y="40" width="36" height="18" fill="#1a1a22" stroke="#444" stroke-width="1" rx="2"/>
+  <circle cx="30" cy="49" r="4" fill="#ff3300" opacity="0.9"/>
+  <circle cx="40" cy="49" r="4" fill="#ffaa00" opacity="0.9"/>
+  <circle cx="50" cy="49" r="4" fill="#ff3300" opacity="0.9"/>
+  <line x1="40" y1="6" x2="40" y2="14" stroke="#555560" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="40" cy="5" r="3" fill="#ff6633"/>
+  <circle cx="40" cy="22" r="18" fill="url(#bd)" stroke="#666670" stroke-width="2"/>
+  <circle cx="40" cy="22" r="14" fill="#f0f0e8" stroke="#aaa" stroke-width="1"/>
+  <ellipse cx="33" cy="20" rx="4" ry="5" fill="url(#ey)"/>
+  <ellipse cx="47" cy="20" rx="4" ry="5" fill="url(#ey)"/>
+  <circle cx="33" cy="20" r="1.5" fill="#fff" opacity="0.7"/>
+  <circle cx="47" cy="20" r="1.5" fill="#fff" opacity="0.7"/>
+  <line x1="40" y1="22" x2="40" y2="11" stroke="#cc2200" stroke-width="2" stroke-linecap="round"/>
+  <line x1="40" y1="22" x2="47" y2="22" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="40" y1="9" x2="40" y2="12" stroke="#888" stroke-width="1"/>
+  <line x1="40" y1="32" x2="40" y2="35" stroke="#888" stroke-width="1"/>
+  <line x1="27" y1="22" x2="30" y2="22" stroke="#888" stroke-width="1"/>
+  <line x1="50" y1="22" x2="53" y2="22" stroke="#888" stroke-width="1"/>
+</svg>`;
+await svgToPng(deadlineBotSvg, "enemy_deadline_bot.png", 80, 80);
+
+// ============================================================================
+// NEW BG — Data Lake near-layer (2560×720)
+// Industrial server-room: teal water at base, server racks, connecting pipes.
+// ============================================================================
+const bgDataLakeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="720" viewBox="0 0 2560 720">
+  <rect width="2560" height="720" fill="#040e14" opacity="0"/>
+  <!-- water band -->
+  <rect x="0" y="572" width="2560" height="148" fill="#083848" opacity="0.9"/>
+  <rect x="0" y="572" width="2560" height="8" fill="#10a0b0" opacity="0.6"/>
+  ${Array.from({ length: 14 }, (_, i) => {
+    const wx = i * 190 + 20;
+    return `<path d="M${wx},578 Q${wx + 40},568 ${wx + 80},578 Q${wx + 120},588 ${wx + 160},578" fill="none" stroke="#1ac8d8" stroke-width="1.5" opacity="0.35"/>`;
+  }).join("")}
+  <!-- server towers -->
+  ${Array.from({ length: 9 }, (_, i) => {
+    const sx = i * 290 + 30;
+    const sh = 200 + (i % 4) * 30;
+    const sy = 572 - sh;
+    const rows = Math.floor(sh / 38);
+    return `
+      <rect x="${sx}" y="${sy}" width="220" height="${sh}" fill="#0a1e28" stroke="#1a5060" stroke-width="2"/>
+      <rect x="${sx}" y="${sy}" width="220" height="14" fill="#0d2a38"/>
+      ${Array.from({ length: rows }, (_, r) =>
+        Array.from({ length: 4 }, (_, c) => {
+          const lit = (r + c + i) % 5 !== 0;
+          return `<rect x="${sx + 16 + c * 50}" y="${sy + 20 + r * 38}" width="36" height="24" fill="${lit ? '#0a3848' : '#081824'}" stroke="#1a5060" stroke-width="1"/>` +
+            (lit && (r + c) % 3 === 0 ? `<rect x="${sx + 24 + c * 50}" y="${sy + 26 + r * 38}" width="4" height="4" fill="#20e8c0" opacity="0.9"/>` : '') +
+            ((r + c) % 4 === 1 ? `<rect x="${sx + 30 + c * 50}" y="${sy + 26 + r * 38}" width="4" height="4" fill="#ff6040" opacity="0.8"/>` : '');
+        }).join("")
+      ).join("")}
+      <rect x="${sx + 90}" y="${sy - 20}" width="8" height="20" fill="#1a5060"/>
+      <circle cx="${sx + 94}" cy="${sy - 22}" r="4" fill="#20e8c0" opacity="0.7"/>
+    `;
+  }).join("")}
+  <!-- connecting pipes -->
+  ${Array.from({ length: 8 }, (_, i) => {
+    const px = i * 320 + 140;
+    const py1 = 400 + (i % 3) * 40;
+    const py2 = 490 + (i % 2) * 30;
+    return `<line x1="${px}" y1="${py1}" x2="${px + 200}" y2="${py2}" stroke="#1a5060" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+            <circle cx="${px}" cy="${py1}" r="8" fill="#0d2a38" stroke="#1a5060" stroke-width="2"/>
+            <circle cx="${px + 200}" cy="${py2}" r="8" fill="#0d2a38" stroke="#1a5060" stroke-width="2"/>`;
+  }).join("")}
+</svg>`;
+await svgToPng(bgDataLakeSvg, "bg_data_lake.png", 2560, 720);
+
+// ============================================================================
+// NEW BG — Executive floor near-layer (2560×720)
+// Glass curtain-wall, marble floor, city lights visible through glass panels.
+// ============================================================================
+const bgExecutiveSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="720" viewBox="0 0 2560 720">
+  <!-- floor -->
+  <rect x="0" y="590" width="2560" height="130" fill="#c8c0b8" opacity="0.9"/>
+  <rect x="0" y="590" width="2560" height="6" fill="#e8e0d8"/>
+  ${Array.from({ length: 20 }, (_, i) => `<line x1="${i * 128}" y1="590" x2="${i * 128 + 64}" y2="720" stroke="#b0a898" stroke-width="1" opacity="0.4"/>`).join("")}
+  <!-- ceiling strip -->
+  <rect x="0" y="0" width="2560" height="30" fill="#f0f0f0" opacity="0.7"/>
+  ${Array.from({ length: 16 }, (_, i) => `<rect x="${i * 160 + 10}" y="4" width="140" height="18" fill="#ffffff" opacity="0.9"/>`).join("")}
+  <!-- glass curtain-wall panels (16 panels × 160px wide) -->
+  ${Array.from({ length: 16 }, (_, i) => {
+    const gx = i * 160;
+    const cityLights = Array.from({ length: 20 }, (_, j) => {
+      const lx = gx + (j % 5) * 28 + 14;
+      const ly = 60 + Math.floor(j / 5) * 80 + (i % 3) * 20;
+      const bright = (i + j) % 3 !== 0;
+      return `<rect x="${lx}" y="${ly}" width="${12 + (j % 3) * 6}" height="${8 + (j % 2) * 6}" fill="${bright ? '#ffe8a0' : '#4060a0'}" opacity="${bright ? 0.6 : 0.4}"/>`;
+    }).join("");
+    return `
+      <rect x="${gx + 2}" y="30" width="156" height="558" fill="#6080a0" opacity="0.12" stroke="#c0d0e0" stroke-width="2"/>
+      ${cityLights}
+      <line x1="${gx + 80}" y1="30" x2="${gx + 80}" y2="588" stroke="#c0d0e0" stroke-width="1" opacity="0.3"/>
+    `;
+  }).join("")}
+  <!-- mullion verticals -->
+  ${Array.from({ length: 17 }, (_, i) => `<rect x="${i * 160 - 3}" y="0" width="6" height="590" fill="#d0d8e0" opacity="0.8"/>`).join("")}
+  <!-- floor reflection -->
+  <rect x="0" y="596" width="2560" height="60" fill="#a0b0c0" opacity="0.15"/>
+</svg>`;
+await svgToPng(bgExecutiveSvg, "bg_executive.png", 2560, 720);
+
 console.log("World assets generated:");
 console.log("  tiles:    tile_ground, tile_grass, tile_platform, tile_brick");
 console.log("  decor:    cloud, sparkle");
-console.log("  enemies:  jargon_blob, ghost, paperwork, projectile_paper, boss");
+console.log("  enemies:  jargon_blob, ghost, paperwork, projectile_paper, boss, deadline_bot");
 console.log("  pickups:  insight, signal_speed, signal_shield, signal_growth");
 console.log("  brand:    brand, brand_happy");
-console.log("  bg:       bg_far, bg_mid, bg_near, bg_tower");
+console.log("  bg:       bg_far, bg_mid, bg_near, bg_tower, bg_data_lake, bg_executive");

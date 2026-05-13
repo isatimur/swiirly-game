@@ -117,10 +117,24 @@
       .tc-j.tc-active {
         background: rgba(184,146,224,0.45);
       }
+      .tc-atk {
+        position: absolute;
+        bottom: calc(110px + env(safe-area-inset-bottom));
+        right: 28px;
+        width: 76px; height: 76px;
+        background: rgba(255,210,74,0.22);
+        border-color: rgba(255,210,74,0.62);
+        color: #fff8d8;
+        font-size: 28px;
+      }
+      .tc-atk.tc-active {
+        background: rgba(255,210,74,0.45);
+      }
       /* Smaller buttons in landscape on short screens (avoids heavy game overlap) */
       @media (orientation: landscape) and (max-height: 440px) {
         .tc-btn       { width: 58px; height: 58px; font-size: 21px; }
         .tc-j         { width: 68px; height: 68px; font-size: 24px; }
+        .tc-atk       { width: 62px; height: 62px; font-size: 22px; bottom: calc(80px + env(safe-area-inset-bottom)); right: 18px; }
         .tc-dpad,
         .tc-j         { bottom: calc(10px + env(safe-area-inset-bottom)); }
         .tc-dpad      { left: 14px; gap: 8px; }
