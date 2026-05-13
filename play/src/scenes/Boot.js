@@ -8,7 +8,7 @@ import { PERSONA_ASSET_KEYS } from "../characters.js";
 // /play/assets/* as Cache-Control: immutable, which trains browsers to
 // never revalidate even on hard-refresh — adding ?v=N busts old caches
 // because the URL becomes a fresh resource the browser hasn't seen.
-const ASSET_VERSION = "3";
+const ASSET_VERSION = "4";
 
 const SWIIRL_FRAMES = [
   "idle",

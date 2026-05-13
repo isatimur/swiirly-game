@@ -1,9 +1,12 @@
 // Slices a single-character sprite sheet (1 + 8 + 4 + 4 = 17 frames) into the
 // 17 named poses at uniform output canvas dimensions, bottom-center anchored.
 //
-// Usage: node tools/extract-character-sheet.mjs <source.png> <prefix> [outW] [outH]
+// Usage: node tools/extract-character-sheet.mjs <source.png> <prefix> [outW] [outH] [outDir]
+//   outDir defaults to play/assets/world/. Pass play/assets/sprites/ for the
+//   Swiirl character frames (the file names match Boot.js SWIIRL_FRAMES so
+//   the existing texture keys still load — no code changes needed).
 //
-// Outputs into play/assets/world/:
+// Outputs into <outDir>/:
 //   <prefix>_idle.png      <prefix>_jump.png       <prefix>_collect.png
 //   <prefix>_walk_1.png    <prefix>_fall.png       <prefix>_hurt.png
 //   <prefix>_walk_2.png    <prefix>_skid.png       <prefix>_celebrate.png
@@ -23,7 +26,7 @@ import { dirname, resolve, basename } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
-const OUT_DIR = resolve(ROOT, "play/assets/world");
+const DEFAULT_OUT_DIR = resolve(ROOT, "play/assets/world");
 
 const FRAME_NAMES = [
   "idle",
@@ -34,9 +37,15 @@ const FRAME_NAMES = [
 ];
 
 function isBgPixel(r, g, b) {
-  // Light gray / white checker
+  // Light gray / white checker — page background.
   if (r > 235 && g > 235 && b > 235) return true;
-  // Dark gray / black checker
+  // Pale lavender card-frame stroke — bright with B significantly above G
+  // (lavender lift). Surrounded character-interior whites (hat stripes) are
+  // near-uniform RGB so they DON'T match this and stay opaque inside the
+  // character body. Reachable card borders DO match and get flood-filled,
+  // letting us treat each pose as a separate connected component.
+  if (r > 215 && b > 235 && (b - g) >= 25 && r >= g) return true;
+  // Dark gray / black checker — original swiirl-sheet-v2 case.
   if (r <= 55 && g <= 55 && b <= 55) {
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
@@ -154,10 +163,16 @@ function cropBlob(rgba, W, blob) {
   return { rgba: out, width: w, height: h };
 }
 
-async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath) {
-  // Use sharp to resize the cropped frame to fit inside outW × outH while
-  // preserving aspect, then place it bottom-center on a transparent canvas.
-  const scale = Math.min(outW / srcW, outH / srcH);
+async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath, fillRatio = 1.0) {
+  // Use sharp to resize the cropped frame to fit inside (outW × fillRatio)
+  // by (outH × fillRatio) while preserving aspect, then place bottom-center
+  // on a transparent outW × outH canvas. fillRatio < 1 leaves margin around
+  // the character — used for the player sheet so the visible character
+  // height stays around 60% of the canvas, matching the old extraction
+  // sizes that the existing PLAYER.spriteScale + hitbox values are tuned to.
+  const targetW = outW * fillRatio;
+  const targetH = outH * fillRatio;
+  const scale = Math.min(targetW / srcW, targetH / srcH);
   const fitW = Math.max(1, Math.round(srcW * scale));
   const fitH = Math.max(1, Math.round(srcH * scale));
   const resized = await sharp(srcBuf, { raw: { width: srcW, height: srcH, channels: 4 } })
@@ -184,13 +199,18 @@ async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath) {
 }
 
 async function main() {
-  const [, , sourceArg, prefix, outWArg, outHArg] = process.argv;
-  if (!sourceArg || !prefix) {
-    console.error("usage: node tools/extract-character-sheet.mjs <source.png> <prefix> [outW] [outH]");
+  const [, , sourceArg, prefixRaw, outWArg, outHArg, outDirArg, fillRatioArg] = process.argv;
+  if (!sourceArg || prefixRaw === undefined) {
+    console.error("usage: node tools/extract-character-sheet.mjs <source.png> <prefix|'none'> [outW] [outH] [outDir] [fillRatio]");
+    console.error("  prefix='none' or '' writes bare frame names (idle.png, walk_1.png, ...) for the player sheet");
+    console.error("  fillRatio (default 1.0): leave canvas margin. 0.65 ≈ old player size.");
     process.exit(1);
   }
+  const prefix = (prefixRaw === "none") ? "" : prefixRaw;
   const outW = parseInt(outWArg ?? "120", 10);
   const outH = parseInt(outHArg ?? "140", 10);
+  const OUT_DIR = outDirArg ? resolve(ROOT, outDirArg) : DEFAULT_OUT_DIR;
+  const fillRatio = fillRatioArg ? parseFloat(fillRatioArg) : 1.0;
   await mkdir(OUT_DIR, { recursive: true });
 
   console.log(`[${prefix}] loading ${basename(sourceArg)}…`);
@@ -213,19 +233,25 @@ async function main() {
   }
   console.log(`[${prefix}] blobs: total=${blobs.length} kept=${keep.length} rows=${rows.map(r=>r.length).join("+")}`);
 
+  // Prefix "" (empty) means write straight frame names (idle.png, walk_1.png,
+  // etc.) — used for the Swiirl player sheet because Boot.js loads its frames
+  // by bare names. Any other prefix writes `<prefix>_<frame>.png` and also a
+  // `<prefix>.png` alias for the idle frame.
+  const noPrefix = prefix === "" || prefix === "_";
   for (let i = 0; i < FRAME_NAMES.length; i++) {
     const name = FRAME_NAMES[i];
     const blob = flat[i];
     const cropped = cropBlob(rgba, W, blob);
-    const outPath = resolve(OUT_DIR, `${prefix}_${name}.png`);
-    await writeFrameToCanvas(cropped.rgba, cropped.width, cropped.height, outW, outH, outPath);
+    const file = noPrefix ? `${name}.png` : `${prefix}_${name}.png`;
+    const outPath = resolve(OUT_DIR, file);
+    await writeFrameToCanvas(cropped.rgba, cropped.width, cropped.height, outW, outH, outPath, fillRatio);
   }
-  // Backwards-compat alias: <prefix>.png is the idle frame, so existing code
-  // that references the single-sprite texture keeps working.
-  const cropped0 = cropBlob(rgba, W, flat[0]);
-  await writeFrameToCanvas(cropped0.rgba, cropped0.width, cropped0.height, outW, outH,
-    resolve(OUT_DIR, `${prefix}.png`));
-  console.log(`[${prefix}] wrote 17 frames + alias → ${outW}×${outH}`);
+  if (!noPrefix) {
+    const cropped0 = cropBlob(rgba, W, flat[0]);
+    await writeFrameToCanvas(cropped0.rgba, cropped0.width, cropped0.height, outW, outH,
+      resolve(OUT_DIR, `${prefix}.png`), fillRatio);
+  }
+  console.log(`[${prefix || "(no-prefix)"}] wrote ${FRAME_NAMES.length} frames${noPrefix ? "" : " + alias"} → ${outW}×${outH} @ fill=${fillRatio}`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
