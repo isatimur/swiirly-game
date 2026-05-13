@@ -298,15 +298,20 @@ export class GameScene extends Phaser.Scene {
       this.player.onAttackConfirm(enemy.x);
       if (!atk.pierce) atk.destroy();
     });
-    this.physics.add.overlap(this.playerAttacks, this.boss, (atk, boss) => {
-      if (!atk.active || boss.dead || !this.bossActive) return;
+    this.physics.add.overlap(this.playerAttacks, this.boss, (a, b) => {
+      // Phaser optimizes group-vs-single-sprite as collideSpriteVsGroup, which
+      // SWAPS the callback args (sprite first, group child second). So `a` may
+      // be the boss and `b` the hitbox, or vice versa depending on Phaser
+      // internals. Disambiguate by the .friendly tag we set on every hitbox.
+      const atk  = a?.friendly ? a : b;
+      const boss = atk === a ? b : a;
+      if (!atk || !atk.active || !boss || boss.dead || !this.bossActive) return;
+      if (typeof boss.takePlayerHit !== "function") return; // defensive
       const result = boss.takePlayerHit(atk.damage ?? 1, this.player.x, atk.attackId ?? "atk");
       if (!result) {
         if (!atk.pierce) atk.destroy();
         return;
       }
-      // Lighter per-hit VFX: combo can chain many of these in a row and we
-      // don't want to queue 80+ sparkle tweens on a x8 combo.
       this.effects.sparkleBurst(boss.x, boss.y - 60, 5, 0xffd24a);
       this.effects.punchZoom(0.04, 180);
       SFX.attackConfirm?.();
