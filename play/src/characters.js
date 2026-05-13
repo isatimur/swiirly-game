@@ -46,6 +46,18 @@ export const CHARACTERS = [
     attackHint: "Insight Bolt — ranged shuriken throw",
     physics: { jumpVelocityMul: 1.12 },
   },
+  {
+    id: "rookie",
+    name: "SWIIRL ROOKIE",
+    role: "The believer",
+    spriteKey: "rookie",
+    color: 0x6bb4ff,
+    perk: "+1 starting heart",
+    perkColor: "#7dc4ff",
+    attack: "shieldBash",
+    attackHint: "Shield Bash — dash forward, parries projectiles",
+    physics: { startLives: 4 },
+  },
 ];
 
 // Per-character art is shipped as sprite frames, not generated portraits,
