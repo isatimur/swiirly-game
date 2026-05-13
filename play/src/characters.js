@@ -11,21 +11,9 @@
 
 export const CHARACTERS = [
   {
-    id: "classic",
-    name: "SWIIRL CLASSIC",
-    role: "The original 3D",
-    spriteKey: "classic",
-    color: 0xb892e0,
-    perk: "Balanced",
-    perkColor: "#dcc7f2",
-    attack: "swipe",
-    attackHint: "Insight Swipe — arc strike in front",
-    physics: {},
-  },
-  {
     id: "beanie",
-    name: "SWIIRL BEANIE",
-    role: "The new look",
+    name: "SWIIRL CLASSIC",
+    role: "The classic",
     spriteKey: "beanie",
     color: 0xff8fbe,
     perk: "+15% run speed",
@@ -33,6 +21,18 @@ export const CHARACTERS = [
     attack: "chain",
     attackHint: "Light-Heavy Chain — tap chains, hold heavy",
     physics: { runSpeedMul: 1.15 },
+  },
+  {
+    id: "classic",
+    name: "SWIIRL BEANIE",
+    role: "The 3D remix",
+    spriteKey: "classic",
+    color: 0xb892e0,
+    perk: "Balanced",
+    perkColor: "#dcc7f2",
+    attack: "swipe",
+    attackHint: "Insight Swipe — arc strike in front",
+    physics: {},
   },
   {
     id: "ninja",
