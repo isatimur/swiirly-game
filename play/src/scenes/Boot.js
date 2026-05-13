@@ -8,7 +8,7 @@ import { PERSONA_ASSET_KEYS } from "../characters.js";
 // /play/assets/* as Cache-Control: immutable, which trains browsers to
 // never revalidate even on hard-refresh — adding ?v=N busts old caches
 // because the URL becomes a fresh resource the browser hasn't seen.
-const ASSET_VERSION = "5";
+const ASSET_VERSION = "6";
 
 // Pose names — every Swiirl skin ships this same 17-frame set, extracted
 // by tools/extract-character-sheet.mjs from a 1+8+4+4 grid sheet.
@@ -22,7 +22,7 @@ const SWIIRL_FRAMES = [
 // Available player skins. Each one is a complete 17-frame set in
 // play/assets/sprites/ under <skin>_<frame>.png. Add a new id here +
 // drop the PNGs in to ship a new variant.
-export const SKINS = ["classic", "beanie"];
+export const SKINS = ["classic", "beanie", "ninja"];
 // The skin whose frames also get loaded under bare keys (idle, walk_1,...)
 // so legacy scenes that don't know about skins still render something.
 export const DEFAULT_SKIN = "beanie";

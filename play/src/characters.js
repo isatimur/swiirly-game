@@ -34,6 +34,18 @@ export const CHARACTERS = [
     attackHint: "Light-Heavy Chain — tap chains, hold heavy",
     physics: { runSpeedMul: 1.15 },
   },
+  {
+    id: "ninja",
+    name: "SWIIRL NINJA",
+    role: "The shadow",
+    spriteKey: "ninja",
+    color: 0x8b63c9,
+    perk: "Higher jump",
+    perkColor: "#b892e0",
+    attack: "bolt",
+    attackHint: "Insight Bolt — ranged shuriken throw",
+    physics: { jumpVelocityMul: 1.12 },
+  },
 ];
 
 // Per-character art is shipped as sprite frames, not generated portraits,

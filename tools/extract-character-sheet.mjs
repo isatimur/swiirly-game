@@ -39,12 +39,12 @@ const FRAME_NAMES = [
 function isBgPixel(r, g, b) {
   // Light gray / white checker — page background.
   if (r > 235 && g > 235 && b > 235) return true;
-  // Pale lavender card-frame stroke — bright with B significantly above G
-  // (lavender lift). Surrounded character-interior whites (hat stripes) are
-  // near-uniform RGB so they DON'T match this and stay opaque inside the
-  // character body. Reachable card borders DO match and get flood-filled,
-  // letting us treat each pose as a separate connected component.
-  if (r > 215 && b > 235 && (b - g) >= 25 && r >= g) return true;
+  // Pale lavender card-frame stroke. Bright pixel with a faint lilac tint
+  // (b ≥ r ≥ g and a real b−g gap). Threshold has to be lax enough to
+  // catch both the beanie sheet (b−g≈37) and the ninja sheet (b−g≈18).
+  // Surrounded character-interior whites are near-uniform RGB and DO NOT
+  // match this (b−g ≈ 0), so they stay opaque inside the body.
+  if (r > 215 && b > 230 && b >= r && r >= g && (b - g) >= 10) return true;
   // Dark gray / black checker — original swiirl-sheet-v2 case.
   if (r <= 55 && g <= 55 && b <= 55) {
     const max = Math.max(r, g, b);
@@ -54,24 +54,22 @@ function isBgPixel(r, g, b) {
   return false;
 }
 
-function floodFillBackground(rgba, W, H) {
+function floodFillFromSeeds(rgba, W, H, seeds) {
   const visited = new Uint8Array(W * H);
   const queue = new Int32Array(W * H);
   let qH = 0, qT = 0;
-
   const tryPush = (x, y) => {
     if (x < 0 || y < 0 || x >= W || y >= H) return;
     const idx = y * W + x;
     if (visited[idx]) return;
     const p = idx * 4;
+    // Already-transparent pixels are traversable but don't need re-zeroing.
+    if (rgba[p + 3] === 0) { visited[idx] = 1; return; }
     if (!isBgPixel(rgba[p], rgba[p + 1], rgba[p + 2])) return;
     visited[idx] = 1;
     queue[qT++] = idx;
   };
-
-  for (let x = 0; x < W; x++) { tryPush(x, 0); tryPush(x, H - 1); }
-  for (let y = 0; y < H; y++) { tryPush(0, y); tryPush(W - 1, y); }
-
+  for (const [x, y] of seeds) tryPush(x | 0, y | 0);
   while (qH < qT) {
     const idx = queue[qH++];
     const x = idx % W;
@@ -81,7 +79,37 @@ function floodFillBackground(rgba, W, H) {
     tryPush(x - 1, y + 1); tryPush(x - 1, y - 1);
   }
   for (let i = 0, p = 3; i < visited.length; i++, p += 4) {
-    if (visited[i]) rgba[p] = 0;
+    if (visited[i] && rgba[p] !== 0) rgba[p] = 0;
+  }
+}
+
+function floodFillBackground(rgba, W, H) {
+  // Pass 1 — seed from every canvas border pixel. This empties "outside the
+  // cards" space but leaves card interiors trapped behind their frame stroke.
+  const borderSeeds = [];
+  for (let x = 0; x < W; x++) { borderSeeds.push([x, 0], [x, H - 1]); }
+  for (let y = 0; y < H; y++) { borderSeeds.push([0, y], [W - 1, y]); }
+  floodFillFromSeeds(rgba, W, H, borderSeeds);
+
+  // Pass 2 — if the sheet uses card-frame layouts where the stroke is too
+  // saturated to qualify as bg (and thus indistinguishable from character
+  // body highlights), the first pass leaves card interiors as remaining
+  // blobs. Detect those, then re-seed flood-fill from each card's bbox
+  // corners (inset 8 px). Corners reliably land in the card's empty interior
+  // (not on the character which sits roughly centered), and the existing
+  // isBgPixel test then floods the rest of the interior inward.
+  const cards = findBlobs(rgba, W, H, 5000);
+  if (cards.length > 0) {
+    const innerSeeds = [];
+    for (const c of cards) {
+      const { x, y, w, h } = c.bbox;
+      const inset = 8;
+      innerSeeds.push([x + inset, y + inset]);
+      innerSeeds.push([x + w - inset, y + inset]);
+      innerSeeds.push([x + inset, y + h - inset]);
+      innerSeeds.push([x + w - inset, y + h - inset]);
+    }
+    floodFillFromSeeds(rgba, W, H, innerSeeds);
   }
 }
 
