@@ -568,7 +568,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     rect.knockbackX = 280;
     rect.pierce = true;
     rect.friendly = true;
-    rect.attackId = "ground_pound";
+    // Use the per-pound shared id so both side waves count as one strike per target.
+    rect.attackId = this._poundInstanceId ?? "ground_pound";
     scene.playerAttacks.add(rect);
     // Visual: expanding crescent on each side.
     const vis = scene.add.rectangle(this.x + dir * 24, this.y - 8, 12, 6, 0xff8866, 0.85);

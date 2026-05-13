@@ -18,6 +18,14 @@
 import { SFX } from "../audio.js";
 import { ATTACK_TUNING } from "../characters.js";
 
+// Globally-unique attack instance ID. Each ATTACKS.xxx call mints one; every
+// hitbox/projectile spawned by that call shares it. This is what we dedupe on
+// in EnemyBase.takePlayerHit, so two SEPARATE attacks (e.g. consecutive
+// swipes 320ms apart) never collide in the dedupe window — only multi-hitbox
+// strikes from the same press (e.g. ground-pound's two side waves) do.
+let _attackUid = 0;
+function nextAttackId(base) { return `${base}#${++_attackUid}`; }
+
 function spawnHitbox(scene, x, y, w, h, ms, damage, opts = {}) {
   // A rectangle is the cheapest way to get a short-lived physics body that
   // overlaps with the enemy group. The rectangle is fully transparent — the
@@ -256,7 +264,7 @@ export const ATTACKS = {
     const x = player.x + player.facing * (t.range / 2 + 8);
     const y = player.y - 80;
     spawnHitbox(scene, x, y, t.range, t.height, t.hitboxMs, t.damage, {
-      knockbackX: t.knockbackX, attackId: "swipe",
+      knockbackX: t.knockbackX, attackId: nextAttackId("swipe"),
     });
     slashArc(scene, player.x, player.y, player.facing, 0xffd24a);
     SFX.attackSwipe?.();
@@ -271,7 +279,8 @@ export const ATTACKS = {
     const vx = player.facing * t.projectileSpeed;
     const startX = player.x + player.facing * 18;
     const startY = player.y - 70;
-    spawnProjectile(scene, startX, startY, vx, 0, t.projectileLife, t.damage, 0x9adcff);
+    const boltP = spawnProjectile(scene, startX, startY, vx, 0, t.projectileLife, t.damage, 0x9adcff);
+    boltP.attackId = nextAttackId("bolt");
     projectileTrail(scene, startX, startY, 0x9adcff);
     // Small "throw" puff at the player's hand.
     scene.effects?.dustPuff?.(startX, startY, { color: 0xcfe9ff, count: 3, scale: 0.5, ms: 240 });
@@ -286,6 +295,9 @@ export const ATTACKS = {
     const t = ATTACK_TUNING.groundPound;
     const scene = player.scene;
     const grounded = player.body.blocked.down || player.body.touching.down;
+    // Tag this pound with one shared attack-id so both side-hitboxes that
+    // spawn on landing dedupe to a single strike against any one target.
+    player._poundInstanceId = nextAttackId("ground_pound");
     leapStreak(scene, player.x, player.y, 0xff6b6b);
     if (grounded) {
       player.setVelocityY(t.leapVy);
@@ -315,7 +327,7 @@ export const ATTACKS = {
     const x = player.x + player.facing * (range / 2 + 6);
     const y = player.y - 80;
     spawnHitbox(scene, x, y, range, t.height, t.hitboxMs, damage, {
-      knockbackX: t.knockbackX, attackId: heavy ? "chain_heavy" : "chain_light",
+      knockbackX: t.knockbackX, attackId: nextAttackId(heavy ? "chain_heavy" : "chain_light"),
     });
     // Heavy swing reads as bigger + tinted pink.
     slashArc(scene, player.x, player.y, player.facing,
@@ -341,7 +353,7 @@ export const ATTACKS = {
     const x = player.x + player.facing * (t.range / 2 + 6);
     const y = player.y - 80;
     const hb = spawnHitbox(scene, x, y, t.range, t.height, t.hitboxMs, t.damage, {
-      knockbackX: 280, attackId: "shield_bash", pierce: true,
+      knockbackX: 280, attackId: nextAttackId("shield_bash"), pierce: true,
     });
     hb.parry = !!t.parry;
     hb._followPlayer = player;

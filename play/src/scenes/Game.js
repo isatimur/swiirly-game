@@ -655,15 +655,13 @@ export class GameScene extends Phaser.Scene {
   handleEnemyCollision(enemy) {
     if (enemy.dead) return;
     const player = this.player;
-    // Active-attack grace: if the player has an attack hitbox out *right now*,
-    // the same physics step will (almost always) also fire the playerAttacks→
-    // enemies overlap that resolves the encounter. Skipping side-touch damage
-    // here prevents the "killed it AND took damage" double-resolve.
-    if (this.time.now < (player._attackUntil ?? 0)) return;
     // Stomp rule: position-only — if your feet are above the enemy's upper half,
     // you stomp. No velocity gate (apex-of-jump no longer hurts you when you're
     // clearly above the target). Predictable and readable.
     const stomping = (player.y - 4) < (enemy.y - enemy.displayHeight * 0.5);
+    // Active-attack grace: skip CONTACT damage during a swing, but never the
+    // stomp resolution — players still want to head-stomp while attacking.
+    if (!stomping && this.time.now < (player._attackUntil ?? 0)) return;
     if (stomping) {
       this.combo.bump("stomp");
       const c = this.combo.count;
@@ -692,18 +690,17 @@ export class GameScene extends Phaser.Scene {
   handleBossCollision() {
     if (this.boss.dead) return;
     const player = this.player;
-    // Active-attack grace: if the player has an attack hitbox out *right now*,
-    // skip side-touch damage. The playerAttacks-vs-boss overlap is the path
-    // that should resolve this encounter.
-    if (this.time.now < (player._attackUntil ?? 0)) return;
+    // Position-only stomp rule (matches handleEnemyCollision).
+    const stomping = (player.y - 4) < (this.boss.y - this.boss.displayHeight * 0.55);
+    // Active-attack grace: skip CONTACT damage during a swing, but never the
+    // stomp resolution — players still want to head-stomp while attacking.
+    if (!stomping && this.time.now < (player._attackUntil ?? 0)) return;
     // While invulnerable, nudge away but don't try to damage.
-    if (this.time.now < player._invulnUntil) {
+    if (!stomping && this.time.now < player._invulnUntil) {
       const dir = (player.x < this.boss.x) ? -1 : 1;
       player.setVelocityX(dir * 220);
       return;
     }
-    // Position-only stomp rule (matches handleEnemyCollision).
-    const stomping = (player.y - 4) < (this.boss.y - this.boss.displayHeight * 0.55);
     if (stomping) {
       this.effects.sparkleBurst(this.boss.x, this.boss.y - 60, 14, 0xffd24a);
       this.effects.stompPoof(this.boss.x, this.boss.y - 60);
