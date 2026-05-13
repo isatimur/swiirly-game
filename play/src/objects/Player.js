@@ -585,10 +585,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // Called by overlap handlers in Game.js when an attack lands on an enemy or
   // a projectile is parried.
+  //
+  // Intentionally does NOT call freezeFrame. Pause-on-hit stacks badly when a
+  // piercing hitbox connects with multiple targets (boss + nearby blob): each
+  // hit re-pauses physics the instant it resumes, and the cumulative effect
+  // looks like the game is hanging. Stomps and boss-kill keep their freezes
+  // (those fire once each); attack swings rely on slash VFX + combo flash.
   onAttackConfirm(targetX) {
     if (!this.scene) return;
     this.scene.effects?.punchZoom?.(0.03, 140);
-    this.scene.effects?.freezeFrame?.(45);
     // A small bump back so attacks feel weighty — only for ground-based melee.
     if (this.body?.blocked?.down || this.body?.touching?.down) {
       const dir = Math.sign(this.x - targetX) || -this.facing;

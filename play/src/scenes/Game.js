@@ -305,7 +305,9 @@ export class GameScene extends Phaser.Scene {
         if (!atk.pierce) atk.destroy();
         return;
       }
-      this.effects.sparkleBurst(boss.x, boss.y - 60, 10, 0xffd24a);
+      // Lighter per-hit VFX: combo can chain many of these in a row and we
+      // don't want to queue 80+ sparkle tweens on a x8 combo.
+      this.effects.sparkleBurst(boss.x, boss.y - 60, 5, 0xffd24a);
       this.effects.punchZoom(0.04, 180);
       SFX.attackConfirm?.();
       this.player.onAttackConfirm(boss.x);
