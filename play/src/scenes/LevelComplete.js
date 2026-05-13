@@ -39,46 +39,58 @@ export class LevelCompleteScene extends Phaser.Scene {
       });
     }
 
-    this.add.text(width / 2, 110, "INSIGHTS  DELIVERED", {
+    // ----- HEADER -----
+    this.add.text(width / 2, 78, "INSIGHTS  DELIVERED", {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "20px",
+      fontSize: "18px",
       color: "#FFD24A",
       letterSpacing: 8,
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, 170, this.payload.levelName, {
+    this.add.text(width / 2, 128, this.payload.levelName, {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "60px",
+      fontSize: "52px",
       fontStyle: "900",
       color: "#ffffff",
       stroke: "#5C3BA3",
-      strokeThickness: 8,
+      strokeThickness: 7,
     }).setOrigin(0.5);
 
-    // Swiirl + Brand together.
-    const swiirl = this.add.image(width / 2 - 140, height / 2 + 30, "celebrate").setScale(1.1);
-    const brand = this.add.image(width / 2 + 140, height / 2 + 80, "brand_happy").setScale(1.0).setOrigin(0.5, 1);
-    this.tweens.add({ targets: swiirl, y: swiirl.y - 14, duration: 800, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    // ----- CELEBRATION ROW -----
+    // Lay out at y≈320 with smaller scales so the rank badge below (y≈520)
+    // has clear airspace. Pre-fix, Swiirl at scale 1.1 + center y=390 spanned
+    // y 214-566, sitting right under the rank circle at y=510.
+    const celebrateY = 310;
+    const swiirl = this.add.image(width / 2 - 180, celebrateY, "celebrate").setScale(0.78);
+    const brand  = this.add.image(width / 2 + 150, celebrateY + 60, "brand_happy")
+      .setScale(0.9).setOrigin(0.5, 1);
+    this.tweens.add({
+      targets: swiirl, y: swiirl.y - 12,
+      duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+    });
 
-    // A speech bubble pointing to the brand from the upper-right.
+    // Speech bubble in upper-right, tail aimed at the brand's head.
     const bubbleX = brand.x + 220;
     const bubbleY = brand.y - 220;
     const bubble = this.add.container(bubbleX, bubbleY);
     const bg = this.add.graphics();
     bg.fillStyle(0xffffff, 0.95);
     bg.lineStyle(3, 0x5C3BA3, 1);
-    bg.fillRoundedRect(-160, -56, 320, 100, 16);
-    bg.strokeRoundedRect(-160, -56, 320, 100, 16);
-    // Tail pointing down-left toward the brand.
-    bg.fillTriangle(-110, 30, -90, 50, -70, 30);
-    bg.strokeTriangle(-110, 30, -90, 50, -70, 30);
+    bg.fillRoundedRect(-160, -50, 320, 90, 16);
+    bg.strokeRoundedRect(-160, -50, 320, 90, 16);
+    // Tail base sits on the bubble's bottom edge; apex aims at brand head.
+    // bubble.x + tailDx = brand.x → tailDx = brand.x - bubble.x = -220
+    const tailDx = brand.x - bubbleX;
+    const tailDy = (brand.y - 160) - bubbleY; // brand head ≈ feet − 160 (sprite height)
+    bg.fillTriangle(tailDx - 20, 38, tailDx, tailDy, tailDx + 20, 38);
+    bg.strokeTriangle(tailDx - 20, 38, tailDx, tailDy, tailDx + 20, 38);
     // Cover the segment of the bubble border where the tail meets it.
     bg.fillStyle(0xffffff, 0.95);
-    bg.fillRect(-110, 28, 42, 5);
-    const bubbleText = this.add.text(0, -6,
+    bg.fillRect(tailDx - 19, 36, 38, 5);
+    const bubbleText = this.add.text(0, -4,
       "Oh!  THAT'S\nwhat the community wants.", {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "16px",
+      fontSize: "15px",
       color: "#5C3BA3",
       align: "center",
       lineSpacing: 4,
@@ -100,18 +112,19 @@ export class LevelCompleteScene extends Phaser.Scene {
     else if (ratio >= 0.60)          { rank = "B"; rankColor = "#7dc4ff"; rankBg = "#1a3d5c"; }
     else                             { rank = "C"; rankColor = "#dcc7f2"; rankBg = "#3a2a55"; }
 
-    // Rank badge — circle with letter, scales in with bounce. Placed above
-    // the stats line so it never overlaps.
-    const rankCenterY = height / 2 + 150;
-    const rankCircle = this.add.circle(width / 2, rankCenterY, 52, Phaser.Display.Color.HexStringToColor(rankBg).color, 1)
+    // Rank badge — placed in the clear band below the celebration row.
+    // celebrate sprite at scale 0.78 spans y ≈ 185-435; rank at y=525 leaves
+    // a clean ~50px gap so the circle no longer overlaps the character.
+    const rankCenterY = 525;
+    const rankCircle = this.add.circle(width / 2, rankCenterY, 46, Phaser.Display.Color.HexStringToColor(rankBg).color, 1)
       .setStrokeStyle(5, 0xffffff).setScale(0).setAlpha(0);
     const rankText = this.add.text(width / 2, rankCenterY, rank, {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "64px",
+      fontSize: "56px",
       fontStyle: "900",
       color: rankColor,
     }).setOrigin(0.5).setScale(0).setAlpha(0);
-    const rankLabel = this.add.text(width / 2, rankCenterY - 64, "RANK", {
+    const rankLabel = this.add.text(width / 2, rankCenterY - 56, "RANK", {
       fontFamily: "system-ui, sans-serif",
       fontSize: "11px",
       fontStyle: "700",
@@ -148,8 +161,8 @@ export class LevelCompleteScene extends Phaser.Scene {
       });
     }
 
-    // Stats panel — moved up, includes time + insights ratio.
-    const panelY = height - 130;
+    // Stats panel — sits below the rank badge.
+    const panelY = height - 90;
     const timeStr = time != null ? `${Math.floor(time / 60)}:${String(time % 60).padStart(2, "0")}` : "--:--";
     this.add.text(width / 2, panelY,
       `${collected}/${total}  insights     ${timeStr}  time     ${lives}  ♥  remaining`, {
@@ -161,9 +174,9 @@ export class LevelCompleteScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     if (this._isNewBest) {
-      this.add.text(width / 2, height - 105, "★  NEW BEST  ★", {
+      this.add.text(width / 2, height - 62, "★  NEW BEST  ★", {
         fontFamily: "system-ui, sans-serif",
-        fontSize: "18px",
+        fontSize: "16px",
         color: "#FFD24A",
         stroke: "#5C3BA3",
         strokeThickness: 4,
@@ -172,10 +185,10 @@ export class LevelCompleteScene extends Phaser.Scene {
     }
 
     const isLastLevel = !this.payload.levelNum || this.payload.levelNum >= 5;
-    const press = this.add.text(width / 2, height - 80,
+    const press = this.add.text(width / 2, height - 32,
       isLastLevel ? "press   SPACE   to play again" : "press   SPACE   for next level", {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "16px",
+      fontSize: "15px",
       color: "#dcc7f2",
       letterSpacing: 4,
     }).setOrigin(0.5);
