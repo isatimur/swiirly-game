@@ -59,13 +59,18 @@ export class LevelCompleteScene extends Phaser.Scene {
       letterSpacing: 8,
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, 118, this.payload.levelName, {
+    // Title is intentionally sized so the longest level name ("Boardroom
+    // Battle" / "Executive Summit", 16 chars) leaves a clear horizontal gap
+    // to the speech bubble at brand.x + 260. At fontSize 36 + 900 weight the
+    // longest name renders ~340 px wide; the bubble's left edge sits at 880,
+    // giving ~50 px of breathing room beside the title.
+    this.add.text(width / 2, 120, this.payload.levelName, {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "44px",
+      fontSize: "36px",
       fontStyle: "900",
       color: "#ffffff",
       stroke: "#5C3BA3",
-      strokeThickness: 6,
+      strokeThickness: 5,
     }).setOrigin(0.5);
 
     // ----- CELEBRATION ROW -----
@@ -79,25 +84,32 @@ export class LevelCompleteScene extends Phaser.Scene {
       duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
     });
 
-    // Speech bubble — anchored to upper-right of brand. The tail apex is
-    // computed dynamically so it always aims at the brand's head, even if
-    // the brand sprite's display size changes.
-    const bubbleX = brand.x + 200;
-    const bubbleY = brand.y - 220;
+    // Speech bubble — pushed further right (+260) so it can never overlap
+    // the title even on long level names.
+    const bubbleX = brand.x + 260;
+    const bubbleY = brand.y - 230;
     const bubble = this.add.container(bubbleX, bubbleY).setAlpha(0);
     const bg = this.add.graphics();
     bg.fillStyle(0xffffff, 0.96);
     bg.lineStyle(3, 0x5C3BA3, 1);
-    bg.fillRoundedRect(-150, -46, 300, 84, 14);
-    bg.strokeRoundedRect(-150, -46, 300, 84, 14);
-    // Tail: apex at brand's head, base on the bubble's bottom edge.
+    const bubbleHalfW = 150;
+    bg.fillRoundedRect(-bubbleHalfW, -46, bubbleHalfW * 2, 84, 14);
+    bg.strokeRoundedRect(-bubbleHalfW, -46, bubbleHalfW * 2, 84, 14);
+    // Tail: apex at brand's head; base CLAMPED to the bubble's bottom edge
+    // so it stays visually attached even when the brand is far off-center.
+    // (Previously the base could end up outside the bubble's left edge,
+    //  making the tail look like a floating arrow.)
     const brandHeadY = brand.y - brand.displayHeight * 0.92;
-    const tailDx = brand.x - bubbleX;
-    const tailDy = brandHeadY - bubbleY;
-    bg.fillTriangle(tailDx - 18, 36, tailDx, tailDy, tailDx + 18, 36);
-    bg.strokeTriangle(tailDx - 18, 36, tailDx, tailDy, tailDx + 18, 36);
+    const apexDx = brand.x - bubbleX;
+    const apexDy = brandHeadY - bubbleY;
+    const baseDx = Phaser.Math.Clamp(apexDx, -bubbleHalfW + 24, bubbleHalfW - 24);
+    const baseDy = 36; // just inside bubble's bottom edge
+    bg.fillTriangle(baseDx - 18, baseDy, apexDx, apexDy, baseDx + 18, baseDy);
+    bg.strokeTriangle(baseDx - 18, baseDy, apexDx, apexDy, baseDx + 18, baseDy);
+    // Cover the bubble's bottom border where the tail attaches so the
+    // stroked outline reads as one continuous shape.
     bg.fillStyle(0xffffff, 0.96);
-    bg.fillRect(tailDx - 17, 34, 34, 5);
+    bg.fillRect(baseDx - 17, baseDy - 2, 34, 5);
     const bubbleText = this.add.text(0, -4,
       "Oh!  THAT'S\nwhat the community wants.", {
       fontFamily: "system-ui, sans-serif",
