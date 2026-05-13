@@ -3,6 +3,13 @@
 
 import { PERSONA_ASSET_KEYS } from "../characters.js";
 
+// Bump this whenever a sprite at an existing filename changes (e.g. we
+// regenerate enemy_jargon_blob.png in place). vercel.json USED to mark
+// /play/assets/* as Cache-Control: immutable, which trains browsers to
+// never revalidate even on hard-refresh — adding ?v=N busts old caches
+// because the URL becomes a fresh resource the browser hasn't seen.
+const ASSET_VERSION = "3";
+
 const SWIIRL_FRAMES = [
   "idle",
   "walk_1", "walk_2", "walk_3", "walk_4",
@@ -55,13 +62,13 @@ export class BootScene extends Phaser.Scene {
       fill.setAlpha(0);
     });
 
-    // Swiirl character frames.
+    // Swiirl character frames. Append ?v= to bust stale browser caches.
     for (const k of SWIIRL_FRAMES) {
-      this.load.image(k, `assets/sprites/${k}.png`);
+      this.load.image(k, `assets/sprites/${k}.png?v=${ASSET_VERSION}`);
     }
     // World assets.
     for (const k of WORLD_IMAGES) {
-      this.load.image(k, `assets/world/${k}.png`);
+      this.load.image(k, `assets/world/${k}.png?v=${ASSET_VERSION}`);
     }
   }
 
