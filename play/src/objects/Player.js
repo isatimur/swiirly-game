@@ -20,15 +20,19 @@ import { ATTACK_TUNING, getCharacter } from "../characters.js";
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, character = null) {
-    // Default to Swiirl if no character was selected (e.g. dev shortcut into Game).
-    const ch = character ?? getCharacter("swiirl");
-    super(scene, x, y, "idle");
+    // Default to the first character if none was selected (e.g. dev shortcut into Game).
+    const ch = character ?? getCharacter();
+    // Each character has its own complete sprite set, loaded under the
+    // <spriteKey>_<frame> namespace in Boot.js. Use the skin's idle frame
+    // as the starting texture.
+    const sk = ch.spriteKey ?? "beanie";
+    super(scene, x, y, `${sk}_idle`);
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    // Character config — tint + per-character physics + combat style.
     this.character = ch;
-    if (ch.color && ch.color !== 0xffffff) this.setTint(ch.color);
+    this._skin = sk;
+    // No tint applied — every character has its own art now.
     const cphys = ch.physics ?? {};
     this._charJumpMul = cphys.jumpVelocityMul ?? 1;
     this._charRunMul  = cphys.runSpeedMul ?? 1;
@@ -493,17 +497,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   applyState(s) {
     if (this.state === s) return;
     this.state = s;
+    const sk = this._skin;
+    const k = (frame) => `${sk}_${frame}`;
     switch (s) {
-      case "idle":      this.anims.stop(); this.setTexture("idle"); break;
-      case "walk":      this.anims.play("walk", true); break;
-      case "run":       this.anims.play("run", true); break;
-      case "jump":      this.anims.stop(); this.setTexture("jump"); break;
-      case "fall":      this.anims.stop(); this.setTexture("fall"); break;
-      case "skid":      this.anims.stop(); this.setTexture("skid"); break;
-      case "crouch":    this.anims.stop(); this.setTexture("crouch"); break;
-      case "slide":     this.anims.stop(); this.setTexture("crouch"); break;
-      case "hurt":      this.anims.stop(); this.setTexture("hurt"); break;
-      case "celebrate": this.anims.stop(); this.setTexture("celebrate"); break;
+      case "idle":      this.anims.stop(); this.setTexture(k("idle")); break;
+      case "walk":      this.anims.play(k("walk"), true); break;
+      case "run":       this.anims.play(k("run"), true); break;
+      case "jump":      this.anims.stop(); this.setTexture(k("jump")); break;
+      case "fall":      this.anims.stop(); this.setTexture(k("fall")); break;
+      case "skid":      this.anims.stop(); this.setTexture(k("skid")); break;
+      case "crouch":    this.anims.stop(); this.setTexture(k("crouch")); break;
+      case "slide":     this.anims.stop(); this.setTexture(k("crouch")); break;
+      case "hurt":      this.anims.stop(); this.setTexture(k("hurt")); break;
+      case "celebrate": this.anims.stop(); this.setTexture(k("celebrate")); break;
     }
   }
 

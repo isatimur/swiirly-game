@@ -51,8 +51,10 @@ export class CharacterSelectScene extends Phaser.Scene {
       const cx = startX + i * (cardWidth + cardSpacing);
       const cardBg = this.add.rectangle(cx, cardY, cardWidth, 300, 0x1a0f2e, 0.55)
         .setStrokeStyle(3, 0x5C3BA3);
-      const sprite = this.add.image(cx, cardY - 40, "idle").setScale(0.65);
-      if (char.color !== 0xffffff) sprite.setTint(char.color);
+      // Each character now has its own sprite set, so the portrait is THAT
+      // character's idle frame — no tint, no shared base image.
+      const portraitKey = `${char.spriteKey}_idle`;
+      const sprite = this.add.image(cx, cardY - 40, portraitKey).setScale(0.65);
       const name = this.add.text(cx, cardY + 60, char.name, {
         fontFamily: "system-ui, sans-serif",
         fontSize: "20px", fontStyle: "900",

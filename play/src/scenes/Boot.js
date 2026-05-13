@@ -8,14 +8,24 @@ import { PERSONA_ASSET_KEYS } from "../characters.js";
 // /play/assets/* as Cache-Control: immutable, which trains browsers to
 // never revalidate even on hard-refresh — adding ?v=N busts old caches
 // because the URL becomes a fresh resource the browser hasn't seen.
-const ASSET_VERSION = "4";
+const ASSET_VERSION = "5";
 
+// Pose names — every Swiirl skin ships this same 17-frame set, extracted
+// by tools/extract-character-sheet.mjs from a 1+8+4+4 grid sheet.
 const SWIIRL_FRAMES = [
   "idle",
   "walk_1", "walk_2", "walk_3", "walk_4",
   "run_1", "run_2", "run_3", "run_4",
   "jump", "fall", "skid", "crouch", "collect", "hurt", "celebrate", "bounce",
 ];
+
+// Available player skins. Each one is a complete 17-frame set in
+// play/assets/sprites/ under <skin>_<frame>.png. Add a new id here +
+// drop the PNGs in to ship a new variant.
+export const SKINS = ["classic", "beanie"];
+// The skin whose frames also get loaded under bare keys (idle, walk_1,...)
+// so legacy scenes that don't know about skins still render something.
+export const DEFAULT_SKIN = "beanie";
 
 const WORLD_IMAGES = [
   "tile_ground", "tile_grass", "tile_platform", "tile_brick",
@@ -62,9 +72,16 @@ export class BootScene extends Phaser.Scene {
       fill.setAlpha(0);
     });
 
-    // Swiirl character frames. Append ?v= to bust stale browser caches.
+    // Per-skin frames. Keys are `<skin>_<frame>` (e.g. "classic_idle").
+    for (const skin of SKINS) {
+      for (const k of SWIIRL_FRAMES) {
+        this.load.image(`${skin}_${k}`, `assets/sprites/${skin}_${k}.png?v=${ASSET_VERSION}`);
+      }
+    }
+    // Bare keys (idle, walk_1, …) point at the default skin so any legacy
+    // code that references unprefixed frames still works without a rewrite.
     for (const k of SWIIRL_FRAMES) {
-      this.load.image(k, `assets/sprites/${k}.png?v=${ASSET_VERSION}`);
+      this.load.image(k, `assets/sprites/${DEFAULT_SKIN}_${k}.png?v=${ASSET_VERSION}`);
     }
     // World assets.
     for (const k of WORLD_IMAGES) {
@@ -80,21 +97,30 @@ export class BootScene extends Phaser.Scene {
   registerAnimations() {
     const a = this.anims;
 
-    if (!a.exists("walk")) {
+    // One walk + run animation per skin, plus bare-key versions tied to
+    // the default skin for legacy callers.
+    const registerWalk = (key, prefix) => {
+      if (a.exists(key)) return;
       a.create({
-        key: "walk",
-        frames: [{ key: "walk_1" }, { key: "walk_2" }, { key: "walk_3" }, { key: "walk_4" }],
-        frameRate: 9,
-        repeat: -1,
+        key,
+        frames: [1, 2, 3, 4].map(n => ({ key: `${prefix}walk_${n}` })),
+        frameRate: 9, repeat: -1,
       });
-    }
-    if (!a.exists("run")) {
+    };
+    const registerRun = (key, prefix) => {
+      if (a.exists(key)) return;
       a.create({
-        key: "run",
-        frames: [{ key: "run_1" }, { key: "run_2" }, { key: "run_3" }, { key: "run_4" }],
-        frameRate: 13,
-        repeat: -1,
+        key,
+        frames: [1, 2, 3, 4].map(n => ({ key: `${prefix}run_${n}` })),
+        frameRate: 13, repeat: -1,
       });
+    };
+
+    for (const skin of SKINS) {
+      registerWalk(`${skin}_walk`, `${skin}_`);
+      registerRun(`${skin}_run`,   `${skin}_`);
     }
+    registerWalk("walk", "");
+    registerRun("run", "");
   }
 }

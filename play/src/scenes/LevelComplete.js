@@ -76,7 +76,11 @@ export class LevelCompleteScene extends Phaser.Scene {
     // ----- CELEBRATION ROW -----
     // Centered horizontally as a pair — Swiirl on the left, Brand on the right.
     const rowY = 280;
-    const swiirl = this.add.image(width / 2 - 150, rowY, "celebrate").setScale(0.68);
+    // Show the player's chosen skin in the cutscene, not a generic Swiirl.
+    const chosen = this.registry.get("character");
+    const skin = chosen?.spriteKey ?? "beanie";
+    const celebrateKey = this.textures.exists(`${skin}_celebrate`) ? `${skin}_celebrate` : "celebrate";
+    const swiirl = this.add.image(width / 2 - 150, rowY, celebrateKey).setScale(0.68);
     const brand  = this.add.image(width / 2 + 130, rowY + 60, "brand_happy")
       .setScale(0.85).setOrigin(0.5, 1);
     this.tweens.add({

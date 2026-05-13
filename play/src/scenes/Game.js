@@ -388,7 +388,7 @@ export class GameScene extends Phaser.Scene {
         this.game.events.emit("persona-bind", {
           name: ch.name,
           attackHint: ch.attackHint,
-          color: ch.color,
+          spriteKey: ch.spriteKey,
         });
       }
     });

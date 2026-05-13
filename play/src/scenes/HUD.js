@@ -203,11 +203,13 @@ export class HUDScene extends Phaser.Scene {
           duration: 90, yoyo: true, ease: "Back.easeOut",
         });
       },
-      "persona-bind": ({ name, attackHint, color }) => {
-        // Portrait is always the base "idle" sprite, tinted to the character's color.
-        this.personaPortrait.setTexture("idle");
-        if (color && color !== 0xffffff) this.personaPortrait.setTint(color);
-        else this.personaPortrait.clearTint();
+      "persona-bind": ({ name, attackHint, spriteKey }) => {
+        // Portrait uses the selected character's own idle frame — no tint,
+        // each skin's art has its own colors.
+        const key = spriteKey ? `${spriteKey}_idle` : "idle";
+        if (this.textures.exists(key)) this.personaPortrait.setTexture(key);
+        else this.personaPortrait.setTexture("idle");
+        this.personaPortrait.clearTint();
         this.personaNameText.setText(name?.toUpperCase() ?? "");
         this.personaAttackText.setText(attackHint ?? "");
       },
