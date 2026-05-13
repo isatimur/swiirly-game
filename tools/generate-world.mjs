@@ -59,12 +59,26 @@ const grassTopSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="
 </svg>`;
 await svgToPng(grassTopSvg, "tile_grass.png", TILE, TILE);
 
+// Standing surface stays at y=14 to match the physics body offset; we extend
+// the VISIBLE block down to y=60 (was y=50) so the platform reads as a chunky
+// brick under the player rather than a thin wafer. Added side bevels and a
+// bottom shadow stripe for depth.
 const platformSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <rect x="2" y="14" width="60" height="36" rx="6" fill="#B892E0" stroke="#5C3BA3" stroke-width="2"/>
-  <rect x="2" y="14" width="60" height="10" rx="4" fill="#DCC7F2"/>
-  <circle cx="14" cy="34" r="2" fill="#5C3BA3" opacity="0.4"/>
-  <circle cx="32" cy="40" r="2" fill="#5C3BA3" opacity="0.4"/>
-  <circle cx="50" cy="34" r="2" fill="#5C3BA3" opacity="0.4"/>
+  <!-- Drop shadow on the ground beneath the block -->
+  <ellipse cx="32" cy="62" rx="28" ry="2.5" fill="#1A0F2E" opacity="0.32"/>
+  <!-- Main block, rounded top, square bottom -->
+  <path d="M4,20 Q4,14 10,14 L54,14 Q60,14 60,20 L60,60 L4,60 Z" fill="#B892E0" stroke="#5C3BA3" stroke-width="2"/>
+  <!-- Top highlight band (the standing surface, matches body y=14-24) -->
+  <rect x="6" y="14" width="52" height="11" rx="4" fill="#DCC7F2"/>
+  <!-- Side bevels for dimensionality -->
+  <rect x="4" y="26" width="3" height="32" fill="#9D80C0" opacity="0.75"/>
+  <rect x="57" y="26" width="3" height="32" fill="#9D80C0" opacity="0.75"/>
+  <!-- Bottom shadow stripe so it doesn't read flat -->
+  <rect x="6" y="53" width="52" height="6" rx="2" fill="#5C3BA3" opacity="0.45"/>
+  <!-- Texture spots -->
+  <circle cx="16" cy="36" r="2" fill="#5C3BA3" opacity="0.5"/>
+  <circle cx="32" cy="42" r="2" fill="#5C3BA3" opacity="0.5"/>
+  <circle cx="48" cy="36" r="2" fill="#5C3BA3" opacity="0.5"/>
 </svg>`;
 await svgToPng(platformSvg, "tile_platform.png", TILE, TILE);
 

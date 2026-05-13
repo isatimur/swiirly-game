@@ -161,8 +161,8 @@ export class PaperworkPile extends EnemyBase {
 // Base class for all bosses. Provides common patrol + stomp-damage behavior.
 // Subclasses override preUpdate to add unique attack patterns.
 export class BossBase extends EnemyBase {
-  constructor(scene, x, y, health = 3) {
-    super(scene, x, y, "enemy_boss");
+  constructor(scene, x, y, health = 3, texture = "enemy_boss") {
+    super(scene, x, y, texture);
     this.setScale(1.05);
     // Sprite 120x140. Body 80x110, bottom-aligned.
     this.body.setSize(80, 110).setOffset(20, 30);
@@ -310,10 +310,8 @@ export class BossBase extends EnemyBase {
 // L1 — Hot-Take Hank: throws clipboards in arcs every 2.4s.
 export class HotTakeHank extends BossBase {
   constructor(scene, x, y, health = 3) {
-    super(scene, x, y, health);
+    super(scene, x, y, health, "enemy_boss_l1");
     this.displayName = "HOT-TAKE HANK";
-    this.bossTint = 0xff8866;
-    this.applyVisualTint();
     this.attackInterval = 2400;
   }
   preUpdate(time, dt) {
@@ -334,10 +332,8 @@ export class HotTakeHank extends BossBase {
 // L2 — Middle Manager Mike: summons JargonBlobs every ~4s.
 export class ManagerMike extends BossBase {
   constructor(scene, x, y, health = 4) {
-    super(scene, x, y, health);
+    super(scene, x, y, health, "enemy_boss_l2");
     this.displayName = "MIDDLE MANAGER MIKE";
-    this.bossTint = 0xa088c0;
-    this.applyVisualTint();
     this.summonInterval = 4200;
   }
   preUpdate(time, dt) {
@@ -356,10 +352,8 @@ export class ManagerMike extends BossBase {
 // L3 — VP of Vibes: high-speed dash attack with telegraph.
 export class VPVibes extends BossBase {
   constructor(scene, x, y, health = 5) {
-    super(scene, x, y, health);
+    super(scene, x, y, health, "enemy_boss_l3");
     this.displayName = "VP OF VIBES";
-    this.bossTint = 0xff5cb0;
-    this.applyVisualTint();
     this.dashInterval = 3500;
     this.dashing = false;
     this.dashEndAt = 0;
@@ -391,10 +385,8 @@ export class VPVibes extends BossBase {
 // L4 — The Algorithm: stationary, fires projectile fans every 3.2s.
 export class TheAlgorithm extends BossBase {
   constructor(scene, x, y, health = 5) {
-    super(scene, x, y, health);
+    super(scene, x, y, health, "enemy_boss_l4");
     this.displayName = "THE ALGORITHM";
-    this.bossTint = 0x40c0e0;
-    this.applyVisualTint();
     this.body.setAllowGravity(false);
     this.body.setVelocity(0, 0);
     this.spreadInterval = 3200;
@@ -423,10 +415,10 @@ export class TheAlgorithm extends BossBase {
 // L5 — The CEO: three-phase final boss combining all attack patterns.
 export class TheCEO extends BossBase {
   constructor(scene, x, y, health = 8) {
-    super(scene, x, y, health);
+    super(scene, x, y, health, "enemy_boss_l5");
     this.displayName = "THE CEO";
-    this.bossTint = 0xc0a040;
-    this.applyVisualTint();
+    // CEO keeps phase-based tint shifts (gold → orange → red) — those are
+    // an intentional damage-progression cue, not just identification.
     this.summonInterval = 5000;
     this.dashInterval = 4200;
     this.spreadInterval = 3600;
