@@ -45,9 +45,21 @@ function spawnHitbox(scene, x, y, w, h, ms, damage, opts = {}) {
 }
 
 function spawnProjectile(scene, x, y, vx, vy, lifeMs, damage, tint, opts = {}) {
-  const p = scene.playerAttacks.create(x, y, "insight");
-  p.setScale(0.65);
-  p.setTint(tint);
+  // Prefer the painted vfx_bolt flipbook (looping animation, baked-in trail).
+  // The art is directional, so we flip horizontally for left-bound shots
+  // instead of spinning the sprite.
+  const useVfx = scene.textures.exists("vfx_bolt_1") && scene.anims.exists("vfx_bolt_anim");
+  const tex = useVfx ? "vfx_bolt_1" : "insight";
+  const p = scene.playerAttacks.create(x, y, tex);
+  if (useVfx) {
+    p.setScale(0.42);
+    p.setFlipX(vx < 0);
+    p.play("vfx_bolt_anim");
+  } else {
+    p.setScale(0.65);
+    p.setTint(tint);
+    scene.tweens.add({ targets: p, angle: 360, duration: 500, repeat: -1 });
+  }
   p.body.setAllowGravity(false);
   p.body.setSize(28, 28);
   p.setVelocity(vx, vy);
@@ -56,7 +68,6 @@ function spawnProjectile(scene, x, y, vx, vy, lifeMs, damage, tint, opts = {}) {
   p.pierce = opts.pierce ?? false;
   p.friendly = true;
   p.attackId = "bolt";
-  scene.tweens.add({ targets: p, angle: 360, duration: 500, repeat: -1 });
   scene.time.delayedCall(lifeMs, () => { if (p && p.active) p.destroy(); });
   return p;
 }
