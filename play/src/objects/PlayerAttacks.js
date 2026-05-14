@@ -52,6 +52,7 @@ function spawnProjectile(scene, x, y, vx, vy, lifeMs, damage, tint, opts = {}) {
   const tex = useVfx ? "vfx_bolt_1" : "insight";
   const p = scene.playerAttacks.create(x, y, tex);
   if (useVfx) {
+    p.setBlendMode(Phaser.BlendModes.ADD);
     p.setScale(0.42);
     p.setFlipX(vx < 0);
     p.play("vfx_bolt_anim");
@@ -86,8 +87,7 @@ function slashArc(scene, x, y, facing, color = 0xffd24a, size = 1.0) {
       y - 64,
       "vfx_swipe_1"
     ).setDepth(18);
-    // Bumped from 0.95 → 1.25 so the painted arc visually covers the
-    // expanded hitbox range (140px swipe / 120px chain / 150px bash).
+    slash.setBlendMode(Phaser.BlendModes.ADD);
     slash.setScale(size * 1.25);
     slash.setFlipX(facing < 0);
     // Heavy chain still passes a pink tint — preserve it.
@@ -199,12 +199,13 @@ function projectileTrail(scene, x, y, color) {
 
 // Ground impact: cracks radiating + dust ring. Used for ground-pound.
 function groundCracks(scene, x, y, range, color) {
-  // Painted sprite version when available — gold shockwave with cracks.
+  // Painted sprite version. ADD blend mode means dark pixels are invisible
+  // (no rectangular halo around the glow), and the scale is capped so the
+  // ring isn't bigger than the actual gameplay range it represents.
   if (scene.textures.exists("vfx_pound_1") && scene.anims.exists("vfx_pound_anim")) {
     const shock = scene.add.sprite(x, y - 8, "vfx_pound_1").setDepth(17);
-    // Scale so the sprite's visible ring roughly matches the requested range.
-    // The painted ring occupies ~70% of the 256px sprite, so scale = range/90.
-    shock.setScale(Math.max(1.0, range / 90));
+    shock.setBlendMode(Phaser.BlendModes.ADD);
+    shock.setScale(1.2);
     shock.play("vfx_pound_anim");
     shock.once("animationcomplete", () => shock.destroy());
     return;
