@@ -24,10 +24,25 @@ export class LevelCompleteScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.fadeIn(500, 26, 15, 46);
 
-    // Persist best run.
+    // Persist best run + score (overall and today's daily-best).
     const prevBest = +(localStorage.getItem("swiirl.bestInsights") || 0);
     const isNewBest = this.payload.insights > prevBest;
     if (isNewBest) localStorage.setItem("swiirl.bestInsights", String(this.payload.insights));
+
+    const score = this.payload.score ?? 0;
+    const prevBestScore = +(localStorage.getItem("swiirl.bestScore") || 0);
+    const isNewBestScore = score > prevBestScore;
+    if (isNewBestScore) localStorage.setItem("swiirl.bestScore", String(score));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const dailyKey = `swiirl.daily.${today}`;
+    const dailyBest = +(localStorage.getItem(dailyKey) || 0);
+    const isNewDailyBest = score > dailyBest;
+    if (isNewDailyBest) localStorage.setItem(dailyKey, String(score));
+    this._score = score;
+    this._bestScore = Math.max(prevBestScore, score);
+    this._dailyBest = Math.max(dailyBest, score);
+    this._isNewBestScore = isNewBestScore;
 
     // ----- BACKGROUND -----
     this.add.image(width / 2, height / 2, "bg_far").setDisplaySize(width, height);
@@ -274,7 +289,31 @@ export class LevelCompleteScene extends Phaser.Scene {
     });
 
     // ----- NEW-BEST RIBBON -----
-    if (isNewBest) {
+    // SCORE READOUT — big tally above the rank stamp.
+    this.add.text(width / 2, 420, this._score.toLocaleString(), {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "38px",
+      fontStyle: "900",
+      color: "#ffd24a",
+      stroke: "#1a0f2e",
+      strokeThickness: 6,
+      letterSpacing: 3,
+    }).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(width / 2, 395, "SCORE", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "11px",
+      fontStyle: "900",
+      color: "#dcc7f2",
+      letterSpacing: 6,
+    }).setOrigin(0.5);
+    this.add.text(width / 2, 450, `BEST  ${this._bestScore.toLocaleString()}  ·  TODAY  ${this._dailyBest.toLocaleString()}`, {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "11px",
+      color: this._isNewBestScore ? "#ffd24a" : "#dcc7f2",
+      letterSpacing: 4,
+    }).setOrigin(0.5);
+
+    if (isNewBest || this._isNewBestScore) {
       const ribbon = this.add.container(width / 2, 178).setAlpha(0).setScale(0.6);
       const rg = this.add.graphics();
       rg.fillStyle(0xffd24a, 0.96);

@@ -10,6 +10,15 @@ export class HUDScene extends Phaser.Scene {
 
     // ----- INSIGHTS -----
     this.add.image(36, 36, "insight").setScale(0.75).setScrollFactor(0);
+    // SCORE — shareable, brag-worthy tally.
+    this.scoreText = this.add.text(VIEW.width / 2, 78, "SCORE  0", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "13px",
+      fontStyle: "900",
+      color: "#ffd24a",
+      letterSpacing: 4,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(60);
+
     this.insightText = this.add.text(64, 22, "× 0", {
       fontFamily: "system-ui, sans-serif",
       fontSize: "26px",
@@ -127,6 +136,7 @@ export class HUDScene extends Phaser.Scene {
         this.brandFillTarget = 0;
         this.renderLives(data.lives);
         this.insightText.setText("× 0");
+        if (this.scoreText) this.scoreText.setText("SCORE  0");
         // Show level name with a brief slide-in.
         this.levelNameText.setText(data.level?.toUpperCase() ?? "");
         this.tweens.add({ targets: this.levelNameText, alpha: 0.8, y: 60, duration: 280, ease: "Quad.easeOut", from: 0, fromY: 70 });
@@ -209,6 +219,10 @@ export class HUDScene extends Phaser.Scene {
       "level-intro": ({ name, num, quote }) => this.showLevelIntro({ name, num, quote }),
       "frenzy-start": ({ duration }) => this.startFrenzy(duration),
       "frenzy-end": () => this.endFrenzy(),
+      "score-changed": ({ score }) => {
+        this.scoreText.setText(`SCORE  ${score.toLocaleString()}`);
+        this.tweens.add({ targets: this.scoreText, scale: 1.18, duration: 80, yoyo: true, ease: "Back.easeOut" });
+      },
       "hud-insight-arrived": () => {
         this.tweens.add({
           targets: this.insightText, scale: 1.4,

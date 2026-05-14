@@ -42,6 +42,10 @@ export class GameScene extends Phaser.Scene {
     // VFX manager + combo state.
     this.effects = new Effects(this);
     this.combo = new Combo(this, 2200);
+    // Score system — accumulates across the level, persists best in
+    // localStorage. addScore() emits "score-changed" so HUD updates and
+    // a floating "+N" pop spawns at the event's world coords.
+    this.score = 0;
 
     this.physics.world.setBounds(0, 0, lvl.width, lvl.height);
     this.cameras.main.setBounds(0, 0, lvl.width, lvl.height);
@@ -256,6 +260,7 @@ export class GameScene extends Phaser.Scene {
       insight.destroy();
       // Multiplier-aware collect — falls back to 1 if combo is fresh.
       this.player.collectInsight(this.combo.multiplier);
+      this.addScore(100 * this.combo.multiplier, ix, iy);
       this.updateBrandMeter();
       // Custom audio replaces the default chord on first collect.
       SFX.collectAt(c);
@@ -295,6 +300,7 @@ export class GameScene extends Phaser.Scene {
       const c = this.combo.count;
       if (killed) SFX.stompAt(c);
       else SFX.attackConfirm?.();
+      this.addScore((killed ? 80 : 30) * this.combo.multiplier, enemy.x, enemy.y - 24);
       this.player.onAttackConfirm(enemy.x);
       if (!atk.pierce) atk.destroy();
     });
@@ -315,6 +321,7 @@ export class GameScene extends Phaser.Scene {
       this.effects.sparkleBurst(boss.x, boss.y - 60, 5, 0xffd24a);
       this.effects.punchZoom(0.04, 180);
       SFX.attackConfirm?.();
+      this.addScore(result === "killed" ? 2000 : 250, boss.x, boss.y - 60);
       this.player.onAttackConfirm(boss.x);
       if (!atk.pierce) atk.destroy();
     });
@@ -649,6 +656,15 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  addScore(amount, x, y) {
+    if (!amount) return;
+    this.score += amount;
+    this.game.events.emit("score-changed", { score: this.score, delta: amount });
+    if (x != null && y != null) {
+      this.effects?.comboFloat?.(x, y - 18, `+${amount}`, "#ffd24a");
+    }
+  }
+
   updateBrandMeter() {
     const ratio = Math.min(1, this.player.insights / this.level.insightsRequired);
     this.game.events.emit("brand-meter", ratio, this.player.insights, this.level.insightsRequired);
@@ -784,6 +800,8 @@ export class GameScene extends Phaser.Scene {
 
     this.brand.becomeHappy();
 
+    // Brand-delivery bonus — big payoff at level end.
+    this.addScore(2500 + this.player.lives * 500);
     this.time.delayedCall(2200, () => {
       this.scene.stop("HUD");
       this.scene.start("LevelComplete", {
@@ -794,6 +812,7 @@ export class GameScene extends Phaser.Scene {
         insightsCollected: this.player.insights,
         totalInsights: this.level.insights.length,
         time: Math.floor((this.time.now - this._levelStartTime) / 1000),
+        score: this.score,
       });
     });
   }
