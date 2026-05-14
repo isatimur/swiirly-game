@@ -393,6 +393,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     } // end !this._sliding
 
+    // ---- WALL JUMP: press jump while airborne AND touching a wall → push off ----
+    // The kick refreshes jumpsRemaining so you can chain wall + air-jump for
+    // bigger climbs. Direction-aware: pushes AWAY from the wall.
+    const wallContact = this.body.blocked.left ? -1 : (this.body.blocked.right ? 1 : 0);
+    const buffered2 = (time - this._jumpRequestedAt) <= PHYSICS.jumpBuffer;
+    if (buffered2 && !grounded && wallContact !== 0) {
+      this.setVelocityX(-wallContact * PHYSICS.runSpeed * 0.95);
+      this.setVelocityY(PHYSICS.jumpVelocity * this._charJumpMul * 0.9);
+      this._isJumping = true;
+      this._jumpsRemaining = (PHYSICS.maxJumps ?? 2); // refresh — chainable
+      this.facing = -wallContact;
+      this.setFlipX(this.facing < 0);
+      this._jumpRequestedAt = -Infinity;
+      this._lastGroundedAt = -Infinity;
+      SFX.jump();
+      this.scene.effects?.dustPuff?.(this.x + wallContact * 14, this.y - 50, {
+        color: 0xdcc7f2, count: 5, scale: 0.7, ms: 320,
+      });
+      // jumpRequestedAt is cleared above, so the regular-jump branch below
+      // sees buffered=false and won't re-fire on this same frame.
+    }
+
     // ---- JUMP: press to launch, release-before-apex shortens it ----
     // First jump uses coyote time. Subsequent jumps (double-jump) consume a
     // remaining-jump slot regardless of grounding.

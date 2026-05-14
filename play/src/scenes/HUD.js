@@ -165,6 +165,16 @@ export class HUDScene extends Phaser.Scene {
           targets: this.comboText,
           scale: 1.3, duration: 90, yoyo: true, ease: "Back.easeOut",
         });
+        // Tier callouts at threshold counts.
+        const tiers = {
+          3:  { label: "GOOD!",     color: "#ffd24a", scale: 1.15 },
+          5:  { label: "GREAT!",    color: "#7dc4ff", scale: 1.30 },
+          8:  { label: "INSANE!",   color: "#ff8866", scale: 1.45 },
+          12: { label: "GODLIKE!",  color: "#ff5cb0", scale: 1.65 },
+          16: { label: "UNREAL!!",  color: "#ffffff", scale: 1.85 },
+        };
+        const tier = tiers[count];
+        if (tier) this.spawnTierCallout(tier);
       },
       "damage-flash": () => {
         // Brief, less obtrusive flash — fades in then out so it doesn't blank the screen.
@@ -317,6 +327,37 @@ export class HUDScene extends Phaser.Scene {
     delete this.signalIcons[kind];
     // Re-layout.
     Object.values(this.signalIcons).forEach((c2, idx) => c2.x = 36 + idx * 56);
+  }
+
+  // Big mid-screen tier callout, scales in with bounce then fades up + out.
+  spawnTierCallout({ label, color, scale = 1.3 }) {
+    const t = this.add.text(VIEW.width / 2, VIEW.height / 2 - 60, label, {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "64px",
+      fontStyle: "900",
+      color,
+      stroke: "#1a0f2e",
+      strokeThickness: 8,
+      shadow: { offsetX: 0, offsetY: 6, color: "#1a0f2e", blur: 14, fill: true },
+      letterSpacing: 4,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(120).setScale(0).setAlpha(0);
+    // Pop in.
+    this.tweens.add({
+      targets: t, scale, alpha: 1,
+      duration: 260, ease: "Back.easeOut",
+    });
+    // Drift up + fade out.
+    this.tweens.add({
+      targets: t,
+      y: t.y - 50,
+      alpha: 0,
+      delay: 420,
+      duration: 600,
+      ease: "Quad.easeIn",
+      onComplete: () => t.destroy(),
+    });
+    // Brief camera shake on the bigger tiers.
+    if (scale >= 1.45) this.cameras.main.shake(160, 0.005);
   }
 
   flashCenter(text) {
