@@ -199,7 +199,17 @@ function projectileTrail(scene, x, y, color) {
 
 // Ground impact: cracks radiating + dust ring. Used for ground-pound.
 function groundCracks(scene, x, y, range, color) {
-  // Dust ring (big).
+  // Painted sprite version when available — gold shockwave with cracks.
+  if (scene.textures.exists("vfx_pound_1") && scene.anims.exists("vfx_pound_anim")) {
+    const shock = scene.add.sprite(x, y - 8, "vfx_pound_1").setDepth(17);
+    // Scale so the sprite's visible ring roughly matches the requested range.
+    // The painted ring occupies ~70% of the 256px sprite, so scale = range/90.
+    shock.setScale(Math.max(1.0, range / 90));
+    shock.play("vfx_pound_anim");
+    shock.once("animationcomplete", () => shock.destroy());
+    return;
+  }
+  // Fallback — programmatic ring + cracks.
   shockwaveRing(scene, x, y, range, color, 420);
   // Radial cracks — 5 jagged lines outward at random angles in a forward fan.
   const g = scene.add.graphics().setDepth(16);
@@ -227,6 +237,25 @@ function groundCracks(scene, x, y, range, color) {
 // Shield held in front of the player during a shieldBash. Returns the object
 // so the caller can clean it up when the dash window ends.
 function shieldGraphic(scene, player, facing, durationMs, color = 0xffd24a) {
+  // Painted sprite version when available — gold shield + impact burst.
+  if (scene.textures.exists("vfx_bash_1") && scene.anims.exists("vfx_bash_anim")) {
+    const s = scene.add.sprite(player.x + facing * 36, player.y - 72, "vfx_bash_1").setDepth(20);
+    s.setScale(1.0);
+    s.setFlipX(facing < 0);
+    s._followPlayer = player;
+    s._followOffsetX = facing * 36;
+    s._followOffsetY = -72;
+    s.play("vfx_bash_anim");
+    scene.time.delayedCall(durationMs, () => {
+      scene.tweens.add({
+        targets: s, alpha: 0, scale: 1.25,
+        duration: 140, ease: "Quad.easeOut",
+        onComplete: () => s.destroy(),
+      });
+    });
+    return s;
+  }
+  // Fallback — drawn kite shield.
   const g = scene.add.graphics().setDepth(20);
   // Kite shield profile: wide top, pointed bottom.
   g.fillStyle(color, 0.85);
