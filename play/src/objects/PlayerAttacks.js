@@ -237,25 +237,9 @@ function groundCracks(scene, x, y, range, color) {
 // Shield held in front of the player during a shieldBash. Returns the object
 // so the caller can clean it up when the dash window ends.
 function shieldGraphic(scene, player, facing, durationMs, color = 0xffd24a) {
-  // Painted sprite version when available — gold shield + impact burst.
-  if (scene.textures.exists("vfx_bash_1") && scene.anims.exists("vfx_bash_anim")) {
-    const s = scene.add.sprite(player.x + facing * 36, player.y - 72, "vfx_bash_1").setDepth(20);
-    s.setScale(1.0);
-    s.setFlipX(facing < 0);
-    s._followPlayer = player;
-    s._followOffsetX = facing * 36;
-    s._followOffsetY = -72;
-    s.play("vfx_bash_anim");
-    scene.time.delayedCall(durationMs, () => {
-      scene.tweens.add({
-        targets: s, alpha: 0, scale: 1.25,
-        duration: 140, ease: "Quad.easeOut",
-        onComplete: () => s.destroy(),
-      });
-    });
-    return s;
-  }
-  // Fallback — drawn kite shield.
+  // Clean drawn kite-shield. The painted vfx_bash sprite carried too many
+  // surrounding effects + leftover background bleed; the simple shape
+  // reads more clearly as "shield" during the dash.
   const g = scene.add.graphics().setDepth(20);
   // Kite shield profile: wide top, pointed bottom.
   g.fillStyle(color, 0.85);

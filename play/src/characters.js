@@ -28,10 +28,10 @@ export const CHARACTERS = [
     role: "The chibi original",
     spriteKey: "classic",
     color: 0xb892e0,
-    perk: "Balanced",
+    perk: "Heavy hits, slower swings",
     perkColor: "#dcc7f2",
-    attack: "swipe",
-    attackHint: "Insight Swipe — arc strike in front",
+    attack: "groundPound",
+    attackHint: "Ground Pound — air-slam shockwave",
     physics: {},
   },
   {
