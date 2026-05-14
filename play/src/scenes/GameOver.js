@@ -37,8 +37,12 @@ export class GameOverScene extends Phaser.Scene {
       this.cameras.main.shake(200, 0.007);
     });
 
-    // Swiirl in hurt pose — bounces in from below.
-    const hero = this.add.image(width / 2, height / 2 + 40, "hurt")
+    // Show the SELECTED character's hurt pose, not the default Swiirl,
+    // so losing with Ninja shows Ninja crying, etc.
+    const chosen = this.registry.get("character");
+    const skin = chosen?.spriteKey ?? "beanie";
+    const hurtKey = this.textures.exists(`${skin}_hurt`) ? `${skin}_hurt` : "hurt";
+    const hero = this.add.image(width / 2, height / 2 + 40, hurtKey)
       .setScale(1.4).setAlpha(0).setY(height / 2 + 120);
     this.tweens.add({
       targets: hero, alpha: 1, y: height / 2 + 30,
