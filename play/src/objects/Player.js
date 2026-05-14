@@ -402,7 +402,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVelocityX(-wallContact * PHYSICS.runSpeed * 0.95);
       this.setVelocityY(PHYSICS.jumpVelocity * this._charJumpMul * 0.9);
       this._isJumping = true;
-      this._jumpsRemaining = (PHYSICS.maxJumps ?? 2); // refresh — chainable
+      // Refresh to MAX-1 (not max) so isFirstJump=false on the next press →
+      // the double-jump branch fires. Setting to max would lock the player
+      // out: first-jump branch needs coyote (cleared here) and double-jump
+      // branch requires !isFirstJump.
+      this._jumpsRemaining = Math.max(1, (PHYSICS.maxJumps ?? 2) - 1);
       this.facing = -wallContact;
       this.setFlipX(this.facing < 0);
       this._jumpRequestedAt = -Infinity;
