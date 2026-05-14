@@ -71,10 +71,15 @@ export function getCharacter(id) {
 
 // Attack tuning shared across characters. Adjust here, reload — no rebuild.
 // Cooldowns are in ms.
+//
+// Widened ranges so the hitboxes line up with the painted vfx_swipe arc,
+// which visually extends further than the previous programmatic crescent.
+// Height also bumped so ground enemies (paperwork, jargon blobs) get
+// covered when the player is standing at normal range.
 export const ATTACK_TUNING = {
-  swipe:       { cooldown: 320, damage: 1, hitboxMs: 140, range: 78,  height: 90,  knockbackX: 220 },
-  bolt:        { cooldown: 380, damage: 1, projectileSpeed: 520, projectileLife: 700 },
-  groundPound: { cooldown: 720, damage: 2, shockwaveRange: 140, slamVy: 1200, leapVy: -340 },
-  chain:       { cooldown: 180, damage: 1, hitboxMs: 110, range: 70,  height: 80,  knockbackX: 160, heavyChargeMs: 380, heavyDamage: 2, heavyRange: 110 },
-  shieldBash:  { cooldown: 600, damage: 1, dashSpeed: 520, dashMs: 220, hitboxMs: 240, range: 84, height: 100, parry: true },
+  swipe:       { cooldown: 320, damage: 1, hitboxMs: 160, range: 140, height: 130, knockbackX: 240 },
+  bolt:        { cooldown: 380, damage: 1, projectileSpeed: 600, projectileLife: 900 },
+  groundPound: { cooldown: 720, damage: 2, shockwaveRange: 200, slamVy: 1200, leapVy: -340 },
+  chain:       { cooldown: 180, damage: 1, hitboxMs: 130, range: 120, height: 120, knockbackX: 200, heavyChargeMs: 380, heavyDamage: 2, heavyRange: 180 },
+  shieldBash:  { cooldown: 600, damage: 1, dashSpeed: 540, dashMs: 240, hitboxMs: 260, range: 150, height: 140, parry: true },
 };

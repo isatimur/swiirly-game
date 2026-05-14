@@ -82,11 +82,13 @@ function spawnProjectile(scene, x, y, vx, vy, lifeMs, damage, tint, opts = {}) {
 function slashArc(scene, x, y, facing, color = 0xffd24a, size = 1.0) {
   if (scene.textures.exists("vfx_swipe_1") && scene.anims.exists("vfx_swipe_anim")) {
     const slash = scene.add.sprite(
-      x + facing * 30 * size,
+      x + facing * 50 * size,
       y - 64,
       "vfx_swipe_1"
     ).setDepth(18);
-    slash.setScale(size * 0.95);
+    // Bumped from 0.95 → 1.25 so the painted arc visually covers the
+    // expanded hitbox range (140px swipe / 120px chain / 150px bash).
+    slash.setScale(size * 1.25);
     slash.setFlipX(facing < 0);
     // Heavy chain still passes a pink tint — preserve it.
     if (color !== 0xffd24a && color !== 0xffffff) slash.setTint(color);
