@@ -24,8 +24,8 @@ export const CHARACTERS = [
   },
   {
     id: "classic",
-    name: "SWIIRL BEANIE",
-    role: "The 3D remix",
+    name: "SWIIRL ITTY",
+    role: "The chibi original",
     spriteKey: "classic",
     color: 0xb892e0,
     perk: "Balanced",
@@ -48,8 +48,8 @@ export const CHARACTERS = [
   },
   {
     id: "rookie",
-    name: "SWIIRL ROOKIE",
-    role: "The believer",
+    name: "SWIIRL EXEC",
+    role: "The executive",
     spriteKey: "rookie",
     color: 0x6bb4ff,
     perk: "+1 starting heart",
