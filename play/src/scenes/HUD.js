@@ -207,6 +207,8 @@ export class HUDScene extends Phaser.Scene {
         this.bossBarLabel.setText(String(name).toUpperCase());
       },
       "level-intro": ({ name, num, quote }) => this.showLevelIntro({ name, num, quote }),
+      "frenzy-start": ({ duration }) => this.startFrenzy(duration),
+      "frenzy-end": () => this.endFrenzy(),
       "hud-insight-arrived": () => {
         this.tweens.add({
           targets: this.insightText, scale: 1.4,
@@ -327,6 +329,65 @@ export class HUDScene extends Phaser.Scene {
     delete this.signalIcons[kind];
     // Re-layout.
     Object.values(this.signalIcons).forEach((c2, idx) => c2.x = 36 + idx * 56);
+  }
+
+  // FRENZY mode: gold full-screen tint + big banner + draining timer bar.
+  // Auto-cleans on endFrenzy(), or if the scene shuts down (handlers off).
+  startFrenzy(duration) {
+    if (this._frenzyGroup) this.endFrenzy(); // safety re-entry
+    const overlay = this.add.rectangle(
+      VIEW.width / 2, VIEW.height / 2, VIEW.width, VIEW.height,
+      0xffd24a, 0.10,
+    ).setScrollFactor(0).setDepth(94);
+    this.tweens.add({ targets: overlay, alpha: 0.14, yoyo: true, repeat: -1, duration: 380, ease: "Sine.easeInOut" });
+
+    const banner = this.add.text(VIEW.width / 2, 220, "FRENZY!", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "96px",
+      fontStyle: "900",
+      color: "#ffd24a",
+      stroke: "#1a0f2e",
+      strokeThickness: 10,
+      shadow: { offsetX: 0, offsetY: 8, color: "#1a0f2e", blur: 18, fill: true },
+      letterSpacing: 6,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(121).setScale(0).setAlpha(0);
+    this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 320, ease: "Back.easeOut" });
+    this.tweens.add({ targets: banner, alpha: 0, y: 180, delay: 900, duration: 500, ease: "Quad.easeIn" });
+
+    // Drain timer bar at top.
+    const barW = 280;
+    const barX = VIEW.width / 2 - barW / 2;
+    const barY = 110;
+    const barBg = this.add.rectangle(VIEW.width / 2, barY, barW, 10, 0x1a0f2e, 0.7)
+      .setStrokeStyle(2, 0xffd24a).setScrollFactor(0).setDepth(95);
+    const barFill = this.add.rectangle(barX, barY, barW, 6, 0xffd24a)
+      .setOrigin(0, 0.5).setScrollFactor(0).setDepth(96);
+    this.tweens.add({
+      targets: barFill, width: 0,
+      duration, ease: "Linear",
+    });
+
+    // Tiny "FRENZY ×2 INSIGHT" caption above the bar.
+    const caption = this.add.text(VIEW.width / 2, barY - 14, "FRENZY  ×2  INSIGHT", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "11px",
+      fontStyle: "900",
+      color: "#ffd24a",
+      letterSpacing: 5,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(96);
+
+    this._frenzyGroup = [overlay, banner, barBg, barFill, caption];
+  }
+
+  endFrenzy() {
+    const group = this._frenzyGroup;
+    if (!group) return;
+    this._frenzyGroup = null;
+    this.tweens.add({
+      targets: group, alpha: 0,
+      duration: 280,
+      onComplete: () => group.forEach(o => o.destroy?.()),
+    });
   }
 
   // Big mid-screen tier callout, scales in with bounce then fades up + out.
