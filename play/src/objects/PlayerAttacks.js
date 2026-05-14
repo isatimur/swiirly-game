@@ -65,11 +65,25 @@ function spawnProjectile(scene, x, y, vx, vy, lifeMs, damage, tint, opts = {}) {
 // VFX HELPERS — visual flair only, no damage logic
 // ============================================================================
 
-// Filled crescent slash + leading hit-flash + 2 motion streaks, all rotated
-// to match the player's facing. The arc sweep is always in front of the
-// player (negative angle band when facing right, mirrored to positive band
-// when facing left) so direction is unmistakable.
+// Slash arc — uses the vfx_swipe_anim sprite flipbook when loaded (gold
+// crescent with sparkles and streaks baked in), or falls back to the
+// programmatic crescent + hit-flash + motion-streak combo.
 function slashArc(scene, x, y, facing, color = 0xffd24a, size = 1.0) {
+  if (scene.textures.exists("vfx_swipe_1") && scene.anims.exists("vfx_swipe_anim")) {
+    const slash = scene.add.sprite(
+      x + facing * 30 * size,
+      y - 64,
+      "vfx_swipe_1"
+    ).setDepth(18);
+    slash.setScale(size * 0.95);
+    slash.setFlipX(facing < 0);
+    // Heavy chain still passes a pink tint — preserve it.
+    if (color !== 0xffd24a && color !== 0xffffff) slash.setTint(color);
+    slash.play("vfx_swipe_anim");
+    slash.once("animationcomplete", () => slash.destroy());
+    return;
+  }
+  // ----- fallback (graphics-based) -----
   const cx = x + facing * 16 * size;
   const cy = y - 64;
   const R1 = 62 * size;        // outer radius of the crescent
