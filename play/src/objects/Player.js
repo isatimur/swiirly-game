@@ -596,16 +596,41 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const t = ATTACK_TUNING.groundPound;
     const scene = this.scene;
     // Camera + freeze frame so the impact reads.
-    scene.cameras.main.shake(180, 0.012);
+    scene.cameras.main.shake(220, 0.014);
     scene.effects?.freezeFrame?.(70);
     scene.effects?.dustPuff?.(this.x, this.y - 4, { color: 0xff6b6b, count: 12, scale: 1.0, ms: 420 });
     // Cracks + dust ring at impact for visible feedback.
     poundImpactVFX(scene, this.x, this.y - 4, t.shockwaveRange);
+    // Reactive environment: debris rains from above the viewport onto a
+    // wide area around impact — sells the "shook the level" feeling.
+    this._spawnPoundFallingDebris();
     // Two hitboxes, one each side, so the wave damages enemies in a range.
     this._spawnPoundHitbox(-1, t);
     this._spawnPoundHitbox( 1, t);
     SFX.attackPoundLand?.();
   }
+  _spawnPoundFallingDebris() {
+    const scene = this.scene;
+    const cam = scene.cameras.main;
+    const topY = cam.scrollY - 20;
+    for (let i = 0; i < 14; i++) {
+      const px = this.x + Phaser.Math.Between(-220, 220);
+      const endY = this.y - Phaser.Math.Between(20, 90);
+      const size = Phaser.Math.Between(2, 4);
+      const color = (i % 3 === 0) ? 0xb892e0 : 0xdcc7f2;
+      const d = scene.add.circle(px, topY + Math.random() * 40, size, color, 0.75).setDepth(5);
+      scene.tweens.add({
+        targets: d,
+        y: endY,
+        alpha: 0,
+        duration: 600 + Math.random() * 400,
+        delay: Math.random() * 220,
+        ease: "Quad.easeIn",
+        onComplete: () => d.destroy(),
+      });
+    }
+  }
+
   _spawnPoundHitbox(dir, t) {
     const scene = this.scene;
     const rect = scene.add.rectangle(this.x + dir * (t.shockwaveRange / 2), this.y - 30,
