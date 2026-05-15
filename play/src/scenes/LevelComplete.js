@@ -2,14 +2,16 @@
 // shows up as a stamp + stat-card row.
 //
 // Layout (1280 x 720, top to bottom):
-//   y  56-140  Header (label + level name)
-//   y 180-410  Celebration row (Swiirl + Brand + speech bubble)
-//   y 430-520  Rank stamp (slams in with rotation + shake)
-//   y 540-650  Stat cards (insights, time, lives) — sequential reveal
-//   y 670-700  Continue hint
+//   y  62-122  Header (label + level name)
+//   y 150-180  "NEW PERSONAL BEST" ribbon (conditional)
+//   y 220-340  Celebration row (Swiirl + Brand + speech bubble off-right)
+//   y 360-460  Rank stamp (size 76, slams in) + "PERFECT RUN" ribbon
+//   y 500-580  Score block (label / big number / best+today)
+//   y 610-678  Stat cards (insights, time, lives) — sequential reveal
+//   y 700      Continue hint
 //
-// The rank stamp is positioned in its own clear band so it can never collide
-// with the celebration sprites, regardless of frame size.
+// Each band has ~20-40px clearance from the next so the stamp can never
+// crash into the score numbers (the old layout's bug).
 
 import { VIEW } from "../config.js";
 
@@ -67,21 +69,19 @@ export class LevelCompleteScene extends Phaser.Scene {
     }
 
     // ----- HEADER -----
-    this.add.text(width / 2, 70, "INSIGHTS  DELIVERED", {
+    this.add.text(width / 2, 62, "INSIGHTS  DELIVERED", {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "17px",
+      fontSize: "15px",
       color: "#FFD24A",
       letterSpacing: 8,
     }).setOrigin(0.5);
 
-    // Title is intentionally sized so the longest level name ("Boardroom
-    // Battle" / "Executive Summit", 16 chars) leaves a clear horizontal gap
-    // to the speech bubble at brand.x + 260. At fontSize 36 + 900 weight the
-    // longest name renders ~340 px wide; the bubble's left edge sits at 880,
-    // giving ~50 px of breathing room beside the title.
-    this.add.text(width / 2, 120, this.payload.levelName, {
+    // Title sized so the longest level name ("Boardroom Battle" /
+    // "Executive Summit", 16 chars) clears the speech bubble at
+    // brand.x + 260 with breathing room.
+    this.add.text(width / 2, 100, this.payload.levelName, {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "36px",
+      fontSize: "32px",
       fontStyle: "900",
       color: "#ffffff",
       stroke: "#5C3BA3",
@@ -90,7 +90,7 @@ export class LevelCompleteScene extends Phaser.Scene {
 
     // ----- CELEBRATION ROW -----
     // Centered horizontally as a pair — Swiirl on the left, Brand on the right.
-    const rowY = 280;
+    const rowY = 240;
     // Show the player's chosen skin in the cutscene, not a generic Swiirl.
     const chosen = this.registry.get("character");
     const skin = chosen?.spriteKey ?? "beanie";
@@ -160,8 +160,8 @@ export class LevelCompleteScene extends Phaser.Scene {
     // A "stamp" is a tilted rounded square with the rank letter inside,
     // animated in with rotation + scale + screen shake to feel impactful.
     const stampX = width / 2;
-    const stampY = 470;
-    const stampSize = 96;
+    const stampY = 400;
+    const stampSize = 76;
     const stampContainer = this.add.container(stampX, stampY).setAlpha(0).setScale(2.6);
     stampContainer.setAngle(-30);
 
@@ -176,12 +176,12 @@ export class LevelCompleteScene extends Phaser.Scene {
 
     const stampLetter = this.add.text(0, 2, rank, {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "70px",
+      fontSize: "54px",
       fontStyle: "900",
       color: rankColor,
     }).setOrigin(0.5);
 
-    const rankLabel = this.add.text(0, stampSize / 2 + 22, rankRibbon, {
+    const rankLabel = this.add.text(0, stampSize / 2 + 18, rankRibbon, {
       fontFamily: "system-ui, sans-serif",
       fontSize: "11px",
       fontStyle: "700",
@@ -232,9 +232,9 @@ export class LevelCompleteScene extends Phaser.Scene {
     // ----- STAT CARDS -----
     // Three rounded panels in a horizontal row. Each fades + slides in
     // sequentially after the stamp settles for a satisfying readout.
-    const cardY = 600;
+    const cardY = 644;
     const cardW = 200;
-    const cardH = 86;
+    const cardH = 68;
     const gap = 36;
     const totalW = cardW * 3 + gap * 2;
     const cardsStartX = (width - totalW) / 2 + cardW / 2;
@@ -288,9 +288,17 @@ export class LevelCompleteScene extends Phaser.Scene {
       });
     });
 
-    // ----- NEW-BEST RIBBON -----
-    // SCORE READOUT — big tally above the rank stamp.
-    this.add.text(width / 2, 420, this._score.toLocaleString(), {
+    // ----- SCORE READOUT -----
+    // Centered band between the rank stamp's ribbon (ends ~466) and the
+    // stat-cards top edge (610), with comfortable padding on both sides.
+    this.add.text(width / 2, 504, "SCORE", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "11px",
+      fontStyle: "900",
+      color: "#dcc7f2",
+      letterSpacing: 6,
+    }).setOrigin(0.5);
+    this.add.text(width / 2, 538, this._score.toLocaleString(), {
       fontFamily: "system-ui, sans-serif",
       fontSize: "38px",
       fontStyle: "900",
@@ -299,14 +307,8 @@ export class LevelCompleteScene extends Phaser.Scene {
       strokeThickness: 6,
       letterSpacing: 3,
     }).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(width / 2, 395, "SCORE", {
-      fontFamily: "system-ui, sans-serif",
-      fontSize: "11px",
-      fontStyle: "900",
-      color: "#dcc7f2",
-      letterSpacing: 6,
-    }).setOrigin(0.5);
-    this.add.text(width / 2, 450, `BEST  ${this._bestScore.toLocaleString()}  ·  TODAY  ${this._dailyBest.toLocaleString()}`, {
+    this.add.text(width / 2, 575,
+      `BEST  ${this._bestScore.toLocaleString()}   ·   TODAY  ${this._dailyBest.toLocaleString()}`, {
       fontFamily: "system-ui, sans-serif",
       fontSize: "11px",
       color: this._isNewBestScore ? "#ffd24a" : "#dcc7f2",
@@ -314,7 +316,7 @@ export class LevelCompleteScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     if (isNewBest || this._isNewBestScore) {
-      const ribbon = this.add.container(width / 2, 178).setAlpha(0).setScale(0.6);
+      const ribbon = this.add.container(width / 2, 156).setAlpha(0).setScale(0.6);
       const rg = this.add.graphics();
       rg.fillStyle(0xffd24a, 0.96);
       rg.lineStyle(3, 0x5C3BA3, 1);
