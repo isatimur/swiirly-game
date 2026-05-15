@@ -1,4 +1,5 @@
 import { VIEW } from "../config.js";
+import { Music } from "../audio.js";
 
 export class GameOverScene extends Phaser.Scene {
   constructor() { super("GameOver"); }
@@ -9,6 +10,9 @@ export class GameOverScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    // Silence sells the loss — kill the music for the game-over screen.
+    Music.stop();
 
     // Dark bg with red-tinted vignette.
     this.add.rectangle(width / 2, height / 2, width, height, 0x100814);

@@ -382,6 +382,15 @@ export class GameScene extends Phaser.Scene {
     }
     this.scene.bringToTop("HUD");
 
+    // Start the level's chiptune track. Music.play is a no-op if already
+    // playing the same track, so re-running create() (restart) won't restart
+    // the music mid-bar. Intensity is restored to full (LevelComplete dims
+    // it for the celebration; this brings it back up for the new run).
+    import("../audio.js").then(m => {
+      m.Music.play("level" + this.levelNum);
+      m.Music.setIntensity(1.0);
+    });
+
     // Deferred so HUD's create() has finished registering game.events listeners.
     this.time.delayedCall(50, () => {
       this.game.events.emit("level-loaded", {
@@ -417,15 +426,36 @@ export class GameScene extends Phaser.Scene {
       this.time.delayedCall(360, () => this.effects.sparkleBurst(x, y, 24, 0xffd24a));
       this.time.delayedCall(420, () => this.effects.radialFlash(0xffd24a, 0.35, 480));
       SFX.bossKill();
+      // Boss music → level music, dim while the celebration plays.
+      import("../audio.js").then(m => {
+        m.Music.play("level" + this.levelNum);
+        m.Music.setIntensity(0.45);
+      });
     };
     this.game.events.on("player-hurt", onPlayerHurt);
     this.game.events.once("player-died", onPlayerDied);
     this.game.events.once("boss-defeated", onBossDefeated);
+
+    // Pause-menu actions — only valid while a game is in progress.
+    const onRestart = () => {
+      this.scene.stop("HUD");
+      this.scene.restart({ level: this.levelNum });
+    };
+    const onQuit = () => {
+      this.scene.stop("HUD");
+      import("../audio.js").then(m => m.Music.stop());
+      this.scene.start("Menu");
+    };
+    this.game.events.on("request-restart", onRestart);
+    this.game.events.on("request-quit", onQuit);
+
     // Clean up when this scene instance shuts down so stale handlers don't fire.
     this.events.once("shutdown", () => {
       this.game.events.off("player-hurt", onPlayerHurt);
       this.game.events.off("player-died", onPlayerDied);
       this.game.events.off("boss-defeated", onBossDefeated);
+      this.game.events.off("request-restart", onRestart);
+      this.game.events.off("request-quit", onQuit);
     });
 
     // ----- LEVEL INTRO CINEMATIC -----
@@ -873,6 +903,9 @@ export class GameScene extends Phaser.Scene {
     // Boss is visible but not yet active during the cinematic.
     boss.setVisible(true);
     boss.body.enable = false;
+
+    // Swap to the boss chiptune theme.
+    import("../audio.js").then(m => m.Music.play("boss"));
 
     // Phase 1 — instant: stinger shake + red wash + slow-mo dip.
     cam.shake(320, 0.014);

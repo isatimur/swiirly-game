@@ -211,26 +211,85 @@
         align-items: center;
         justify-content: center;
         flex-direction: column;
-        gap: 18px;
+        gap: 14px;
         color: #eee6f5;
+        padding: 24px;
       }
       .tc-pause-overlay.visible { display: flex; }
       .tc-pause-overlay h2 {
         font-family: system-ui, -apple-system, sans-serif;
         font-size: 42px; font-weight: 900;
-        margin: 0; letter-spacing: 4px;
+        margin: 0 0 8px; letter-spacing: 4px;
         color: #fff;
         text-shadow: 0 4px 18px rgba(0,0,0,0.5);
       }
-      .tc-pause-resume {
-        font-family: system-ui, sans-serif;
-        font-size: 16px; font-weight: 700; letter-spacing: 3px;
-        padding: 14px 30px;
+      /* Vertical pill menu items shared by every pause-menu row. */
+      .tc-pill {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 15px; font-weight: 700; letter-spacing: 3px;
+        padding: 13px 28px;
+        min-width: 240px;
         border-radius: 999px;
+        background: rgba(184, 146, 224, 0.18);
+        color: #eee6f5;
+        border: 1.5px solid rgba(184, 146, 224, 0.55);
+        cursor: pointer;
+        transition: background 0.12s, transform 0.08s;
+      }
+      .tc-pill:hover { background: rgba(184, 146, 224, 0.36); }
+      .tc-pill:active { transform: scale(0.97); }
+      /* RESUME is the primary action — fill it for emphasis. */
+      .tc-pause-resume {
         background: rgba(184, 146, 224, 0.85);
         color: #1a0f2e;
-        border: none;
-        cursor: pointer;
+        border-color: transparent;
+      }
+      .tc-pause-resume:hover { background: rgba(220, 199, 242, 0.95); }
+      /* Scope-based visibility — game-only items hide in non-Game scenes,
+         menu-only items hide in Game. Resume + Sound show everywhere. */
+      .tc-pause-overlay.menu-scope .game-only { display: none; }
+      .tc-pause-overlay:not(.menu-scope) .menu-only { display: none; }
+      /* "Danger" state for two-step confirms (reset progress). */
+      .tc-pill.danger {
+        background: rgba(255, 92, 92, 0.85);
+        color: #1a0f2e;
+        border-color: transparent;
+        animation: pulseDanger 0.7s ease-in-out infinite alternate;
+      }
+      @keyframes pulseDanger {
+        from { box-shadow: 0 0 0 0 rgba(255,92,92,0.4); }
+        to   { box-shadow: 0 0 0 6px rgba(255,92,92,0); }
+      }
+      /* About sub-panel — appears in place of the pill list. */
+      .tc-about-panel {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        max-width: 480px;
+        padding: 6px 24px;
+        text-align: center;
+      }
+      .tc-pause-overlay.about-open .tc-about-panel { display: flex; }
+      .tc-pause-overlay.about-open .tc-pill:not(.tc-about-back) { display: none; }
+      .tc-pause-overlay.about-open h2 { display: none; }
+      .tc-pause-overlay.about-open .tc-pause-hint { display: none; }
+      .tc-about-panel h3 {
+        font-family: system-ui, sans-serif;
+        font-size: 26px; font-weight: 900; letter-spacing: 4px;
+        margin: 0; color: #fff;
+      }
+      .tc-about-panel p {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        font-size: 15px; line-height: 1.55;
+        color: #dcc7f2;
+      }
+      .tc-pause-hint {
+        margin-top: 10px;
+        font-family: system-ui, sans-serif;
+        font-size: 11px; letter-spacing: 3px;
+        color: rgba(220, 199, 242, 0.55);
       }
       /* Smaller buttons in landscape on short screens (avoids heavy game overlap) */
       @media (orientation: landscape) and (max-height: 440px) {

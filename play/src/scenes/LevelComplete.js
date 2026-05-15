@@ -14,6 +14,7 @@
 // crash into the score numbers (the old layout's bug).
 
 import { VIEW } from "../config.js";
+import { Music } from "../audio.js";
 
 export class LevelCompleteScene extends Phaser.Scene {
   constructor() { super("LevelComplete"); }
@@ -25,6 +26,10 @@ export class LevelCompleteScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.cameras.main.fadeIn(500, 26, 15, 46);
+    // Dim the still-playing level track so the celebration reads. Restored
+    // when the next level loads (Game.js calls Music.play("levelN") which
+    // re-sets intensity via its own path).
+    Music.setIntensity(0.35);
 
     // Persist best run + score (overall and today's daily-best).
     const prevBest = +(localStorage.getItem("swiirl.bestInsights") || 0);
@@ -156,6 +161,25 @@ export class LevelCompleteScene extends Phaser.Scene {
     else if (ratio >= 0.60)          { rank = "B"; rankColor = "#FFFFFF"; rankFill = 0x7dc4ff; rankRibbon = "WELL  PLAYED"; }
     else                             { rank = "C"; rankColor = "#FFFFFF"; rankFill = 0xb892e0; rankRibbon = "DELIVERED"; }
 
+    // ----- PERSIST BEST RANK PER LEVEL -----
+    // Ordering S > A > B > C; only overwrite if the new rank is at least as
+    // good as the stored one. Read prevBestRank BEFORE writing so we can
+    // decide whether to render a "BEST  X" line below the stamp.
+    const RANK_ORDER = { S: 4, A: 3, B: 2, C: 1 };
+    const levelNum = this.payload.levelNum ?? 1;
+    const bestRankKey = `swiirl.bestRank.${levelNum}`;
+    const prevBestRank = localStorage.getItem(bestRankKey);
+    const newBestRank = (!prevBestRank || (RANK_ORDER[rank] ?? 0) > (RANK_ORDER[prevBestRank] ?? 0))
+      ? rank : prevBestRank;
+    if (newBestRank !== prevBestRank) {
+      try { localStorage.setItem(bestRankKey, newBestRank); } catch {}
+    }
+    // Bump the runs counter on a full-game finish (level 5 only).
+    if (levelNum === 5) {
+      const runs = +(localStorage.getItem("swiirl.runsCompleted") || 0) + 1;
+      try { localStorage.setItem("swiirl.runsCompleted", String(runs)); } catch {}
+    }
+
     // ----- RANK STAMP -----
     // A "stamp" is a tilted rounded square with the rank letter inside,
     // animated in with rotation + scale + screen shake to feel impactful.
@@ -190,6 +214,24 @@ export class LevelCompleteScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     stampContainer.add([stampBg, stampLetter, rankLabel]);
+
+    // "BEST  X" line under the stamp ribbon — only if a previous run set a
+    // best rank. Rendered outside the stamp container (no tilt) so it stays
+    // readable. Position uses the same baseline as rankLabel + a small gap.
+    if (prevBestRank) {
+      const bestRankText = this.add.text(
+        stampX, stampY + stampSize / 2 + 42,
+        `BEST  ${newBestRank}`,
+        {
+          fontFamily: "system-ui, sans-serif",
+          fontSize: "13px",
+          fontStyle: "700",
+          color: `#${rankFill.toString(16).padStart(6, "0")}`,
+          letterSpacing: 5,
+        }
+      ).setOrigin(0.5).setAlpha(0);
+      this.tweens.add({ targets: bestRankText, alpha: 1, duration: 380, delay: 1200 });
+    }
 
     // Stamp slam: rotation settles to a small tilt, scale snaps to 1.
     this.tweens.add({

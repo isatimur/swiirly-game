@@ -7,7 +7,7 @@
 // session opens with the same one preselected.
 
 import { VIEW } from "../config.js";
-import { SFX } from "../audio.js";
+import { SFX, Music } from "../audio.js";
 import { CHARACTERS } from "../characters.js";
 import { PAD } from "../gamepad.js";
 
@@ -16,6 +16,10 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+
+    // Keep the menu chiptune playing across the title → character-select
+    // boundary. No-op if already playing.
+    Music.play("menu");
 
     // Background — same sky as menu for continuity.
     this.add.image(width / 2, height / 2, "bg_far").setDisplaySize(width, height);

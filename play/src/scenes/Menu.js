@@ -2,13 +2,18 @@
 // Press Space / click to enter the level.
 
 import { VIEW } from "../config.js";
-import { SFX } from "../audio.js";
+import { SFX, Music } from "../audio.js";
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super("Menu"); }
 
   create() {
     const { width, height } = this.scale;
+
+    // Mellow menu chiptune. Music.play is a no-op if the same track is
+    // already playing (e.g. coming back from CharacterSelect).
+    Music.play("menu");
+    Music.setIntensity(1.0);
 
     // Sky background.
     this.add.image(width / 2, height / 2, "bg_far").setDisplaySize(width, height);
@@ -120,6 +125,36 @@ export class MenuScene extends Phaser.Scene {
       this.tweens.add({ targets: badge, alpha: 1, duration: 300, ease: "Quad.easeOut", delay: 350 });
     }
 
+    // Per-level rank recap row — 5 small chips colored by best rank earned.
+    // Shows even when no ranks are stored (— placeholders) once the player
+    // has at least one best-insights run, so they see what's tracked.
+    const RANK_COLORS = { S: "#ffd24a", A: "#7bd389", B: "#7dc4ff", C: "#b892e0" };
+    const ranks = [1, 2, 3, 4, 5].map(n => localStorage.getItem(`swiirl.bestRank.${n}`));
+    if (ranks.some(r => r != null)) {
+      const rowY = height / 2 + 220;
+      this.add.text(width / 2, rowY - 20, "YOUR  RANKS", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "11px",
+        color: "#b892e0",
+        letterSpacing: 5,
+      }).setOrigin(0.5);
+      const chipW = 44, gap = 8;
+      const totalW = ranks.length * chipW + (ranks.length - 1) * gap;
+      const startX = (width - totalW) / 2 + chipW / 2;
+      ranks.forEach((r, i) => {
+        const cx = startX + i * (chipW + gap);
+        const color = r ? RANK_COLORS[r] : "#3a2860";
+        const chip = this.add.rectangle(cx, rowY, chipW, 30, 0x1a0f2e, 0.55)
+          .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(color).color);
+        this.add.text(cx, rowY, r ?? "—", {
+          fontFamily: "system-ui, sans-serif",
+          fontSize: r ? "16px" : "14px",
+          fontStyle: r ? "900" : "400",
+          color: r ? color : "#5C3BA3",
+        }).setOrigin(0.5);
+      });
+    }
+
     const start = () => {
       SFX.collect();
       this.cameras.main.fadeOut(420, 26, 15, 46);
@@ -134,5 +169,89 @@ export class MenuScene extends Phaser.Scene {
     // Gamepad: × button advances.
     this.game.events.once("gamepad-cross", start);
     this.events.once("shutdown", () => this.game.events.off("gamepad-cross", start));
+
+    // One-time feedback prompt — surfaces after the player has completed
+    // 3 full runs (i.e. beaten Level 5 three times). Shown as a Phaser
+    // card so it lives in the same render layer as the rest of the menu.
+    const runsCompleted = +(localStorage.getItem("swiirl.runsCompleted") || 0);
+    const feedbackGiven = localStorage.getItem("swiirl.feedbackGiven") === "1";
+    if (runsCompleted >= 3 && !feedbackGiven) {
+      this.time.delayedCall(900, () => this._showFeedbackPrompt());
+    }
+  }
+
+  _showFeedbackPrompt() {
+    const { width, height } = this.scale;
+    const cardX = width / 2;
+    const cardY = height - 230;
+    const cardW = 380, cardH = 180;
+
+    const card = this.add.container(cardX, cardY).setAlpha(0).setDepth(900);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1a0f2e, 0.94);
+    bg.lineStyle(2, 0xb892e0, 1);
+    bg.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 18);
+    bg.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 18);
+    const title = this.add.text(0, -cardH / 2 + 30, "Enjoying  Swiirl?", {
+      fontFamily: "system-ui, sans-serif", fontSize: "20px",
+      fontStyle: "900", color: "#ffffff", letterSpacing: 3,
+    }).setOrigin(0.5);
+    const sub = this.add.text(0, -cardH / 2 + 58,
+      "Tap a face — one-time prompt, stays local.", {
+      fontFamily: "system-ui, sans-serif", fontSize: "12px",
+      color: "#b892e0", letterSpacing: 2,
+    }).setOrigin(0.5);
+    const up   = this._mkFeedbackBtn(-90, 30, "👍", () => this._submitFeedback("up", card));
+    const down = this._mkFeedbackBtn(  0, 30, "👎", () => this._submitFeedback("down", card));
+    const later = this.add.text(95, 35, "MAYBE\nLATER", {
+      fontFamily: "system-ui, sans-serif", fontSize: "11px",
+      fontStyle: "700", color: "#dcc7f2",
+      align: "center", letterSpacing: 2,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    later.on("pointerdown", () => this._dismissFeedback(card));
+
+    card.add([bg, title, sub, up, down, later]);
+    this.tweens.add({ targets: card, alpha: 1, y: cardY - 8, duration: 320, ease: "Back.easeOut" });
+  }
+
+  _mkFeedbackBtn(x, y, emoji, onPress) {
+    const ring = this.add.circle(x, y, 28, 0xb892e0, 0.22).setStrokeStyle(2, 0xb892e0);
+    const t = this.add.text(x, y, emoji, { fontSize: "26px" }).setOrigin(0.5);
+    ring.setInteractive({ useHandCursor: true });
+    ring.on("pointerover", () => ring.setFillStyle(0xb892e0, 0.45));
+    ring.on("pointerout",  () => ring.setFillStyle(0xb892e0, 0.22));
+    ring.on("pointerdown", onPress);
+    return this.add.container(0, 0, [ring, t]);
+  }
+
+  _submitFeedback(kind, card) {
+    try {
+      localStorage.setItem("swiirl.feedback", kind);
+      localStorage.setItem("swiirl.feedbackGiven", "1");
+    } catch {}
+    this.game.events.emit("feedback-given", { kind });
+    SFX.win();
+    const thanks = this.add.text(this.scale.width / 2, this.scale.height - 230,
+      "thanks!  ★", {
+      fontFamily: "system-ui, sans-serif", fontSize: "18px",
+      fontStyle: "900", color: "#ffd24a", letterSpacing: 4,
+    }).setOrigin(0.5).setAlpha(0).setDepth(901);
+    this._dismissFeedback(card, () => {
+      this.tweens.add({ targets: thanks, alpha: 1, duration: 200 });
+      this.time.delayedCall(1400, () => {
+        this.tweens.add({ targets: thanks, alpha: 0, duration: 300, onComplete: () => thanks.destroy() });
+      });
+    });
+  }
+
+  _dismissFeedback(card, onDone) {
+    this.tweens.add({
+      targets: card, alpha: 0, y: card.y + 8,
+      duration: 220, ease: "Quad.easeIn",
+      onComplete: () => {
+        card.destroy();
+        if (onDone) onDone();
+      },
+    });
   }
 }

@@ -1,5 +1,5 @@
 import { VIEW } from "./config.js";
-import { initTouchControls } from "./touchControls.js";
+import { initTouchControls, wireGamepadPause } from "./touchControls.js";
 import { initGamepad, rumble } from "./gamepad.js";
 import { BootScene } from "./scenes/Boot.js";
 import { MenuScene } from "./scenes/Menu.js";
@@ -40,6 +40,8 @@ initTouchControls();
 const game = new Phaser.Game(config);
 if (typeof window !== "undefined") window.game = game;
 initGamepad(game);
+// Gamepad Options button toggles the universal pause menu (any scene).
+wireGamepadPause(game);
 
 // Haptic feedback on key gameplay moments. Tuned so it punctuates rather
 // than buzzes constantly — short on damage, longer on boss kill / frenzy.

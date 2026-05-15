@@ -145,3 +145,214 @@ export { blip as _blip, noiseBurst as _noiseBurst, chord as _chord };
 export function setMuted(m) { muted = m; }
 export function toggleMuted() { muted = !muted; return muted; }
 export function isMuted() { return muted; }
+
+// ============================================================================
+// MUSIC — procedural chiptune background tracks. No audio files; everything is
+// synthesized through `OscillatorNode` + a tiny step sequencer. Per-level
+// themes plus a boss theme. Notes are encoded as semitones from A4
+// (e.g. 0 = A4 / 440 Hz, 12 = A5 / 880 Hz, -12 = A3 / 220 Hz). `null` = rest.
+// Each track is one bar of 16 steps (16th-notes at the given BPM); the bar
+// loops indefinitely.
+// ============================================================================
+
+const MUSIC_MASTER = 0.18;       // sits under SFX (0.45) — Mario-style mix
+const SCHED_INTERVAL_MS = 25;    // scheduler tick rate
+const SCHED_LOOKAHEAD_S = 0.10;  // schedule notes up to 100 ms ahead
+
+let musicGain = null;
+let musicLowpass = null;
+let musicMuted = false;
+let currentTrackId = null;
+let currentTrack = null;
+let nextStepTime = 0;
+let stepIndex = 0;
+let schedulerId = null;
+
+// Persist music-mute preference across sessions.
+try { musicMuted = localStorage.getItem("swiirl.musicMuted") === "1"; } catch {}
+
+function ensureMusicGraph() {
+  ensureCtx();
+  if (musicGain) return;
+  musicGain = ctx.createGain();
+  musicGain.gain.value = 0;
+  musicLowpass = ctx.createBiquadFilter();
+  musicLowpass.type = "lowpass";
+  musicLowpass.frequency.value = 6000;
+  musicGain.connect(musicLowpass).connect(ctx.destination);
+}
+
+function pitchHz(semis) { return 440 * Math.pow(2, semis / 12); }
+
+function scheduleVoice(when, semis, voice, duration) {
+  if (semis == null) return;
+  const c = ctx;
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = voice.type;
+  osc.frequency.value = pitchHz(semis);
+  g.gain.setValueAtTime(0, when);
+  g.gain.linearRampToValueAtTime(voice.gain, when + voice.attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + voice.attack + duration);
+  osc.connect(g).connect(musicGain);
+  osc.start(when);
+  osc.stop(when + voice.attack + duration + 0.05);
+}
+
+function scheduleDrum(when, kind) {
+  if (!kind) return;
+  const c = ctx;
+  const dur = kind === "kick" ? 0.10 : 0.04;
+  const buf = c.createBuffer(1, Math.max(1, Math.floor(c.sampleRate * dur)), c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    const t = i / data.length;
+    data[i] = (Math.random() * 2 - 1) * (1 - t);
+  }
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const filter = c.createBiquadFilter();
+  filter.type = kind === "kick" ? "lowpass" : "bandpass";
+  filter.frequency.value = kind === "kick" ? 140 : 4200;
+  const g = c.createGain();
+  g.gain.value = kind === "kick" ? 0.30 : 0.14;
+  src.connect(filter).connect(g).connect(musicGain);
+  src.start(when);
+}
+
+// Voice presets — quieter than SFX so they blend under the action.
+const V_LEAD = { type: "square",   gain: 0.16, attack: 0.005 };
+const V_HARM = { type: "triangle", gain: 0.09, attack: 0.005 };
+const V_BASS = { type: "triangle", gain: 0.20, attack: 0.005 };
+
+// All tracks are 16 steps (one bar of 16th notes). Note values = semitones
+// from A4. Composed to fit each level's mood — see header for the legend.
+const TRACKS = {
+  // Mellow C-major loop for the title / character select. Walking bass.
+  menu: {
+    bpm: 96,
+    lead:    [0, null, 4, null, 7, null, 12, null,    11, null, 7, null, 4, null, 0, null],
+    harmony: [null, null, null, 4, null, null, 9, null,  null, null, null, 4, null, null, 5, null],
+    bass:    [-12, null, null, null, -8, null, null, null, -5, null, null, null, -8, null, null, null],
+    drum:    [null, null, "hat", null, "kick", null, "hat", null,    null, null, "hat", null, "kick", null, "hat", null],
+  },
+  // Bright F-major overworld bounce.
+  level1: {
+    bpm: 132,
+    lead:    [8, null, 12, 15, 12, null, 8, 12,    15, 17, 15, 12, 8, null, 5, null],
+    harmony: [null, null, null, null, 5, null, null, null,    null, null, 3, null, null, null, null, null],
+    bass:    [-16, null, null, null, -16, null, null, null,    -9, null, null, null, -9, null, null, null],
+    drum:    ["kick", null, "hat", null, null, null, "hat", null, "kick", null, "hat", null, null, null, "hat", null],
+  },
+  // Cool A-minor — slower, mellow with quarter-note hits.
+  level2: {
+    bpm: 116,
+    lead:    [0, null, 3, null, 7, null, 12, null,    10, null, 7, null, 3, null, 0, null],
+    harmony: [-5, null, null, null, 3, null, null, null,  -7, null, null, null, 0, null, null, null],
+    bass:    [-12, null, null, null, -10, null, null, null, -17, null, null, null, -10, null, null, null],
+    drum:    ["kick", null, null, null, "hat", null, null, null, "kick", null, null, null, "hat", null, null, null],
+  },
+  // D-dorian, pulsing arpeggios — tense.
+  level3: {
+    bpm: 144,
+    lead:    [5, 8, 12, 14, 12, 8, 5, 8,    7, 10, 14, 17, 14, 10, 7, 10],
+    harmony: [null, null, null, null, 12, null, null, null,    null, null, null, null, 14, null, null, null],
+    bass:    [-7, null, null, null, -7, null, null, null,  -5, null, null, null, -5, null, null, null],
+    drum:    ["kick", null, "hat", null, "kick", null, "hat", "hat", "kick", null, "hat", null, "kick", null, "hat", null],
+  },
+  // E-phrygian, syncopated, stuttering.
+  level4: {
+    bpm: 160,
+    lead:    [7, null, 7, 8, 10, null, 12, null,    14, 12, 10, 8, 7, null, 5, 7],
+    harmony: [null, null, null, null, null, null, 15, null,    null, null, null, null, 12, null, null, null],
+    bass:    [-5, null, -5, null, -5, null, -5, null,  -10, null, -10, null, -10, null, -10, null],
+    drum:    ["kick", null, "hat", "hat", "kick", null, "hat", null, "kick", "hat", "hat", null, "kick", null, "hat", "hat"],
+  },
+  // G-minor, broad chord stabs — summit / ominous.
+  level5: {
+    bpm: 156,
+    lead:    [10, null, 13, null, 17, null, 22, null,    20, null, 17, null, 13, null, 10, null],
+    harmony: [10, null, null, null, 13, null, null, null,  10, null, null, null, 13, null, null, null],
+    bass:    [-14, null, null, null, -14, null, null, null,    -7, null, null, null, -7, null, null, null],
+    drum:    ["kick", null, "kick", null, "hat", null, "hat", null, "kick", null, "kick", null, "hat", null, "hat", null],
+  },
+  // Boss — chromatic descent, heavy bass on every beat.
+  boss: {
+    bpm: 168,
+    lead:    [12, 11, 10, 9, 8, 7, 6, 5,    4, 3, 4, 5, 6, 7, 8, 9],
+    harmony: [null, null, null, null, 3, null, null, null,    null, null, null, null, 0, null, null, null],
+    bass:    [-12, null, -12, null, -12, null, -12, null,  -14, null, -14, null, -14, null, -14, null],
+    drum:    ["kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat"],
+  },
+};
+
+function tickScheduler() {
+  if (!currentTrack || !ctx) return;
+  const stepDur = 60 / currentTrack.bpm / 4;
+  while (nextStepTime < ctx.currentTime + SCHED_LOOKAHEAD_S) {
+    const step = stepIndex % currentTrack.lead.length;
+    // Mute check is per-tick so toggling pauses audio mid-bar without
+    // tearing down the schedule. Re-unmute resumes mid-bar (correct).
+    if (!muted && !musicMuted) {
+      const noteDur = stepDur * 0.9;
+      scheduleVoice(nextStepTime, currentTrack.lead[step],    V_LEAD, noteDur);
+      scheduleVoice(nextStepTime, currentTrack.harmony[step], V_HARM, noteDur * 1.3);
+      scheduleVoice(nextStepTime, currentTrack.bass[step],    V_BASS, noteDur * 1.5);
+      scheduleDrum(nextStepTime, currentTrack.drum[step]);
+    }
+    nextStepTime += stepDur;
+    stepIndex++;
+  }
+}
+
+export const Music = {
+  /** Start (or switch to) a track. No-op if same track already playing. */
+  play(trackId) {
+    if (!TRACKS[trackId]) return;
+    ensureMusicGraph();
+    if (currentTrackId === trackId && schedulerId) return;
+    currentTrackId = trackId;
+    currentTrack = TRACKS[trackId];
+    stepIndex = 0;
+    nextStepTime = ctx.currentTime + 0.08;
+    // Fade in.
+    const t = ctx.currentTime;
+    musicGain.gain.cancelScheduledValues(t);
+    musicGain.gain.setValueAtTime(musicGain.gain.value, t);
+    musicGain.gain.linearRampToValueAtTime(MUSIC_MASTER, t + 0.6);
+    if (!schedulerId) {
+      schedulerId = setInterval(tickScheduler, SCHED_INTERVAL_MS);
+    }
+  },
+  /** Fade out and stop the scheduler. */
+  stop() {
+    if (!musicGain || !ctx) return;
+    const t = ctx.currentTime;
+    musicGain.gain.cancelScheduledValues(t);
+    musicGain.gain.setValueAtTime(musicGain.gain.value, t);
+    musicGain.gain.linearRampToValueAtTime(0, t + 0.5);
+    setTimeout(() => {
+      if (schedulerId) { clearInterval(schedulerId); schedulerId = null; }
+      currentTrack = null;
+      currentTrackId = null;
+    }, 540);
+  },
+  /** 0..1 — drives lowpass cutoff. 0.3 = muffled, 1 = bright. */
+  setIntensity(x) {
+    if (!musicLowpass || !ctx) return;
+    const v = Math.max(0.1, Math.min(1, x));
+    const cutoff = 600 + (6000 - 600) * v;
+    const t = ctx.currentTime;
+    musicLowpass.frequency.cancelScheduledValues(t);
+    musicLowpass.frequency.setValueAtTime(musicLowpass.frequency.value, t);
+    musicLowpass.frequency.exponentialRampToValueAtTime(cutoff, t + 0.6);
+  },
+};
+
+export function setMusicMuted(m) {
+  musicMuted = !!m;
+  try { localStorage.setItem("swiirl.musicMuted", musicMuted ? "1" : "0"); } catch {}
+  return musicMuted;
+}
+export function toggleMusicMuted() { return setMusicMuted(!musicMuted); }
+export function isMusicMuted() { return musicMuted; }
