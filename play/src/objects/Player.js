@@ -83,6 +83,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this._idleTimer = 0;
     this._entertainerActive = false;
     this._trailTimer = 0;
+    this._ghostTimer = 0;
     this._prevState = "idle";
 
     this._cursors = scene.input.keyboard.createCursorKeys();
@@ -490,6 +491,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this._trailTimer = 0;
     }
 
+    // Combo ghost trail: at combo ≥5 the player leaves fading after-images.
+    // Color shifts gold during Frenzy for extra peak-state cool factor.
+    const comboState = this.scene.combo;
+    const comboCount = comboState?.count ?? 0;
+    const moving = Math.abs(this.body.velocity.x) > 80 || !grounded;
+    if (comboCount >= 5 && moving) {
+      this._ghostTimer += dt;
+      const interval = comboState?.frenzyActive ? 50 : 80;
+      if (this._ghostTimer >= interval) {
+        this._ghostTimer = 0;
+        this._spawnComboGhost(comboState?.frenzyActive ? 0xffd24a : 0xff8fbe);
+      }
+    } else {
+      this._ghostTimer = 0;
+    }
+
     // Idle entertainer: subtle stretch animation after 3s of idle.
     if (next === "idle" && grounded && !this._sliding) {
       this._idleTimer += dt;
@@ -631,6 +648,27 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const dir = Math.sign(this.x - targetX) || -this.facing;
       this.setVelocityX(this.body.velocity.x + dir * 60);
     }
+  }
+
+  // Spawn a fading colored after-image at the player's current pose. Used
+  // by the combo ghost trail above ×5 / Frenzy.
+  _spawnComboGhost(tint) {
+    if (!this.scene || !this.scene.add) return;
+    const ghost = this.scene.add.image(this.x, this.y, this.texture.key)
+      .setOrigin(0.5, 1.0)
+      .setScale(this.scaleX, this.scaleY)
+      .setFlipX(this.flipX)
+      .setAlpha(0.45)
+      .setTint(tint)
+      .setDepth((this.depth ?? 5) - 1);
+    this.scene.tweens.add({
+      targets: ghost,
+      alpha: 0,
+      scale: this.scaleX * 0.9,
+      duration: 320,
+      ease: "Quad.easeOut",
+      onComplete: () => ghost.destroy(),
+    });
   }
 
   celebrate() {
