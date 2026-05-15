@@ -12,7 +12,7 @@
 // older version feel jittery — texture would change before the next frame
 // reset it).
 
-import { PHYSICS, PLAYER, SIGNAL_DURATIONS } from "../config.js";
+import { PHYSICS, PLAYER, SIGNAL_DURATIONS, IS_MOBILE } from "../config.js";
 import { SFX } from "../audio.js";
 import { TOUCH } from "../touchControls.js";
 import { PAD } from "../gamepad.js";
@@ -508,12 +508,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Combo ghost trail: at combo ≥5 the player leaves fading after-images.
     // Color shifts gold during Frenzy for extra peak-state cool factor.
+    // Mobile: spawns ~half as often (160ms / 110ms vs 80ms / 50ms) so the
+    // cumulative tween load doesn't tank framerate on long combos.
     const comboState = this.scene.combo;
     const comboCount = comboState?.count ?? 0;
     const moving = Math.abs(this.body.velocity.x) > 80 || !grounded;
     if (comboCount >= 5 && moving) {
       this._ghostTimer += dt;
-      const interval = comboState?.frenzyActive ? 50 : 80;
+      let interval = comboState?.frenzyActive ? 50 : 80;
+      if (IS_MOBILE) interval *= 2;
       if (this._ghostTimer >= interval) {
         this._ghostTimer = 0;
         this._spawnComboGhost(comboState?.frenzyActive ? 0xffd24a : 0xff8fbe);
@@ -628,7 +631,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const scene = this.scene;
     const cam = scene.cameras.main;
     const topY = cam.scrollY - 20;
-    for (let i = 0; i < 14; i++) {
+    const debrisCount = IS_MOBILE ? 6 : 14;
+    for (let i = 0; i < debrisCount; i++) {
       const px = this.x + Phaser.Math.Between(-220, 220);
       const endY = this.y - Phaser.Math.Between(20, 90);
       const size = Phaser.Math.Between(2, 4);

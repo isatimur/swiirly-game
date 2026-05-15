@@ -28,7 +28,16 @@
         overflow: hidden;
         overscroll-behavior: none;
         touch-action: none;
+        /* Kill iOS/Android tap flash + selection rectangles globally — without
+           this, every tap on the canvas or on a control flashes a translucent
+           highlight, and a long-press selects the emoji glyph. */
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
       }
+      /* The Phaser canvas should never show a focus ring or selection caret. */
+      #game canvas { outline: none; -webkit-user-select: none; user-select: none; }
       #game {
         width: 100vw;
         height: 100vh;
@@ -103,13 +112,17 @@
         display: flex; align-items: center; justify-content: center;
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
         user-select: none;
+        outline: none;
         cursor: pointer;
-        /* backdrop-filter gives it depth against the game */
-        backdrop-filter: blur(6px) brightness(1.1);
-        -webkit-backdrop-filter: blur(6px) brightness(1.1);
         transition: background 0.07s, transform 0.07s;
+        /* No backdrop-filter — it's the single most expensive CSS prop on
+           mobile GPUs, and we have up to 7 of these on-screen at once. */
       }
+      .tc-btn:focus,
+      .tc-btn:focus-visible { outline: none; }
       .tc-btn.tc-active {
         background: rgba(255,255,255,0.28);
         transform: scale(0.91);
@@ -163,7 +176,7 @@
         pointer-events: all;
         width: 44px; height: 44px;
         border-radius: 50%;
-        background: rgba(26, 15, 46, 0.55);
+        background: rgba(26, 15, 46, 0.78);
         border: 1.5px solid rgba(255,255,255,0.22);
         color: rgba(255,255,255,0.88);
         font-size: 18px;
@@ -172,25 +185,34 @@
         display: flex; align-items: center; justify-content: center;
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
         user-select: none;
+        outline: none;
         cursor: pointer;
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
       }
+      .tc-icon:focus,
+      .tc-icon:focus-visible { outline: none; }
       .tc-icon:active { transform: scale(0.9); }
+      .tc-pause-resume {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        outline: none;
+      }
+      .tc-pause-resume:focus { outline: none; }
       /* Pause overlay shown while game is paused. */
       .tc-pause-overlay {
         display: none;
         position: fixed; inset: 0;
-        background: rgba(10, 6, 22, 0.72);
+        background: rgba(10, 6, 22, 0.88);
         z-index: 250;
         align-items: center;
         justify-content: center;
         flex-direction: column;
         gap: 18px;
         color: #eee6f5;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
       }
       .tc-pause-overlay.visible { display: flex; }
       .tc-pause-overlay h2 {

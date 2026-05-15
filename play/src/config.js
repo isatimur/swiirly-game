@@ -5,6 +5,13 @@ export const VIEW = {
   height: 720,
 };
 
+// Mobile detection — read ONCE at module load (coarse pointer = touch device).
+// Used to dial down particle counts, skip combo ghost trail, and otherwise
+// keep the frame budget under control on phone GPUs. Desktop stays untouched.
+export const IS_MOBILE = (typeof window !== "undefined")
+  && (window.matchMedia?.("(pointer: coarse)").matches
+      || (window.innerWidth ?? 9999) < 820);
+
 export const PALETTE = {
   deep: 0x5c3ba3,
   mid: 0x8b63c9,

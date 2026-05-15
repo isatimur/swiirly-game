@@ -1,7 +1,7 @@
 // Main gameplay scene — Community Park.
 // Builds the world from level1 data, runs physics, dispatches collisions.
 
-import { VIEW, PHYSICS, PLAYER } from "../config.js";
+import { VIEW, PHYSICS, PLAYER, IS_MOBILE } from "../config.js";
 import { Player } from "../objects/Player.js";
 import { JargonBlob, GutFeelGhost, PaperworkPile, IncompetenceManager, DeadlineBot, BossBase, makeBoss } from "../objects/Enemies.js";
 import { Insight, CommunitySignal } from "../objects/Collectibles.js";
@@ -552,6 +552,10 @@ export class GameScene extends Phaser.Scene {
       5: { color: 0xffd24a, count: 26, shape: "spark", size: 3, speed: 40, msMin: 3000, msMax: 6000,  dirX: 0, gravity: 60 },   // sparks falling
     })[levelNum];
     if (!cfg) return;
+    // Mobile budget: each ambient is a tween + game object that respawns on
+    // complete, so the cost compounds with count. 40% feels equally lively
+    // but lets the frame loop breathe on phone GPUs.
+    if (IS_MOBILE) cfg.count = Math.max(3, Math.round(cfg.count * 0.4));
 
     // Per-level atmospheric haze — a wide tinted overlay that slowly breathes
     // in opacity, giving each environment a distinct "mood" beyond particles.
