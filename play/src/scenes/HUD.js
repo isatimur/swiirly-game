@@ -182,6 +182,7 @@ export class HUDScene extends Phaser.Scene {
           8:  { label: "INSANE!",   color: "#ff8866", scale: 1.45 },
           12: { label: "GODLIKE!",  color: "#ff5cb0", scale: 1.65 },
           16: { label: "UNREAL!!",  color: "#ffffff", scale: 1.85 },
+          20: { label: "RAMPAGE!!", color: "#ff3060", scale: 2.10 },
         };
         const tier = tiers[count];
         if (tier) this.spawnTierCallout(tier);

@@ -545,13 +545,35 @@ export class GameScene extends Phaser.Scene {
     const VIEW_W = this.cameras.main.width;
     const VIEW_H = this.cameras.main.height;
     const cfg = ({
-      1: { color: 0xffe6a0, count: 12, shape: "dot",   size: 3, speed: 30, msMin: 8000, msMax: 14000, dirX: 1, gravity: 18 },   // pollen drifting right
-      2: { color: 0xdcc7f2, count: 10, shape: "rect",  size: 6, speed: 50, msMin: 9000, msMax: 14000, dirX: 1, gravity: 12 },   // floating papers
-      3: { color: 0xffe6a0, count: 6,  shape: "ray",   size: 80, speed: 0,  msMin: 4000, msMax: 7000,  dirX: 0, gravity: 0  },   // god rays
-      4: { color: 0x40e0c0, count: 18, shape: "dot",   size: 2, speed: 55, msMin: 4000, msMax: 8000,  dirX: 1, gravity: -30 }, // data bits rising
-      5: { color: 0xffd24a, count: 14, shape: "spark", size: 3, speed: 40, msMin: 3000, msMax: 6000,  dirX: 0, gravity: 60 },   // sparks falling
+      1: { color: 0xffe6a0, count: 22, shape: "dot",   size: 3, speed: 30, msMin: 8000, msMax: 14000, dirX: 1, gravity: 18 },   // pollen drifting right
+      2: { color: 0xdcc7f2, count: 18, shape: "rect",  size: 6, speed: 50, msMin: 9000, msMax: 14000, dirX: 1, gravity: 12 },   // floating papers
+      3: { color: 0xffe6a0, count: 11, shape: "ray",   size: 80, speed: 0,  msMin: 4000, msMax: 7000,  dirX: 0, gravity: 0  },   // god rays
+      4: { color: 0x40e0c0, count: 32, shape: "dot",   size: 2, speed: 55, msMin: 4000, msMax: 8000,  dirX: 1, gravity: -30 }, // data bits rising
+      5: { color: 0xffd24a, count: 26, shape: "spark", size: 3, speed: 40, msMin: 3000, msMax: 6000,  dirX: 0, gravity: 60 },   // sparks falling
     })[levelNum];
     if (!cfg) return;
+
+    // Per-level atmospheric haze — a wide tinted overlay that slowly breathes
+    // in opacity, giving each environment a distinct "mood" beyond particles.
+    const hazeCfg = ({
+      1: { color: 0xffe6a0, alpha: 0.05 },  // golden hour park
+      2: { color: 0x4060a0, alpha: 0.08 },  // cold office
+      3: { color: 0xff8866, alpha: 0.07 },  // amber boardroom
+      4: { color: 0x40a0a0, alpha: 0.09 },  // teal server room
+      5: { color: 0x8090c8, alpha: 0.07 },  // steel summit
+    })[levelNum];
+    if (hazeCfg) {
+      const haze = this.add.rectangle(VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, hazeCfg.color, hazeCfg.alpha)
+        .setScrollFactor(0).setDepth(-25);
+      this.tweens.add({
+        targets: haze,
+        alpha: hazeCfg.alpha * 1.7,
+        duration: 3200,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
 
     const spawn = (initial = false) => {
       const p = (() => {
@@ -658,10 +680,17 @@ export class GameScene extends Phaser.Scene {
 
   addScore(amount, x, y) {
     if (!amount) return;
+    const before = this.score;
     this.score += amount;
     this.game.events.emit("score-changed", { score: this.score, delta: amount });
     if (x != null && y != null) {
       this.effects?.comboFloat?.(x, y - 18, `+${amount}`, "#ffd24a");
+    }
+    // Score milestone celebration — every 5000 points crossed.
+    const prevTier = Math.floor(before / 5000);
+    const newTier  = Math.floor(this.score / 5000);
+    if (newTier > prevTier && newTier > 0) {
+      this._celebrateScoreMilestone(newTier * 5000, x, y);
     }
   }
 
@@ -826,6 +855,84 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Multi-phase dramatic entrance when the player first enters the boss arena.
+   * Replaces the old "snap to visible + show banner" with: slow-mo, camera
+   * pull-back, red radial flash, ground tremor, and a swarm of dark motes
+   * converging on the boss before it actually becomes hittable.
+   */
+  triggerBossEntrance() {
+    const boss = this.boss;
+    const cam = this.cameras.main;
+    const name = boss.displayName ?? "BOSS";
+
+    // Boss is visible but not yet active during the cinematic.
+    boss.setVisible(true);
+    boss.body.enable = false;
+
+    // Phase 1 — instant: stinger shake + red wash + slow-mo dip.
+    cam.shake(320, 0.014);
+    this.effects.radialFlash(0xff3060, 0.35, 420);
+    this.effects.slowMo(0.4, 160, 280, 520);
+    SFX.attackConfirm?.();
+
+    // Phase 1b — camera pulls back a touch to reveal the arena.
+    const baseZoom = cam.zoom;
+    this.tweens.add({
+      targets: cam, zoom: baseZoom - 0.05,
+      duration: 240, ease: "Quad.easeOut",
+      yoyo: true, hold: 320,
+    });
+
+    // Phase 2 — boss aura: dark motes converge on the boss, then a single
+    // bright pulse fires outward as it "wakes up".
+    this.time.delayedCall(280, () => {
+      if (!boss.active) return;
+      const bx = boss.x, by = boss.y - boss.displayHeight * 0.35;
+      for (let i = 0; i < 22; i++) {
+        const angle = (i / 22) * Math.PI * 2;
+        const r = 220 + Math.random() * 60;
+        const sx = bx + Math.cos(angle) * r;
+        const sy = by + Math.sin(angle) * r * 0.6;
+        const dot = this.add.circle(sx, sy, 4, 0xff5c5c, 1).setDepth(50);
+        this.tweens.add({
+          targets: dot,
+          x: bx, y: by,
+          alpha: 0, scale: 0.3,
+          duration: 520 + Math.random() * 180,
+          ease: "Quad.easeIn",
+          onComplete: () => dot.destroy(),
+        });
+      }
+      // Outward pulse ring on arrival.
+      this.time.delayedCall(560, () => {
+        if (!boss.active) return;
+        this.effects.bossShockwave(bx, by);
+      });
+    });
+
+    // Phase 3 — announce + HUD bar + activate hitbox.
+    this.time.delayedCall(820, () => {
+      this.game.events.emit("boss-name", name);
+      this.showActBanner(name);
+      this.game.events.emit("boss-health", { current: boss.health, max: boss.maxHealth });
+      if (boss.active) boss.body.enable = true;
+    });
+  }
+
+  /** Celebrates crossing every 5000-point threshold with a screen flash,
+   *  big sparkle burst, comboFloat, and a satisfying chord. */
+  _celebrateScoreMilestone(milestone, x, y) {
+    const cam = this.cameras.main;
+    cam.flash(260, 255, 235, 170);
+    cam.shake(220, 0.008);
+    const px = x ?? this.player.x;
+    const py = (y ?? this.player.y) - 40;
+    this.effects.sparkleBurst(px, py, 24, 0xffd24a);
+    this.effects.comboFloat(px, py - 32, `${(milestone / 1000).toFixed(0)}K!`, "#ffd24a");
+    SFX.collectAt?.(8);
+  }
+
   showActBanner(text) {
     const banner = this.add.text(this.scale.width / 2, 90, text, {
       fontFamily: "system-ui, sans-serif",
@@ -857,13 +964,7 @@ export class GameScene extends Phaser.Scene {
       this.bgNear.setAlpha(Math.max(0.3, this.bgNear.alpha - 0.005));
       if (!this.bossActive && !this.boss.dead) {
         this.bossActive = true;
-        this.boss.setVisible(true);
-        this.boss.body.enable = true;
-        // Announce the boss to HUD + show name banner.
-        this.game.events.emit("boss-name", this.boss.displayName ?? "INCOMPETENCE MANAGER");
-        this.showActBanner(this.boss.displayName ?? "BOSS");
-        // Initialize boss bar with full health.
-        this.game.events.emit("boss-health", { current: this.boss.health, max: this.boss.maxHealth });
+        this.triggerBossEntrance();
       }
     }
 
