@@ -67,7 +67,15 @@
         #rotate-hint { display: flex; }
       }
 
-      /* ---- Virtual gamepad (injected by touchControls.js on touch devices) ---- */
+      /* ---- Virtual gamepad (injected by touchControls.js on touch devices) ----
+         Sizes scale slightly with viewport min-side so an iPhone SE and iPad Pro
+         both get comfortable tap targets without one being a postage stamp on
+         the other. --tcSz is clamped between 60 and 92 px.                 */
+      :root {
+        --tcSz: clamp(60px, 9.5vmin, 92px);
+        --tcGap: clamp(8px, 1.6vmin, 14px);
+        --tcEdge: clamp(14px, 2.6vmin, 24px);
+      }
       #tc {
         position: fixed;
         inset: 0;
@@ -76,21 +84,22 @@
       }
       .tc-dpad {
         position: absolute;
-        bottom: calc(24px + env(safe-area-inset-bottom));
-        left: 20px;
+        bottom: calc(var(--tcEdge) + env(safe-area-inset-bottom));
+        left: var(--tcEdge);
         display: flex;
-        gap: 12px;
+        gap: var(--tcGap);
         pointer-events: none;
       }
       .tc-btn {
         pointer-events: all;
-        width: 72px; height: 72px;
+        width: var(--tcSz); height: var(--tcSz);
         border-radius: 50%;
         background: rgba(255,255,255,0.10);
         border: 2px solid rgba(255,255,255,0.28);
         color: rgba(255,255,255,0.88);
-        font-size: 26px;
+        font-size: calc(var(--tcSz) * 0.36);
         line-height: 1;
+        padding: 0;
         display: flex; align-items: center; justify-content: center;
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
@@ -105,40 +114,105 @@
         background: rgba(255,255,255,0.28);
         transform: scale(0.91);
       }
+      .tc-down {
+        /* Slightly smaller than the L/R thumbs so it sits between/under them
+           ergonomically without crowding. */
+        width: calc(var(--tcSz) * 0.85);
+        height: calc(var(--tcSz) * 0.85);
+        align-self: flex-end;
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,255,255,0.22);
+      }
       .tc-j {
         position: absolute;
-        bottom: calc(24px + env(safe-area-inset-bottom));
-        right: 20px;
-        width: 86px; height: 86px;
+        bottom: calc(var(--tcEdge) + env(safe-area-inset-bottom));
+        right: var(--tcEdge);
+        width: calc(var(--tcSz) * 1.18);
+        height: calc(var(--tcSz) * 1.18);
         background: rgba(184,146,224,0.20);
         border-color: rgba(184,146,224,0.55);
-        font-size: 30px;
       }
       .tc-j.tc-active {
         background: rgba(184,146,224,0.45);
       }
       .tc-atk {
         position: absolute;
-        bottom: calc(110px + env(safe-area-inset-bottom));
-        right: 28px;
-        width: 76px; height: 76px;
+        /* Sit above the jump button on the right side, with a comfy gap. */
+        bottom: calc(var(--tcEdge) + var(--tcSz) * 1.18 + var(--tcGap)
+                     + env(safe-area-inset-bottom));
+        right: calc(var(--tcEdge) + var(--tcSz) * 0.08);
+        width: calc(var(--tcSz) * 1.02);
+        height: calc(var(--tcSz) * 1.02);
         background: rgba(255,210,74,0.22);
         border-color: rgba(255,210,74,0.62);
         color: #fff8d8;
-        font-size: 28px;
       }
       .tc-atk.tc-active {
         background: rgba(255,210,74,0.45);
       }
+      /* Top-right icon row: mute + pause. Smaller, less visual weight. */
+      .tc-top {
+        position: absolute;
+        top: calc(var(--tcEdge) + env(safe-area-inset-top, 0px));
+        right: var(--tcEdge);
+        display: flex;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .tc-icon {
+        pointer-events: all;
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        background: rgba(26, 15, 46, 0.55);
+        border: 1.5px solid rgba(255,255,255,0.22);
+        color: rgba(255,255,255,0.88);
+        font-size: 18px;
+        line-height: 1;
+        padding: 0;
+        display: flex; align-items: center; justify-content: center;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+      .tc-icon:active { transform: scale(0.9); }
+      /* Pause overlay shown while game is paused. */
+      .tc-pause-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(10, 6, 22, 0.72);
+        z-index: 250;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 18px;
+        color: #eee6f5;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .tc-pause-overlay.visible { display: flex; }
+      .tc-pause-overlay h2 {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 42px; font-weight: 900;
+        margin: 0; letter-spacing: 4px;
+        color: #fff;
+        text-shadow: 0 4px 18px rgba(0,0,0,0.5);
+      }
+      .tc-pause-resume {
+        font-family: system-ui, sans-serif;
+        font-size: 16px; font-weight: 700; letter-spacing: 3px;
+        padding: 14px 30px;
+        border-radius: 999px;
+        background: rgba(184, 146, 224, 0.85);
+        color: #1a0f2e;
+        border: none;
+        cursor: pointer;
+      }
       /* Smaller buttons in landscape on short screens (avoids heavy game overlap) */
       @media (orientation: landscape) and (max-height: 440px) {
-        .tc-btn       { width: 58px; height: 58px; font-size: 21px; }
-        .tc-j         { width: 68px; height: 68px; font-size: 24px; }
-        .tc-atk       { width: 62px; height: 62px; font-size: 22px; bottom: calc(80px + env(safe-area-inset-bottom)); right: 18px; }
-        .tc-dpad,
-        .tc-j         { bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .tc-dpad      { left: 14px; gap: 8px; }
-        .tc-j         { right: 14px; }
+        :root { --tcSz: clamp(54px, 8vmin, 70px); --tcGap: 8px; --tcEdge: 12px; }
       }
       #game canvas {
         max-width: 100%;

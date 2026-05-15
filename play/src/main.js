@@ -43,10 +43,16 @@ initGamepad(game);
 
 // Haptic feedback on key gameplay moments. Tuned so it punctuates rather
 // than buzzes constantly — short on damage, longer on boss kill / frenzy.
-game.events.on("player-hurt",    () => rumble(0.35, 0.55, 200));
-game.events.on("player-died",    () => rumble(0.8,  0.9,  520));
-game.events.on("boss-defeated",  () => rumble(0.9,  1.0,  600));
-game.events.on("frenzy-start",   () => rumble(0.55, 0.75, 360));
+// Mobile uses navigator.vibrate (a single duration, or a pattern). Gamepad
+// rumble is dual-channel (weak/strong). We fire both — only one is active on
+// any given device, so there's no double-buzz.
+const vib = (ms) => {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch {}
+};
+game.events.on("player-hurt",    () => { rumble(0.35, 0.55, 200); vib(40);            });
+game.events.on("player-died",    () => { rumble(0.8,  0.9,  520); vib([80, 60, 180]); });
+game.events.on("boss-defeated",  () => { rumble(0.9,  1.0,  600); vib([90, 40, 220]); });
+game.events.on("frenzy-start",   () => { rumble(0.55, 0.75, 360); vib(70);            });
 
 // Hide the HTML loader the moment Phaser starts booting.
 game.events.once("ready", () => {

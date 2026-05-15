@@ -281,10 +281,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // ---- INPUT ----
     const left    = this._cursors.left.isDown  || this._keys.A.isDown || TOUCH.left  || PAD.left;
     const right   = this._cursors.right.isDown || this._keys.D.isDown || TOUCH.right || PAD.right;
-    const down    = this._cursors.down.isDown  || this._keys.S.isDown || PAD.down;
+    const down    = this._cursors.down.isDown  || this._keys.S.isDown || TOUCH.down || PAD.down;
     const downJustPressed =
       Phaser.Input.Keyboard.JustDown(this._cursors.down) ||
-      Phaser.Input.Keyboard.JustDown(this._keys.S);
+      Phaser.Input.Keyboard.JustDown(this._keys.S) ||
+      TOUCH.downJustDown;
+    if (TOUCH.downJustDown) TOUCH.downJustDown = false;
     // Touch always runs (no Shift on mobile). Pad runs on L1 or deep stick push.
     const running = this._cursors.shift.isDown || this._keys.SHIFT.isDown ||
                     (TOUCH.left || TOUCH.right) || PAD.runDown;
