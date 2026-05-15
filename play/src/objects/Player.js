@@ -80,6 +80,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this._sliding    = false;
     this._slideEndAt = 0;
 
+    // Tracks previous-frame attackHeld so we can detect release across ALL
+    // input sources (keyboard, touch, gamepad). The chain combo (beanie's
+    // attack) needs justReleased; without this fallback it only fires on
+    // keyboard J release, leaving gamepad/touch players unable to attack.
+    this._prevAttackHeld = false;
+
     // "wow" hooks — idle entertainer + run trail.
     this._idleTimer = 0;
     this._entertainerActive = false;
@@ -316,11 +322,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       Phaser.Input.Keyboard.JustDown(this._keys.J) ||
       TOUCH.attackJustDown || PAD.attackJustDown;
     const attackHeld = this._keys.J.isDown || TOUCH.attackDown || PAD.attackDown;
-    const attackJustReleased = Phaser.Input.Keyboard.JustUp(this._keys.J);
+    // Detect release across ALL input sources via held-state edge, not just
+    // keyboard J. Critical for the chain combo (beanie) on gamepad/touch.
+    const attackJustReleased = !attackHeld && this._prevAttackHeld;
     if (TOUCH.attackJustDown) TOUCH.attackJustDown = false;
     if (PAD.attackJustDown)   PAD.attackJustDown   = false;
 
     this.tryAttack(time, attackJustPressed, attackHeld, attackJustReleased);
+    this._prevAttackHeld = attackHeld;
 
     // Keep Guardian's bash hitboxes glued to the player while the dash is live.
     if (this.scene.playerAttacks) tickFollowingHitboxes(this.scene);
