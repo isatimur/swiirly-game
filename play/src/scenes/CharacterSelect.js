@@ -9,6 +9,7 @@
 import { VIEW } from "../config.js";
 import { SFX } from "../audio.js";
 import { CHARACTERS } from "../characters.js";
+import { PAD } from "../gamepad.js";
 
 export class CharacterSelectScene extends Phaser.Scene {
   constructor() { super("CharacterSelect"); }
@@ -96,7 +97,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     // ----- HINT -----
     this.add.text(width / 2, height - 80,
-      "← →  to choose      J  to attack in-game      SPACE  to confirm", {
+      "← →  /  D-pad  to choose      J  /  □  attack      SPACE  /  ×  confirm", {
       fontFamily: "system-ui, sans-serif",
       fontSize: "14px", color: "#dcc7f2", letterSpacing: 4,
     }).setOrigin(0.5);
@@ -108,6 +109,22 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-D",     () => this.selectIndex(this.selectedIdx + 1));
     this.input.keyboard.once("keydown-SPACE", () => this.confirm());
     this.input.keyboard.once("keydown-ENTER", () => this.confirm());
+
+    // Gamepad: edge-detect D-pad / left-stick taps so a held direction
+    // doesn't keep cycling. × confirms.
+    this._padPrevLeft = false;
+    this._padPrevRight = false;
+    const padConfirm = () => this.confirm();
+    this.game.events.once("gamepad-cross", padConfirm);
+    this.events.once("shutdown", () => this.game.events.off("gamepad-cross", padConfirm));
+  }
+
+  update() {
+    if (!PAD.connected) return;
+    if (PAD.left && !this._padPrevLeft)   this.selectIndex(this.selectedIdx - 1);
+    if (PAD.right && !this._padPrevRight) this.selectIndex(this.selectedIdx + 1);
+    this._padPrevLeft  = PAD.left;
+    this._padPrevRight = PAD.right;
   }
 
   selectIndex(idx, fromClick = false) {

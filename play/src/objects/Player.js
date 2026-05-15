@@ -15,6 +15,7 @@
 import { PHYSICS, PLAYER, SIGNAL_DURATIONS } from "../config.js";
 import { SFX } from "../audio.js";
 import { TOUCH } from "../touchControls.js";
+import { PAD } from "../gamepad.js";
 import { ATTACKS, tickFollowingHitboxes, poundImpactVFX } from "./PlayerAttacks.js";
 import { ATTACK_TUNING, getCharacter } from "../characters.js";
 
@@ -278,41 +279,44 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this._wasGrounded = grounded;
 
     // ---- INPUT ----
-    const left    = this._cursors.left.isDown  || this._keys.A.isDown || TOUCH.left;
-    const right   = this._cursors.right.isDown || this._keys.D.isDown || TOUCH.right;
-    const down    = this._cursors.down.isDown  || this._keys.S.isDown;
+    const left    = this._cursors.left.isDown  || this._keys.A.isDown || TOUCH.left  || PAD.left;
+    const right   = this._cursors.right.isDown || this._keys.D.isDown || TOUCH.right || PAD.right;
+    const down    = this._cursors.down.isDown  || this._keys.S.isDown || PAD.down;
     const downJustPressed =
       Phaser.Input.Keyboard.JustDown(this._cursors.down) ||
       Phaser.Input.Keyboard.JustDown(this._keys.S);
-    // Touch always runs (no Shift key on mobile).
-    const running = this._cursors.shift.isDown || this._keys.SHIFT.isDown || (TOUCH.left || TOUCH.right);
+    // Touch always runs (no Shift on mobile). Pad runs on L1 or deep stick push.
+    const running = this._cursors.shift.isDown || this._keys.SHIFT.isDown ||
+                    (TOUCH.left || TOUCH.right) || PAD.runDown;
     const jumpJustPressed =
       Phaser.Input.Keyboard.JustDown(this._cursors.space) ||
       Phaser.Input.Keyboard.JustDown(this._cursors.up) ||
       Phaser.Input.Keyboard.JustDown(this._keys.W) ||
       Phaser.Input.Keyboard.JustDown(this._keys.SPACE) ||
-      TOUCH.jumpJustDown;
+      TOUCH.jumpJustDown || PAD.jumpJustDown;
     const jumpHeld = this._cursors.space.isDown || this._cursors.up.isDown ||
                      this._keys.W.isDown || this._keys.SPACE.isDown ||
-                     TOUCH.jumpDown;
+                     TOUCH.jumpDown || PAD.jumpDown;
     const jumpJustReleased =
       Phaser.Input.Keyboard.JustUp(this._cursors.space) ||
       Phaser.Input.Keyboard.JustUp(this._cursors.up) ||
       Phaser.Input.Keyboard.JustUp(this._keys.W) ||
       Phaser.Input.Keyboard.JustUp(this._keys.SPACE);
 
-    // Consume touch jump-just-down after reading so it fires for exactly one frame.
+    // Consume just-down flags after reading so they each fire for exactly one frame.
     if (TOUCH.jumpJustDown) TOUCH.jumpJustDown = false;
+    if (PAD.jumpJustDown)   PAD.jumpJustDown   = false;
 
     if (jumpJustPressed) this._jumpRequestedAt = time;
 
     // ---- ATTACK INPUT ----
     const attackJustPressed =
       Phaser.Input.Keyboard.JustDown(this._keys.J) ||
-      TOUCH.attackJustDown;
-    const attackHeld = this._keys.J.isDown || TOUCH.attackDown;
+      TOUCH.attackJustDown || PAD.attackJustDown;
+    const attackHeld = this._keys.J.isDown || TOUCH.attackDown || PAD.attackDown;
     const attackJustReleased = Phaser.Input.Keyboard.JustUp(this._keys.J);
     if (TOUCH.attackJustDown) TOUCH.attackJustDown = false;
+    if (PAD.attackJustDown)   PAD.attackJustDown   = false;
 
     this.tryAttack(time, attackJustPressed, attackHeld, attackJustReleased);
 

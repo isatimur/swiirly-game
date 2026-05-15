@@ -363,6 +363,9 @@ export class LevelCompleteScene extends Phaser.Scene {
     this.input.keyboard.once("keydown-SPACE", restart);
     this.input.keyboard.once("keydown-ENTER", restart);
     this.input.once("pointerdown", restart);
+    // Gamepad: × advances to the next level.
+    this.game.events.once("gamepad-cross", restart);
+    this.events.once("shutdown", () => this.game.events.off("gamepad-cross", restart));
   }
 }
 

@@ -131,5 +131,8 @@ export class MenuScene extends Phaser.Scene {
     this.input.keyboard.once("keydown-SPACE", start);
     this.input.keyboard.once("keydown-ENTER", start);
     this.input.once("pointerdown", start);
+    // Gamepad: × button advances.
+    this.game.events.once("gamepad-cross", start);
+    this.events.once("shutdown", () => this.game.events.off("gamepad-cross", start));
   }
 }
