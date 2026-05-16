@@ -62,7 +62,9 @@ function spawnProjectile(scene, x, y, vx, vy, lifeMs, damage, tint, opts = {}) {
     scene.tweens.add({ targets: p, angle: 360, duration: 500, repeat: -1 });
   }
   p.body.setAllowGravity(false);
-  p.body.setSize(28, 28);
+  // Tall body so the projectile reaches both standing AND ground-level
+  // enemies (paperwork piles are short — a 28×28 box flew over them).
+  p.body.setSize(28, 56);
   p.setVelocity(vx, vy);
   p.damage = damage;
   p.knockbackX = opts.knockbackX ?? 180;
@@ -319,7 +321,9 @@ export const ATTACKS = {
     const scene = player.scene;
     const vx = player.facing * t.projectileSpeed;
     const startX = player.x + player.facing * 18;
-    const startY = player.y - 70;
+    // Lower the bolt origin to mid-torso so the 56-tall body covers both
+    // standing enemies AND short ones (paperwork piles).
+    const startY = player.y - 56;
     const boltP = spawnProjectile(scene, startX, startY, vx, 0, t.projectileLife, t.damage, 0x9adcff);
     boltP.attackId = nextAttackId("bolt");
     projectileTrail(scene, startX, startY, 0x9adcff);

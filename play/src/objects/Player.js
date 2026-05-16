@@ -354,8 +354,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const vx = this.body.velocity.x;
 
     // ---- SLIDE ----
+    // Velocity-only trigger. Requiring SHIFT was the original spec but in
+    // practice many keyboard layouts swallow SHIFT+Arrow combos before
+    // Phaser sees them, so slide never fired. Walking at 280 px/s is
+    // already above the 182 threshold, so any moving-and-pressing-DOWN
+    // gesture starts a slide on the press-edge.
     const slideThreshold = PHYSICS.walkSpeed * 0.65;
-    if (!this._sliding && grounded && downJustPressed && running &&
+    if (!this._sliding && grounded && downJustPressed &&
         Math.abs(vx) > slideThreshold) {
       this._sliding = true;
       this._slideEndAt = time + PHYSICS.slideDuration;
@@ -560,6 +565,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.state = s;
     const sk = this._skin;
     const k = (frame) => `${sk}_${frame}`;
+    // The idle entertainer tween scales the player to (1.06× / 0.94×) and
+    // yoyos back. If the player transitions out of idle mid-tween — like
+    // crouching while stretched — the squashed scale persists on the new
+    // texture, which made crouch read as "bigger" instead of compact.
+    // For any state that's NOT idle, kill stray tweens on this sprite and
+    // pin scale back to the player's base value.
+    if (s !== "idle") {
+      this.scene.tweens.killTweensOf(this);
+      this._entertainerActive = false;
+      const base = PLAYER.spriteScale * (this._charSpriteScaleMul ?? 1);
+      this.setScale(base);
+    }
     switch (s) {
       case "idle":      this.anims.stop(); this.setTexture(k("idle")); break;
       case "walk":      this.anims.play(k("walk"), true); break;
