@@ -281,6 +281,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this._lastFallSpeed = 0;
     } else {
       this._lastFallSpeed = Math.max(this._lastFallSpeed ?? 0, this.body.velocity.y);
+      // Coyote dust — first frame of falling off a ledge WITHOUT jumping.
+      // Teaches the coyote-time forgiveness window visually: that little
+      // puff says "you can still jump for ~110 ms."
+      if (this._wasGrounded && !this._isJumping && this.body.velocity.y >= 0) {
+        this.scene.effects?.dustPuff(this.x, this.y - 4, {
+          color: 0xdcc7f2, count: 3, scale: 0.5, ms: 220,
+        });
+      }
     }
     this._wasGrounded = grounded;
 

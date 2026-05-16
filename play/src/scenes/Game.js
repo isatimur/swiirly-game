@@ -308,6 +308,10 @@ export class GameScene extends Phaser.Scene {
       else SFX.attackConfirm?.();
       this.addScore((killed ? 80 : 30) * this.combo.multiplier, enemy.x, enemy.y - 24);
       this.player.onAttackConfirm(enemy.x);
+      // Hit-stop on heavy hits — brief freeze sells the impact. Damage >= 2
+      // catches chain-heavy and ground-pound; the pierce flag catches the
+      // shockwave. Light attacks stay snappy.
+      if ((atk.damage ?? 1) >= 2 || atk.pierce) this.effects.freezeFrame(60);
       if (!atk.pierce) atk.destroy();
     });
     this.physics.add.overlap(this.playerAttacks, this.boss, (a, b) => {
@@ -326,6 +330,8 @@ export class GameScene extends Phaser.Scene {
       }
       this.effects.sparkleBurst(boss.x, boss.y - 60, 5, 0xffd24a);
       this.effects.punchZoom(0.04, 180);
+      // Heavy hits chunk the boss with hit-stop on top of punchZoom.
+      if ((atk.damage ?? 1) >= 2 || atk.pierce) this.effects.freezeFrame(70);
       SFX.attackConfirm?.();
       this.addScore(result === "killed" ? 2000 : 250, boss.x, boss.y - 60);
       this.player.onAttackConfirm(boss.x);
@@ -1103,6 +1109,16 @@ export class GameScene extends Phaser.Scene {
     this.bgTower.tilePositionX = cam.scrollX * 0.4;
     if (this.bgDataLake.alpha > 0)  this.bgDataLake.tilePositionX  = cam.scrollX * 0.5;
     if (this.bgExecutive.alpha > 0) this.bgExecutive.tilePositionX = cam.scrollX * 0.5;
+
+    // Camera lean — subtle rotation in the direction of the player's
+    // velocity sells speed without affecting gameplay. Capped at 0.4°
+    // (0.007 rad) so it never reads as motion-sickness inducing.
+    // Re-centers within a few frames when the player stops.
+    if (this.player?.body) {
+      const speedRatio = this.player.body.velocity.x / PHYSICS.runSpeed;
+      const targetRot = Math.max(-0.007, Math.min(0.007, speedRatio * 0.007));
+      cam.rotation += (targetRot - cam.rotation) * 0.08;
+    }
 
     // Crossfade to tower bg when entering the boss arena.
     if (this.player.x > this.level.bossArenaStart) {
