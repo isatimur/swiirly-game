@@ -40,7 +40,7 @@ export const level3 = {
   terrain: [
     // --- Act 1 ---
     ground(0, 1700),
-    rope(420),                       // first reception-line obstacle
+    rope(420),                       // reception line — intro
     platform(450, GROUND_Y - 140, 3),
     platform(700, GROUND_Y - 260, 4),
     platform(1100, GROUND_Y - 180, 3),
@@ -48,7 +48,6 @@ export const level3 = {
     brick(1414, GROUND_Y - 170),
     brick(1478, GROUND_Y - 230),
     brick(1542, GROUND_Y - 290),
-    rope(1650),                      // pre-pit warning
     // pit 1700–2100
     ground(2100, 3000),
     platform(2300, GROUND_Y - 160, 3),
@@ -58,7 +57,7 @@ export const level3 = {
     // pit 3000–3400 — gusty winds blowing BACKWARD make this a real test
     windZone(3000, GROUND_Y - 360, 400, 360, -280),
     ground(3400, 4600),
-    rope(3520),                      // post-wind landing zone
+    rope(3520),                      // post-wind landing zone beat
     platform(3600, GROUND_Y - 140, 3),
     platform(3900, GROUND_Y - 280, 4),
     platform(4300, GROUND_Y - 360, 3),
@@ -74,7 +73,6 @@ export const level3 = {
     brick(5264, GROUND_Y - 220),
     brick(5200, GROUND_Y - 360),
     brick(5264, GROUND_Y - 360),
-    rope(6100),                      // gallery break
     ground(6400, 7200),
     platform(6600, GROUND_Y - 220, 3),
     platform(6900, GROUND_Y - 340, 4),
@@ -89,7 +87,6 @@ export const level3 = {
     // --- Act 3 ---
     ground(8300, 9800),
     rope(8460),                      // CMO's office threshold
-    rope(9320),                      // post-boss VIP lane to brand
   ],
 
   // ============================================================

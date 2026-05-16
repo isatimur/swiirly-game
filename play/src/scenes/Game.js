@@ -111,6 +111,10 @@ export class GameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.bouncePads = this.physics.add.staticGroup();
     this.conveyors = this.physics.add.staticGroup();
+    // Themed obstacles (bulletin / cubicle / rope / rack / pillar) live in
+    // their own group — only the player collides with them. Enemies pass
+    // straight through so an obstacle never traps a patrolling jargon-blob.
+    this.playerObstacles = this.physics.add.staticGroup();
     this.windZones = [];        // Array of { x, y, w, h, force, particles[] }
     this.fallingShardSpawners = []; // Array of { interval, lastSpawn, xRange }
     for (const t of lvl.terrain) {
@@ -137,14 +141,14 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Tint tiles to match the level's atmosphere. Themed obstacles opt
-    // out — their art is already on-palette for the level.
-    const tintExceptObstacles = (color) =>
-      this.platforms.getChildren().forEach(tile => { if (!tile.isObstacle) tile.setTint(color); });
-    if (this.levelNum === 2)      tintExceptObstacles(0x9ab0cc);
-    else if (this.levelNum === 3) tintExceptObstacles(0xcc9070);
-    else if (this.levelNum === 4) tintExceptObstacles(0x60a0b0);
-    else if (this.levelNum === 5) tintExceptObstacles(0x8090c8);
+    // Tint tiles to match the level's atmosphere. Obstacles live in their
+    // own group so they're already excluded from this pass.
+    const tintTiles = (color) =>
+      this.platforms.getChildren().forEach(tile => tile.setTint(color));
+    if (this.levelNum === 2)      tintTiles(0x9ab0cc);
+    else if (this.levelNum === 3) tintTiles(0xcc9070);
+    else if (this.levelNum === 4) tintTiles(0x60a0b0);
+    else if (this.levelNum === 5) tintTiles(0x8090c8);
 
     // World floor (catch falls into pits).
     this.physics.world.setBoundsCollision(true, true, false, false);
@@ -225,6 +229,8 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.collider(this.boss, this.platforms);
     this.physics.add.collider(this.projectiles, this.platforms, (p) => p.destroy());
+    // Player-only obstacle collisions. Enemies and projectiles ignore.
+    this.physics.add.collider(this.player, this.playerObstacles);
 
     // Bouncy mushrooms — boost the player's jump when landed on from above.
     this.physics.add.collider(this.player, this.bouncePads, (player, pad) => {
@@ -525,15 +531,14 @@ export class GameScene extends Phaser.Scene {
    *  don't unfairly block jumps. Sits at ground level with the bottom of
    *  the sprite touching GROUND_TOP_Y. */
   buildObstacle(x, key) {
+    // Lives in the player-only obstacle group so enemies pass through.
     // Center at GROUND_TOP_Y - 48 so the bottom edge of the 96-tall sprite
     // lands on the ground band, matching every other ground-level entity.
-    const o = this.platforms.create(x, GROUND_TOP_Y - 48, key);
+    const o = this.playerObstacles.create(x, GROUND_TOP_Y - 48, key);
     // Tighter hitbox: 80×72 centered horizontally, top 16px non-colliding.
     o.body.setSize(80, 72);
     o.body.setOffset(8, 22);
     o.refreshBody();
-    // Mark so the per-level platform tinting (L2 cold-blue, L3 amber, etc.)
-    // doesn't repaint the themed obstacle sprite.
     o.isObstacle = true;
     // Texture key cached for the Pascal-surprise check (bulletin board has
     // a "Read the bulletin" interaction; other obstacles ignored).
@@ -549,9 +554,9 @@ export class GameScene extends Phaser.Scene {
    *  A subtle yellow glow telegraphs proximity from 140 px so the player
    *  notices something's interactive before triggering it. */
   _tickBulletinRead(time, dt) {
-    if (!this.player || !this.platforms) return;
+    if (!this.player || !this.playerObstacles) return;
     const px = this.player.x, py = this.player.y;
-    this.platforms.getChildren().forEach((o) => {
+    this.playerObstacles.getChildren().forEach((o) => {
       if (o.obstacleKey !== "obstacle_bulletin_board" || o.readDone) return;
       const dx = Math.abs(px - o.x);
       const dy = Math.abs(py - o.y);
