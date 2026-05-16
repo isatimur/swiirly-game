@@ -8,7 +8,7 @@ import { PERSONA_ASSET_KEYS } from "../characters.js";
 // /play/assets/* as Cache-Control: immutable, which trains browsers to
 // never revalidate even on hard-refresh — adding ?v=N busts old caches
 // because the URL becomes a fresh resource the browser hasn't seen.
-const ASSET_VERSION = "9";
+const ASSET_VERSION = "10";
 
 // Pose names — every Swiirl skin ships this same 17-frame set, extracted
 // by tools/extract-character-sheet.mjs from a 1+8+4+4 grid sheet.
@@ -29,11 +29,11 @@ export const DEFAULT_SKIN = "beanie";
 
 const WORLD_IMAGES = [
   "tile_ground", "tile_grass", "tile_platform", "tile_brick",
-  // Per-level themed obstacles (one signature per level — fence in the park,
-  // cubicle wall in the office, velvet rope in the brand HQ, server rack in
-  // the data lake, marble pillar at the summit).
-  "obstacle_picket_fence", "obstacle_cubicle_wall", "obstacle_velvet_rope",
-  "obstacle_server_rack",  "obstacle_marble_pillar",
+  // Per-level themed obstacles (one signature per level — bulletin board in
+  // the park, cubicle wall in the office, velvet rope in the brand HQ,
+  // server rack in the data lake, marble pillar at the summit).
+  "obstacle_bulletin_board", "obstacle_cubicle_wall", "obstacle_velvet_rope",
+  "obstacle_server_rack",    "obstacle_marble_pillar",
   "cloud", "sparkle",
   "enemy_jargon_blob", "enemy_ghost", "enemy_paperwork", "enemy_boss",
   "projectile_paper",

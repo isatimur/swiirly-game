@@ -101,22 +101,54 @@ await svgToPng(brickSvg, "tile_brick.png", TILE, TILE);
 // sprite.
 // ============================================================================
 
-// L1 — Picket fence (Community Park). White wood, pointed tops, low fence.
-const fencePicketSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+// L1 — Community bulletin board (Community Park). Wooden kiosk on legs with
+// stapled flyers. The yellow flyer carries a tiny "SWIIRL FOR HIRE" easter
+// egg — community insights, literally posted in the park.
+const bulletinBoardSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
   <!-- ground shadow -->
-  <ellipse cx="48" cy="92" rx="42" ry="3" fill="#1A0F2E" opacity="0.32"/>
-  <!-- horizontal rails -->
-  <rect x="2" y="58" width="92" height="6" fill="#EEE6F5" stroke="#5C3BA3" stroke-width="1.5" rx="2"/>
-  <rect x="2" y="78" width="92" height="6" fill="#EEE6F5" stroke="#5C3BA3" stroke-width="1.5" rx="2"/>
-  <!-- five pickets, each pointed top -->
-  ${[6, 24, 42, 60, 78].map((x) => `
-    <path d="M${x},32 L${x + 12},32 L${x + 12},90 L${x},90 Z M${x},32 L${x + 6},22 L${x + 12},32 Z"
-          fill="#FFFFFF" stroke="#5C3BA3" stroke-width="1.8"/>
-  `).join("")}
-  <!-- ribbon — tiny insight gold accent for brand -->
-  <rect x="36" y="46" width="24" height="4" fill="#FFD24A" rx="1" opacity="0.85"/>
+  <ellipse cx="48" cy="92" rx="40" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- pitched roof -->
+  <path d="M6,22 L48,8 L90,22 Z" fill="#6a3818" stroke="#3a1f0f" stroke-width="2"/>
+  <line x1="48" y1="8" x2="48" y2="22" stroke="#3a1f0f" stroke-width="0.8" opacity="0.5"/>
+  <!-- wooden frame -->
+  <rect x="10" y="22" width="76" height="60" fill="#8B5A2B" stroke="#3a1f0f" stroke-width="2"/>
+  <!-- corkboard inside -->
+  <rect x="14" y="26" width="68" height="52" fill="#f0d4a0" stroke="#5C3BA3" stroke-width="1"/>
+  <!-- corkboard texture spots -->
+  <circle cx="20" cy="32" r="1" fill="#8B5A2B" opacity="0.4"/>
+  <circle cx="62" cy="50" r="1" fill="#8B5A2B" opacity="0.4"/>
+  <circle cx="32" cy="68" r="1" fill="#8B5A2B" opacity="0.4"/>
+  <circle cx="72" cy="70" r="1" fill="#8B5A2B" opacity="0.4"/>
+  <!-- flyer 1 (yellow) — Swiirl for hire easter egg -->
+  <g transform="rotate(-4 28 38)">
+    <rect x="18" y="30" width="22" height="18" fill="#ffd24a" stroke="#5C3BA3" stroke-width="0.6"/>
+    <text x="29" y="36" font-family="system-ui" font-size="3.4" fill="#5C3BA3" text-anchor="middle" font-weight="700">SWIIRL</text>
+    <text x="29" y="40" font-family="system-ui" font-size="3" fill="#5C3BA3" text-anchor="middle">FOR HIRE</text>
+    <text x="29" y="44" font-family="system-ui" font-size="2.4" fill="#5C3BA3" text-anchor="middle" opacity="0.7">callbacks &lt; 24h</text>
+    <!-- pushpin -->
+    <circle cx="29" cy="32" r="1.4" fill="#ff5c5c" stroke="#3a1f0f" stroke-width="0.4"/>
+  </g>
+  <!-- flyer 2 (pink) -->
+  <g transform="rotate(5 60 40)">
+    <rect x="48" y="32" width="24" height="20" fill="#ff8fbe" stroke="#5C3BA3" stroke-width="0.6"/>
+    <line x1="50" y1="38" x2="68" y2="38" stroke="#5C3BA3" stroke-width="0.6"/>
+    <line x1="50" y1="42" x2="66" y2="42" stroke="#5C3BA3" stroke-width="0.6"/>
+    <line x1="50" y1="46" x2="68" y2="46" stroke="#5C3BA3" stroke-width="0.6"/>
+    <circle cx="60" cy="34" r="1.4" fill="#7dc4ff" stroke="#3a1f0f" stroke-width="0.4"/>
+  </g>
+  <!-- flyer 3 (green) -->
+  <g transform="rotate(-2 44 64)">
+    <rect x="32" y="56" width="24" height="16" fill="#7bd389" stroke="#5C3BA3" stroke-width="0.6"/>
+    <text x="44" y="63" font-family="system-ui" font-size="3" fill="#5C3BA3" text-anchor="middle" font-weight="700">YARD SALE</text>
+    <line x1="34" y1="66" x2="54" y2="66" stroke="#5C3BA3" stroke-width="0.6"/>
+    <line x1="34" y1="69" x2="50" y2="69" stroke="#5C3BA3" stroke-width="0.6"/>
+    <circle cx="44" cy="58" r="1.4" fill="#ffd24a" stroke="#3a1f0f" stroke-width="0.4"/>
+  </g>
+  <!-- legs / posts -->
+  <rect x="14" y="82" width="6" height="10" fill="#3a1f0f"/>
+  <rect x="76" y="82" width="6" height="10" fill="#3a1f0f"/>
 </svg>`;
-await svgToPng(fencePicketSvg, "obstacle_picket_fence.png", 96, 96);
+await svgToPng(bulletinBoardSvg, "obstacle_bulletin_board.png", 96, 96);
 
 // L2 — Cubicle wall (Corporate Maze). Gray panel + post-it sticky.
 const cubicleWallSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
@@ -216,6 +248,13 @@ await svgToPng(cloudSvg, "cloud.png", 160, 60);
 // ============================================================================
 // ENEMIES — incompetence themed
 // ============================================================================
+// Enemy bare-key sprites are now sourced from extract-character-sheet (the
+// _idle variants are byte-identical to these bare-key files in the repo).
+// Regenerating them through sharp at a different version visibly degrades
+// the art (e.g., gradient sampling, anti-aliasing). Guarded behind an
+// env flag — set REGEN_ENEMIES=1 only when you actually want to overwrite.
+const REGEN_ENEMIES = process.env.REGEN_ENEMIES === "1";
+if (REGEN_ENEMIES) {
 const jargonBlobSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="64" viewBox="0 0 80 64">
   <defs>
     <radialGradient id="b" cx="50%" cy="40%" r="60%">
@@ -482,6 +521,7 @@ const deadlineBotSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" heigh
   <line x1="50" y1="22" x2="53" y2="22" stroke="#888" stroke-width="1"/>
 </svg>`;
 await svgToPng(deadlineBotSvg, "enemy_deadline_bot.png", 80, 80);
+} // end if (REGEN_ENEMIES)
 
 // ============================================================================
 // NEW BG — Data Lake near-layer (2560×720)
@@ -565,7 +605,7 @@ await svgToPng(bgExecutiveSvg, "bg_executive.png", 2560, 720);
 
 console.log("World assets generated:");
 console.log("  tiles:    tile_ground, tile_grass, tile_platform, tile_brick");
-console.log("  obstacles: picket_fence, cubicle_wall, velvet_rope, server_rack, marble_pillar");
+console.log("  obstacles: bulletin_board, cubicle_wall, velvet_rope, server_rack, marble_pillar");
 console.log("  decor:    cloud, sparkle");
 console.log("  enemies:  jargon_blob, ghost, paperwork, projectile_paper, boss, deadline_bot");
 console.log("  pickups:  insight, signal_speed, signal_shield, signal_growth");

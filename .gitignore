@@ -26,3 +26,4 @@ play/assets/source/_debug-overlay.png
 .env.*
 !.env.example
 .vercel
+.superpowers/
