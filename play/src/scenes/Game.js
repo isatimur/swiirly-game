@@ -188,10 +188,14 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Mini-boss (spawned but inactive until player crosses arena boundary).
-    this.boss = makeBoss(this, this.levelNum, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3);
+    // Optional — the bonus level (L6) has no boss, lvl.miniBoss is null.
+    this.boss = null;
     this.bossActive = false;
-    this.boss.setVisible(false);
-    this.boss.body.enable = false;
+    if (lvl.miniBoss) {
+      this.boss = makeBoss(this, this.levelNum, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3);
+      this.boss.setVisible(false);
+      this.boss.body.enable = false;
+    }
 
     // ----- BRAND -----
     // Brand sprite is 120x160, origin (0.5, 1) — feet on the ground.
@@ -229,7 +233,7 @@ export class GameScene extends Phaser.Scene {
     // ----- COLLISIONS -----
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.enemies, this.platforms);
-    this.physics.add.collider(this.boss, this.platforms);
+    if (this.boss) this.physics.add.collider(this.boss, this.platforms);
     this.physics.add.collider(this.projectiles, this.platforms, (p) => p.destroy());
     // Player-only obstacle collisions. Enemies and projectiles ignore.
     this.physics.add.collider(this.player, this.playerObstacles);
@@ -251,12 +255,12 @@ export class GameScene extends Phaser.Scene {
       }
     });
     this.physics.add.collider(this.enemies, this.bouncePads);
-    this.physics.add.collider(this.boss, this.bouncePads);
+    if (this.boss) this.physics.add.collider(this.boss, this.bouncePads);
 
     // Conveyors are solid platforms — collide normally. Force is applied in update().
     this.physics.add.collider(this.player, this.conveyors);
     this.physics.add.collider(this.enemies, this.conveyors);
-    this.physics.add.collider(this.boss, this.conveyors);
+    if (this.boss) this.physics.add.collider(this.boss, this.conveyors);
     this.physics.add.collider(this.projectiles, this.conveyors, (p) => p.destroy());
 
     this.physics.add.overlap(this.player, this.insights, (player, insight) => {
@@ -282,7 +286,7 @@ export class GameScene extends Phaser.Scene {
       this.spawnSparkles(sig.x, sig.y, 18);
     });
     this.physics.add.overlap(this.player, this.enemies, (player, enemy) => this.handleEnemyCollision(enemy));
-    this.physics.add.overlap(this.player, this.boss, () => this.handleBossCollision());
+    if (this.boss) this.physics.add.overlap(this.player, this.boss, () => this.handleBossCollision());
     this.physics.add.overlap(this.player, this.projectiles, (player, p) => {
       p.destroy();
       this.player.takeDamage(p.x);
@@ -316,7 +320,7 @@ export class GameScene extends Phaser.Scene {
       if ((atk.damage ?? 1) >= 2 || atk.pierce) this.effects.freezeFrame(60);
       if (!atk.pierce) atk.destroy();
     });
-    this.physics.add.overlap(this.playerAttacks, this.boss, (a, b) => {
+    if (this.boss) this.physics.add.overlap(this.playerAttacks, this.boss, (a, b) => {
       // Phaser optimizes group-vs-single-sprite as collideSpriteVsGroup, which
       // SWAPS the callback args (sprite first, group child second). So `a` may
       // be the boss and `b` the hitbox, or vice versa depending on Phaser
@@ -381,9 +385,11 @@ export class GameScene extends Phaser.Scene {
       this.player.setPosition(this.level.brandPos.x, GROUND_TOP_Y - 60);
       this.player.setVelocity(0, 0);
       this.player._invulnUntil = this.time.now + 5000;
-      this.boss.dead = true;
-      this.boss.body.enable = false;
-      this.boss.setVisible(false);
+      if (this.boss) {
+        this.boss.dead = true;
+        this.boss.body.enable = false;
+        this.boss.setVisible(false);
+      }
       this.brand.becomeHappy();
       this.brandQuestionMark.setText("!").setColor("#3a7c47");
     });
@@ -1123,7 +1129,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Crossfade to tower bg when entering the boss arena.
-    if (this.player.x > this.level.bossArenaStart) {
+    if (this.boss && this.player.x > this.level.bossArenaStart) {
       this.bgTower.setAlpha(Math.min(1, this.bgTower.alpha + 0.01));
       this.bgNear.setAlpha(Math.max(0.3, this.bgNear.alpha - 0.005));
       if (!this.bossActive && !this.boss.dead) {
@@ -1132,10 +1138,16 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Act banners from level data.
+    // Act banners from level data. Horizontal triggers compare player.x to
+    // the trigger's .x; vertical triggers (act-marker has a .y) fire when
+    // the player has climbed PAST the y (lower y = higher up). This lets
+    // the bonus level fire act banners as the player ascends the shaft.
     if (this.level.actTriggers && this.actTriggerIdx < this.level.actTriggers.length) {
       const next = this.level.actTriggers[this.actTriggerIdx];
-      if (this.player.x > next.x) {
+      const fired = (next.y != null)
+        ? (this.player.y < next.y)
+        : (this.player.x > next.x);
+      if (fired) {
         this.actTriggerIdx++;
         this.showActBanner(next.banner);
       }
