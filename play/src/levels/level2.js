@@ -9,6 +9,7 @@ const platform = (x, y, wTiles) => ({ kind: "platform",  x, y,  w: wTiles  });
 const brick    = (x, y)         => ({ kind: "brick",     x, y               });
 const bouncePad = (x, y)        => ({ kind: "bouncePad", x, y               });
 const conveyor = (x, y, wTiles, dir) => ({ kind: "conveyor", x, y, w: wTiles, dir });
+const cubicle  = (x)            => ({ kind: "obstacle", x, texture: "obstacle_cubicle_wall" });
 
 const LOW  = 70;
 const MID  = 200;
@@ -40,6 +41,7 @@ export const level2 = {
   terrain: [
     // --- Act 1 ---
     ground(0, 1500),
+    cubicle(380),                   // first office obstacle
     platform(550, GROUND_Y - 150, 3),
     platform(850, GROUND_Y - 280, 3),
     brick(1100, GROUND_Y - 120),
@@ -54,10 +56,12 @@ export const level2 = {
     conveyor(2300, GROUND_Y - 250, 4, 1),   // forward-pushing belt at altitude
     brick(2600, GROUND_Y - 140),
     brick(2664, GROUND_Y - 140),
+    cubicle(2480),                  // pre-conveyor break
 
     // --- Act 2 ---
     // pit 2800–3200
     ground(3200, 4400),
+    cubicle(3320),                  // entry to cubicle maze
     conveyor(3700, GROUND_Y - 200, 3, -1),  // BACKWARD belt — challenge!
     platform(3350, GROUND_Y - 140, 3),
     platform(3650, GROUND_Y - 260, 4),
@@ -66,6 +70,7 @@ export const level2 = {
     brick(3850, GROUND_Y - 220),
     brick(3914, GROUND_Y - 300),
     ground(4500, 5800),
+    cubicle(4620),                  // mid-section divider
     brick(4800, GROUND_Y - 220),
     brick(4864, GROUND_Y - 220),
     brick(4928, GROUND_Y - 220),
@@ -73,6 +78,7 @@ export const level2 = {
     brick(4992, GROUND_Y - 360),
     platform(5200, GROUND_Y - 230, 3),
     platform(5500, GROUND_Y - 340, 3),
+    cubicle(5360),                  // ground-level navigation challenge
 
     // pit 5800–6200
     ground(6000, 6400),
@@ -83,6 +89,8 @@ export const level2 = {
 
     // --- Act 3 ---
     ground(6950, 8800),
+    cubicle(7060),                  // executive floor entry
+    cubicle(8180),                  // post-Mike, en route to brand
   ],
 
   // ============================================================

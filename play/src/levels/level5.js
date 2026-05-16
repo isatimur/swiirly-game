@@ -8,6 +8,7 @@ const ground   = (x1, x2)       => ({ kind: "ground",   x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles) => ({ kind: "platform",  x, y,  w: wTiles  });
 const brick    = (x, y)         => ({ kind: "brick",     x, y               });
 const fallingShards = (x1, x2, interval) => ({ kind: "fallingShards", x1, x2, interval });
+const pillar   = (x)            => ({ kind: "obstacle", x, texture: "obstacle_marble_pillar" });
 
 const LOW  = 70;
 const MID  = 200;
@@ -39,24 +40,29 @@ export const level5 = {
   terrain: [
     // --- Act 1 ---
     ground(0, 1900),
+    pillar(440),                      // first marble pillar (lobby gauntlet)
     platform(500,  GROUND_Y - 150, 3),
     platform(800,  GROUND_Y - 280, 4),
     platform(1200, GROUND_Y - 360, 3),
     platform(1500, GROUND_Y - 250, 3),
+    pillar(1640),                     // mid-section pillar
     brick(1750, GROUND_Y - 220),
     brick(1814, GROUND_Y - 320),
     // pit 1900–2300
     ground(2300, 3600),
+    pillar(2400),                     // post-pit pillar — telegraphs C-suite arrival
     platform(2500, GROUND_Y - 170, 4),
     platform(2800, GROUND_Y - 310, 3),
     brick(3050, GROUND_Y - 220),
     brick(3114, GROUND_Y - 220),
     brick(3178, GROUND_Y - 220),
     platform(3300, GROUND_Y - 240, 3),
+    pillar(3450),                     // pre-boardroom
 
     // --- Act 2 ---
     // pit 3600–4100
     ground(4100, 5600),
+    pillar(4200),                     // boardroom entrance
     platform(4300, GROUND_Y - 140, 3),
     platform(4600, GROUND_Y - 270, 4),
     platform(4950, GROUND_Y - 380, 3),
@@ -65,24 +71,32 @@ export const level5 = {
     brick(5328, GROUND_Y - 220),
     brick(5136, GROUND_Y - 360),
     brick(5392, GROUND_Y - 360),
+    pillar(5470),                     // mid-boardroom hazard
     // pit 5600–6200
     ground(6200, 7400),
+    pillar(6300),                     // post-pit pillar
     platform(6400, GROUND_Y - 220, 3),
     platform(6700, GROUND_Y - 350, 4),
     brick(6550, GROUND_Y - 220),
     brick(6614, GROUND_Y - 300),
     brick(7000, GROUND_Y - 220),
     brick(7064, GROUND_Y - 220),
+    pillar(7240),                     // pre-pit pillar
     // pit 7400–7900
     ground(7900, 8600),
     platform(8000, GROUND_Y - 200, 3),
     platform(8300, GROUND_Y - 350, 4),
+    pillar(8520),                     // C-Suite threshold
 
     // --- Act 3 ---
     // pit 8600–9200
     ground(9200, 11500),
+    pillar(9300),                     // shard-zone start, doubles as cover
+    pillar(9700),                     // shard-zone mid, must navigate around
+    pillar(10080),                    // shard-zone end / pre-CEO arena
     // C-suite chaos: glass shards rain down on the final approach.
     fallingShards(9300, 10200, 1800),
+    pillar(11080),                    // final pillar before the brand
   ],
 
   // ============================================================

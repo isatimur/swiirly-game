@@ -93,6 +93,118 @@ const brickSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"
 </svg>`;
 await svgToPng(brickSvg, "tile_brick.png", TILE, TILE);
 
+// ============================================================================
+// THEMED OBSTACLES — one signature per level. 96×96 so they read as a chunky
+// single-tile-wide barrier that needs a real jump. Physics body matches the
+// full 96×96 footprint (set up in Game.buildObstacle). All draw with origin
+// (0.5, 1.0) so the y-coordinate is the feet, matching every other world
+// sprite.
+// ============================================================================
+
+// L1 — Picket fence (Community Park). White wood, pointed tops, low fence.
+const fencePicketSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <!-- ground shadow -->
+  <ellipse cx="48" cy="92" rx="42" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- horizontal rails -->
+  <rect x="2" y="58" width="92" height="6" fill="#EEE6F5" stroke="#5C3BA3" stroke-width="1.5" rx="2"/>
+  <rect x="2" y="78" width="92" height="6" fill="#EEE6F5" stroke="#5C3BA3" stroke-width="1.5" rx="2"/>
+  <!-- five pickets, each pointed top -->
+  ${[6, 24, 42, 60, 78].map((x) => `
+    <path d="M${x},32 L${x + 12},32 L${x + 12},90 L${x},90 Z M${x},32 L${x + 6},22 L${x + 12},32 Z"
+          fill="#FFFFFF" stroke="#5C3BA3" stroke-width="1.8"/>
+  `).join("")}
+  <!-- ribbon — tiny insight gold accent for brand -->
+  <rect x="36" y="46" width="24" height="4" fill="#FFD24A" rx="1" opacity="0.85"/>
+</svg>`;
+await svgToPng(fencePicketSvg, "obstacle_picket_fence.png", 96, 96);
+
+// L2 — Cubicle wall (Corporate Maze). Gray panel + post-it sticky.
+const cubicleWallSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <ellipse cx="48" cy="92" rx="42" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- panel base -->
+  <rect x="6" y="20" width="84" height="70" fill="#9aa0a8" stroke="#3a3d44" stroke-width="2" rx="3"/>
+  <!-- fabric texture -->
+  ${Array.from({ length: 10 }, (_, i) => `<line x1="6" y1="${24 + i * 7}" x2="90" y2="${24 + i * 7}" stroke="#7a8088" stroke-width="0.5" opacity="0.5"/>`).join("")}
+  <!-- panel cap -->
+  <rect x="4" y="18" width="88" height="6" fill="#3a3d44" rx="2"/>
+  <!-- post-it -->
+  <rect x="24" y="32" width="28" height="22" fill="#ffd24a" stroke="#a07820" stroke-width="0.8" transform="rotate(-5,38,43)"/>
+  <line x1="28" y1="40" x2="48" y2="40" stroke="#5C3BA3" stroke-width="0.8" opacity="0.7" transform="rotate(-5,38,43)"/>
+  <line x1="28" y1="44" x2="44" y2="44" stroke="#5C3BA3" stroke-width="0.8" opacity="0.7" transform="rotate(-5,38,43)"/>
+  <line x1="28" y1="48" x2="46" y2="48" stroke="#5C3BA3" stroke-width="0.8" opacity="0.7" transform="rotate(-5,38,43)"/>
+  <!-- coffee ring -->
+  <circle cx="68" cy="62" r="6" fill="none" stroke="#6a4828" stroke-width="1.2" opacity="0.6"/>
+</svg>`;
+await svgToPng(cubicleWallSvg, "obstacle_cubicle_wall.png", 96, 96);
+
+// L3 — Velvet rope stanchion (Brand HQ). Brass posts + red rope.
+const velvetRopeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <ellipse cx="48" cy="92" rx="38" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- left stanchion -->
+  <ellipse cx="18" cy="88" rx="10" ry="3" fill="#a07820"/>
+  <rect x="14" y="40" width="8" height="48" fill="#d4a060" stroke="#6a4828" stroke-width="1.5"/>
+  <circle cx="18" cy="36" r="7" fill="#f4c478" stroke="#6a4828" stroke-width="1.5"/>
+  <circle cx="18" cy="36" r="3" fill="#d4a060"/>
+  <!-- right stanchion -->
+  <ellipse cx="78" cy="88" rx="10" ry="3" fill="#a07820"/>
+  <rect x="74" y="40" width="8" height="48" fill="#d4a060" stroke="#6a4828" stroke-width="1.5"/>
+  <circle cx="78" cy="36" r="7" fill="#f4c478" stroke="#6a4828" stroke-width="1.5"/>
+  <circle cx="78" cy="36" r="3" fill="#d4a060"/>
+  <!-- rope (catenary curve, deep red) -->
+  <path d="M24,40 Q48,62 72,40" fill="none" stroke="#a02830" stroke-width="6" stroke-linecap="round"/>
+  <path d="M24,40 Q48,62 72,40" fill="none" stroke="#d04450" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <!-- tassel -->
+  <line x1="48" y1="56" x2="48" y2="64" stroke="#d4a060" stroke-width="1.5"/>
+  <circle cx="48" cy="66" r="3" fill="#a07820"/>
+</svg>`;
+await svgToPng(velvetRopeSvg, "obstacle_velvet_rope.png", 96, 96);
+
+// L4 — Server rack (Data Lake). Dark, lit LEDs, matches bg_data_lake palette.
+const serverRackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <ellipse cx="48" cy="92" rx="42" ry="3" fill="#000814" opacity="0.45"/>
+  <!-- rack chassis -->
+  <rect x="8" y="8" width="80" height="84" fill="#0a1e28" stroke="#1a5060" stroke-width="2" rx="3"/>
+  <!-- top vent strip -->
+  <rect x="12" y="12" width="72" height="8" fill="#0d2a38" stroke="#1a5060" stroke-width="0.8"/>
+  ${Array.from({ length: 12 }, (_, i) => `<rect x="${14 + i * 6}" y="14" width="2" height="4" fill="#08151e"/>`).join("")}
+  <!-- server units (4 rows × 3 cols of slots) -->
+  ${Array.from({ length: 4 }, (_, r) =>
+    Array.from({ length: 3 }, (_, c) => {
+      const sx = 14 + c * 24;
+      const sy = 26 + r * 16;
+      const lit = (r + c) % 3 !== 0;
+      const errLed = (r * 3 + c) === 5;
+      return `<rect x="${sx}" y="${sy}" width="20" height="12" fill="${lit ? '#0a3848' : '#081824'}" stroke="#1a5060" stroke-width="0.8"/>` +
+             (lit ? `<rect x="${sx + 2}" y="${sy + 4}" width="3" height="3" fill="#20e8c0" opacity="0.95"/>` : '') +
+             (errLed ? `<rect x="${sx + 14}" y="${sy + 4}" width="3" height="3" fill="#ff6040" opacity="0.95"/>` : '') +
+             `<rect x="${sx + 8}" y="${sy + 7}" width="9" height="1" fill="#1a5060" opacity="0.6"/>`;
+    }).join("")
+  ).join("")}
+  <!-- bottom power LED -->
+  <circle cx="80" cy="86" r="2.5" fill="#20e8c0" opacity="0.9"/>
+</svg>`;
+await svgToPng(serverRackSvg, "obstacle_server_rack.png", 96, 96);
+
+// L5 — Marble pillar (Executive Summit). Light marble, capital + base.
+const marblePillarSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <ellipse cx="48" cy="92" rx="36" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- base -->
+  <rect x="14" y="80" width="68" height="12" fill="#d8d0c8" stroke="#a8a098" stroke-width="1.5"/>
+  <rect x="18" y="76" width="60" height="6" fill="#e8e0d8" stroke="#a8a098" stroke-width="1.2"/>
+  <!-- shaft -->
+  <rect x="26" y="20" width="44" height="58" fill="#f0e8e0" stroke="#a8a098" stroke-width="1.5"/>
+  <!-- fluting lines -->
+  ${[32, 40, 48, 56, 64].map((x) => `<line x1="${x}" y1="22" x2="${x}" y2="76" stroke="#c8c0b8" stroke-width="1" opacity="0.7"/>`).join("")}
+  <!-- subtle marble vein -->
+  <path d="M32,30 Q44,42 38,56 Q34,68 48,72" fill="none" stroke="#b0a898" stroke-width="0.8" opacity="0.55"/>
+  <!-- capital -->
+  <rect x="20" y="14" width="56" height="8" fill="#e8e0d8" stroke="#a8a098" stroke-width="1.5"/>
+  <rect x="16" y="6" width="64" height="10" fill="#f0e8e0" stroke="#a8a098" stroke-width="1.5"/>
+  <!-- gold ring under capital — corporate luxury cue -->
+  <rect x="20" y="22" width="56" height="2" fill="#FFD24A" opacity="0.85"/>
+</svg>`;
+await svgToPng(marblePillarSvg, "obstacle_marble_pillar.png", 96, 96);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
@@ -453,6 +565,7 @@ await svgToPng(bgExecutiveSvg, "bg_executive.png", 2560, 720);
 
 console.log("World assets generated:");
 console.log("  tiles:    tile_ground, tile_grass, tile_platform, tile_brick");
+console.log("  obstacles: picket_fence, cubicle_wall, velvet_rope, server_rack, marble_pillar");
 console.log("  decor:    cloud, sparkle");
 console.log("  enemies:  jargon_blob, ghost, paperwork, projectile_paper, boss, deadline_bot");
 console.log("  pickups:  insight, signal_speed, signal_shield, signal_growth");

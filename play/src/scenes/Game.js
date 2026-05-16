@@ -132,19 +132,19 @@ export class GameScene extends Phaser.Scene {
           interval: t.interval ?? 2200,
           lastSpawn: 0,
         });
+      } else if (t.kind === "obstacle") {
+        this.buildObstacle(t.x, t.texture);
       }
     }
 
-    // Tint tiles to match the level's atmosphere.
-    if (this.levelNum === 2) {
-      this.platforms.getChildren().forEach(tile => tile.setTint(0x9ab0cc));
-    } else if (this.levelNum === 3) {
-      this.platforms.getChildren().forEach(tile => tile.setTint(0xcc9070));
-    } else if (this.levelNum === 4) {
-      this.platforms.getChildren().forEach(tile => tile.setTint(0x60a0b0));
-    } else if (this.levelNum === 5) {
-      this.platforms.getChildren().forEach(tile => tile.setTint(0x8090c8));
-    }
+    // Tint tiles to match the level's atmosphere. Themed obstacles opt
+    // out — their art is already on-palette for the level.
+    const tintExceptObstacles = (color) =>
+      this.platforms.getChildren().forEach(tile => { if (!tile.isObstacle) tile.setTint(color); });
+    if (this.levelNum === 2)      tintExceptObstacles(0x9ab0cc);
+    else if (this.levelNum === 3) tintExceptObstacles(0xcc9070);
+    else if (this.levelNum === 4) tintExceptObstacles(0x60a0b0);
+    else if (this.levelNum === 5) tintExceptObstacles(0x8090c8);
 
     // World floor (catch falls into pits).
     this.physics.world.setBoundsCollision(true, true, false, false);
@@ -518,6 +518,24 @@ export class GameScene extends Phaser.Scene {
   buildBrick(x, y) {
     const b = this.platforms.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_brick");
     b.refreshBody();
+  }
+
+  /** Themed obstacle — 96×96 sprite with a slightly tighter hitbox so the
+   *  pointy tops (picket-fence spikes, marble capital flourish, rope arc)
+   *  don't unfairly block jumps. Sits at ground level with the bottom of
+   *  the sprite touching GROUND_TOP_Y. */
+  buildObstacle(x, key) {
+    // Center at GROUND_TOP_Y - 48 so the bottom edge of the 96-tall sprite
+    // lands on the ground band, matching every other ground-level entity.
+    const o = this.platforms.create(x, GROUND_TOP_Y - 48, key);
+    // Tighter hitbox: 80×72 centered horizontally, top 16px non-colliding.
+    o.body.setSize(80, 72);
+    o.body.setOffset(8, 22);
+    o.refreshBody();
+    // Mark so the per-level platform tinting (L2 cold-blue, L3 amber, etc.)
+    // doesn't repaint the themed obstacle sprite.
+    o.isObstacle = true;
+    return o;
   }
 
   buildBouncePad(x, y) {

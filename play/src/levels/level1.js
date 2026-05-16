@@ -15,6 +15,10 @@ const ground   = (x1, x2)         => ({ kind: "ground", x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles)   => ({ kind: "platform", x, y, w: wTiles });
 const brick    = (x, y)           => ({ kind: "brick", x, y });
 const bouncePad = (x, y)          => ({ kind: "bouncePad", x, y });
+// Themed ground-level obstacle. The level passes the texture key; Game.js
+// places it with its base at GROUND_TOP_Y so the player needs a real jump
+// to clear it.
+const fence    = (x)              => ({ kind: "obstacle", x, texture: "obstacle_picket_fence" });
 
 // Pickup-altitude shorthand. "low" = walk-through, "mid" = single jump,
 // "high" = chain-jump from a platform.
@@ -49,6 +53,7 @@ export const level1 = {
   terrain: [
     // ---- ACT 1 (intro) ----
     ground(0, 1280),
+    fence(450),                     // first obstacle teaches the player to jump
     platform(900,  GROUND_Y - 150, 4),
     platform(1100, GROUND_Y - 260, 3),
     brick(1280, GROUND_Y - 130),
@@ -56,6 +61,7 @@ export const level1 = {
     brick(1408, GROUND_Y - 130),
     // pit 1280–1500
     ground(1500, 2400),
+    fence(1820),                    // mid-act jump
     platform(2000, GROUND_Y - 170, 3),
     platform(2300, GROUND_Y - 290, 3),
     bouncePad(1640, GROUND_Y - 64),  // springboard up to the high platforms
@@ -65,6 +71,7 @@ export const level1 = {
     brick(2620, GROUND_Y - 120),
     brick(2780, GROUND_Y - 220),
     brick(2960, GROUND_Y - 120),
+    fence(3080),                    // tight gap obstacle near pit edge
 
     // ---- ACT 2 (vertical platforming) ----
     platform(3300, GROUND_Y - 100, 3),
@@ -73,11 +80,13 @@ export const level1 = {
     platform(4100, GROUND_Y - 240, 3),
     platform(4350, GROUND_Y - 130, 3),
     ground(4500, 5400),
+    fence(4700),                    // mid-ground hop
     brick(4900, GROUND_Y - 220),
     brick(4964, GROUND_Y - 220),
     brick(5028, GROUND_Y - 220),
     brick(4836, GROUND_Y - 320),
     brick(5092, GROUND_Y - 320),
+    fence(5260),                    // pit-edge obstacle
 
     // pit 5400–5800
     ground(5500, 5800),
@@ -88,6 +97,8 @@ export const level1 = {
 
     // ---- ACT 3 (boss arena → brand) ----
     ground(6300, 7400),
+    fence(6360),                    // arena entry — last warning before Hank
+    fence(7020),                    // arena exit — between boss and brand
   ],
 
   // ============================================================================

@@ -7,6 +7,7 @@ const GROUND_Y = 656;
 const ground   = (x1, x2)       => ({ kind: "ground",   x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles) => ({ kind: "platform",  x, y,  w: wTiles  });
 const brick    = (x, y)         => ({ kind: "brick",     x, y               });
+const rack     = (x)            => ({ kind: "obstacle", x, texture: "obstacle_server_rack" });
 
 const LOW  = 70;
 const MID  = 200;
@@ -38,18 +39,22 @@ export const level4 = {
   terrain: [
     // --- Act 1 ---
     ground(0, 1600),
+    rack(400),                        // first server rack on the floor
     platform(500,  GROUND_Y - 160, 3),
     platform(800,  GROUND_Y - 290, 4),
     platform(1200, GROUND_Y - 190, 3),
     brick(1400, GROUND_Y - 220),
     brick(1464, GROUND_Y - 320),
+    rack(1280),                       // mid-act rack lane
     // pit 1600–2000
     ground(2000, 3200),
+    rack(2120),                       // post-pit landing
     platform(2200, GROUND_Y - 150, 3),
     platform(2500, GROUND_Y - 280, 4),
     brick(2750, GROUND_Y - 220),
     brick(2814, GROUND_Y - 220),
     brick(2878, GROUND_Y - 220),
+    rack(3020),                       // pre-pit obstacle
     // pit 3200–3700
     ground(3700, 5200),
     platform(3900, GROUND_Y - 180, 3),
@@ -59,10 +64,13 @@ export const level4 = {
     brick(4628, GROUND_Y - 220),
     brick(4436, GROUND_Y - 360),
     brick(4692, GROUND_Y - 360),
+    rack(4920),                       // mid-act rack
+    rack(5060),                       // double — server hallway feel
 
     // --- Act 2 ---
     // pit 5200–5700
     ground(5700, 7000),
+    rack(5820),                       // post-pit entry
     platform(5900, GROUND_Y - 160, 3),
     platform(6200, GROUND_Y - 300, 4),
     platform(6600, GROUND_Y - 220, 3),
@@ -70,6 +78,7 @@ export const level4 = {
     brick(5864, GROUND_Y - 220),
     brick(6800, GROUND_Y - 220),
     brick(6864, GROUND_Y - 300),
+    rack(6940),                       // pre-pit
     // pit 7000–7500
     ground(7500, 8000),
     platform(7600, GROUND_Y - 200, 3),
@@ -82,6 +91,8 @@ export const level4 = {
 
     // --- Act 3 ---
     ground(8500, 10500),
+    rack(8620),                       // Core Processor arena entry
+    rack(10080),                      // post-Algorithm cooldown
   ],
 
   // ============================================================
