@@ -238,6 +238,13 @@
       }
       .tc-pill:hover { background: rgba(184, 146, 224, 0.36); }
       .tc-pill:active { transform: scale(0.97); }
+      /* Keyboard / gamepad focus indicator — pulsing gold outline so the
+         "selected" pill is unmistakable. */
+      .tc-pill.focused {
+        background: rgba(184, 146, 224, 0.50);
+        border-color: #ffd24a;
+        box-shadow: 0 0 0 3px rgba(255, 210, 74, 0.32);
+      }
       /* RESUME is the primary action — fill it for emphasis. */
       .tc-pause-resume {
         background: rgba(184, 146, 224, 0.85);

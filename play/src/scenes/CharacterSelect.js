@@ -118,7 +118,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     // doesn't keep cycling. × confirms.
     this._padPrevLeft = false;
     this._padPrevRight = false;
-    const padConfirm = () => this.confirm();
+    const padConfirm = () => { if (!window.__pauseModalOpen) this.confirm(); };
     this.game.events.once("gamepad-cross", padConfirm);
     this.events.once("shutdown", () => this.game.events.off("gamepad-cross", padConfirm));
   }

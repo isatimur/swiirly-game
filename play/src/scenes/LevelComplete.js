@@ -379,7 +379,10 @@ export class LevelCompleteScene extends Phaser.Scene {
     }
 
     // ----- CONTINUE HINT -----
-    const isLastLevel = !this.payload.levelNum || this.payload.levelNum >= 5;
+    // Last "regular" level was 5, but with the bonus shaft (level 6) at
+    // the top of the ladder, the real last level is 6. After 6 the credits
+    // roll. Level 5's LevelComplete still advances normally to level 6.
+    const isLastLevel = !this.payload.levelNum || this.payload.levelNum >= 6;
     const press = this.add.text(width / 2, height - 32,
       isLastLevel ? "press   SPACE   to play again" : "press   SPACE   for next level", {
       fontFamily: "system-ui, sans-serif",
@@ -395,8 +398,15 @@ export class LevelCompleteScene extends Phaser.Scene {
 
     // ----- INPUT -----
     const restart = () => {
+      if (window.__pauseModalOpen) return;
       this.cameras.main.fadeOut(400, 26, 15, 46);
       this.time.delayedCall(420, () => {
+        // After the bonus (Level 6), credits play, then back to menu.
+        if (this.payload.levelNum === 6) {
+          this.scene.stop("HUD");
+          this.scene.start("Credits");
+          return;
+        }
         const nextLevel = isLastLevel ? 1 : this.payload.levelNum + 1;
         this.scene.start("Game", { level: nextLevel });
         this.scene.launch("HUD");

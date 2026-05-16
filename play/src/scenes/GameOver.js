@@ -97,6 +97,7 @@ export class GameOverScene extends Phaser.Scene {
     this.cameras.main.fadeIn(300, 16, 8, 20);
 
     const restart = () => {
+      if (window.__pauseModalOpen) return;
       this.cameras.main.fadeOut(400, 26, 15, 46);
       this.time.delayedCall(420, () => {
         this.scene.start("Game");

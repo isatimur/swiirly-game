@@ -284,6 +284,14 @@ const TRACKS = {
     bass:    [-12, null, -12, null, -12, null, -12, null,  -14, null, -14, null, -14, null, -14, null],
     drum:    ["kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat"],
   },
+  // Bonus — fast ascending arpeggios, F-lydian. Reflects the climb.
+  level6: {
+    bpm: 148,
+    lead:    [8, 12, 15, 19, 22, 19, 15, 12,   10, 14, 17, 21, 24, 21, 17, 14],
+    harmony: [null, null, null, 8, null, null, null, null,    null, null, null, 10, null, null, null, null],
+    bass:    [-16, null, null, null, -9, null, null, null,    -14, null, null, null, -7, null, null, null],
+    drum:    ["kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat", "kick", "hat"],
+  },
 };
 
 function tickScheduler() {

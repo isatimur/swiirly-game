@@ -156,6 +156,9 @@ export class MenuScene extends Phaser.Scene {
     }
 
     const start = () => {
+      // Pause overlay consumes Enter / × for menu navigation; don't advance
+      // the scene from underneath it.
+      if (window.__pauseModalOpen) return;
       SFX.collect();
       this.cameras.main.fadeOut(420, 26, 15, 46);
       this.time.delayedCall(440, () => {

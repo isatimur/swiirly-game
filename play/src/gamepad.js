@@ -40,6 +40,9 @@ export const PAD = {
 const _prev = {
   cross: false, circle: false, square: false, triangle: false,
   options: false, jump: false, attack: false,
+  // D-pad edges, surfaced as gamepad-up / gamepad-down events so menus
+  // can navigate without polling PAD state every frame.
+  dpadUp: false, dpadDown: false, dpadLeft: false, dpadRight: false,
 };
 
 let _gameEvents = null;
@@ -112,6 +115,11 @@ function pollOnce() {
   emitEdge(b, 0,  "gamepad-cross",    "cross");
   emitEdge(b, 1,  "gamepad-circle",   "circle");
   emitEdge(b, 9,  "gamepad-options",  "options");
+  // D-pad nav edges for menu navigation. Fires on press, not on hold.
+  emitEdge(b, 12, "gamepad-up",       "dpadUp");
+  emitEdge(b, 13, "gamepad-down",     "dpadDown");
+  emitEdge(b, 14, "gamepad-left",     "dpadLeft");
+  emitEdge(b, 15, "gamepad-right",    "dpadRight");
 }
 
 function emitEdge(buttons, idx, evtName, prevKey) {

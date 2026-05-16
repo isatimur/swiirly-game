@@ -146,16 +146,54 @@ export function initTouchControls() {
     btnMute.textContent  = m.isMuted() ? "🔇" : "🔊";
   };
 
+  // Menu-pill navigation state. Arrow keys / D-pad move focus through the
+  // currently-visible pills; Enter / × confirms by synthesizing a click.
+  // window.__pauseModalOpen is read by per-scene listeners (Menu, GameOver,
+  // LevelComplete, CharacterSelect) so they stop responding to gamepad-cross
+  // and Enter while the overlay is up.
+  // aboutBack is appended so when the About sub-panel opens, the visible
+  // pill set collapses to just [aboutBack] and nav reaches it.
+  const allPills = [btnResume, btnRestart, btnQuit, btnSound, btnMusic, btnReset, btnAbout, aboutBack];
+  let focusIdx = 0;
+  const visiblePills = () =>
+    allPills.filter(p => p.offsetParent !== null && getComputedStyle(p).display !== "none");
+  const applyFocus = () => {
+    const visible = visiblePills();
+    if (!visible.length) return;
+    focusIdx = ((focusIdx % visible.length) + visible.length) % visible.length;
+    allPills.forEach(p => p.classList.remove("focused"));
+    visible[focusIdx].classList.add("focused");
+  };
+  const moveFocus = (dir) => {
+    const visible = visiblePills();
+    if (!visible.length) return;
+    focusIdx += dir;
+    applyFocus();
+  };
+  const confirmFocus = () => {
+    const visible = visiblePills();
+    visible[focusIdx]?.click();
+  };
+
   const setPaused = (p) => {
     paused = p;
     pauseOverlay.classList.toggle("visible", p);
     btnPause.textContent = p ? "▶" : "⏸";
+    window.__pauseModalOpen = p;
     const g = window.game;
     if (!g) return;
     // Tag the overlay so CSS can hide game-only items when paused from Menu.
     if (p) {
       const inGame = g.scene?.isActive?.("Game");
       pauseOverlay.classList.toggle("menu-scope", !inGame);
+      // Reset focus to RESUME (always-visible, always-safe) each time the
+      // menu opens.
+      focusIdx = 0;
+      // Defer one frame so DOM .visible class settles before computing
+      // offsetParent for visibility filtering.
+      setTimeout(() => applyFocus(), 0);
+    } else {
+      allPills.forEach(pill => pill.classList.remove("focused"));
     }
     // Toggle Phaser's main loop. `game.loop.paused` doesn't exist in
     // Phaser 3 (the TimeStep tracks `.running` instead), so guarding on it
@@ -230,30 +268,82 @@ export function initTouchControls() {
     else g?.scene?.start?.("Menu");
   });
 
-  // About — toggle the about sub-panel.
+  // About — toggle the about sub-panel. Focus needs to follow the visible
+  // pill set so keyboard/gamepad nav reaches the BACK pill inside, and
+  // returns to the ABOUT pill when leaving.
   btnAbout.addEventListener("click", () => {
     pauseOverlay.classList.add("about-open");
+    setTimeout(() => {
+      const visible = visiblePills();
+      const i = visible.indexOf(aboutBack);
+      if (i !== -1) { focusIdx = i; applyFocus(); }
+    }, 0);
   });
   aboutBack.addEventListener("click", () => {
     pauseOverlay.classList.remove("about-open");
+    setTimeout(() => {
+      const visible = visiblePills();
+      const i = visible.indexOf(btnAbout);
+      if (i !== -1) { focusIdx = i; applyFocus(); }
+    }, 0);
   });
 
   // Initial label sync.
   refreshSoundLabel();
 
-  // ---- Global keyboard: Esc or P pauses ----
+  // ---- Global keyboard: Esc or P pauses; arrow keys / Enter navigate ----
   // Listening on window means pause works in every scene, including Menu /
   // CharacterSelect / LevelComplete — not just Game.
   window.addEventListener("keydown", (e) => {
     const k = (e.key || "").toLowerCase();
     if (k === "escape" || k === "p") {
-      // Don't pause if a Menu-side settings overlay is up; that overlay
-      // checks `window.__settingsOpen` and we honor the same flag here.
       if (window.__settingsOpen) return;
       e.preventDefault();
+      // Backstep — Esc inside the About sub-panel closes About, not pause.
+      if (paused && pauseOverlay.classList.contains("about-open")) {
+        aboutBack.click();
+        return;
+      }
       _togglePauseFn();
+      return;
+    }
+    // Pause-menu nav (only when the overlay is open).
+    if (!paused) return;
+    if (k === "arrowup" || k === "w") {
+      e.preventDefault();
+      moveFocus(-1);
+    } else if (k === "arrowdown" || k === "s") {
+      e.preventDefault();
+      moveFocus(1);
+    } else if (k === "enter" || k === " " || k === "spacebar") {
+      e.preventDefault();
+      confirmFocus();
+    } else if (k === "backspace") {
+      e.preventDefault();
+      if (pauseOverlay.classList.contains("about-open")) aboutBack.click();
+      else _togglePauseFn();
     }
   });
+
+  // Gamepad-driven pause-menu nav. The same gamepad-cross event is also
+  // used by scene listeners (Menu, GameOver, LevelComplete) for "advance"
+  // — but those listeners check window.__pauseModalOpen and short-circuit
+  // when the overlay is up.
+  const wireWhenGameReady = () => {
+    const g = window.game;
+    if (!g?.events) { setTimeout(wireWhenGameReady, 30); return; }
+    g.events.on("gamepad-up",    () => { if (paused) moveFocus(-1); });
+    g.events.on("gamepad-down",  () => { if (paused) moveFocus(1); });
+    g.events.on("gamepad-cross", () => { if (paused) confirmFocus(); });
+    // Circle (○) is the universal cancel/back on PS pads. Closes the About
+    // sub-panel if it's open, otherwise closes the whole pause overlay.
+    g.events.on("gamepad-circle", () => {
+      if (!paused) return;
+      if (pauseOverlay.classList.contains("about-open")) aboutBack.click();
+      else setPaused(false);
+    });
+  };
+  wireWhenGameReady();
 
   // Belt-and-braces: any time the page loses focus or visibility, force all
   // held buttons to release. Prevents the "switched apps with finger down,
