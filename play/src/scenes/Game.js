@@ -535,7 +535,88 @@ export class GameScene extends Phaser.Scene {
     // Mark so the per-level platform tinting (L2 cold-blue, L3 amber, etc.)
     // doesn't repaint the themed obstacle sprite.
     o.isObstacle = true;
+    // Texture key cached for the Pascal-surprise check (bulletin board has
+    // a "Read the bulletin" interaction; other obstacles ignored).
+    o.obstacleKey = key;
+    o.standTime = 0;
+    o.readDone = false;
     return o;
+  }
+
+  /** Pascal surprise — "Read the bulletin." Spike. When the player stands
+   *  within 56 px of a bulletin board and isn't running for ~1.5 s, a
+   *  flyer tooltip pops in and the camera nudges in. Fires once per
+   *  bulletin per level (readDone flag). */
+  _tickBulletinRead(time, dt) {
+    if (!this.player || !this.platforms) return;
+    const px = this.player.x;
+    const moving = Math.abs(this.player.body?.velocity?.x ?? 0) > 50;
+    this.platforms.getChildren().forEach((o) => {
+      if (o.obstacleKey !== "obstacle_bulletin_board" || o.readDone) return;
+      const dx = Math.abs(px - o.x);
+      if (dx < 56 && !moving) {
+        o.standTime += dt;
+        if (o.standTime >= 1500) {
+          o.readDone = true;
+          this._spawnBulletinTooltip(o);
+        }
+      } else {
+        o.standTime = 0;
+      }
+    });
+  }
+
+  _spawnBulletinTooltip(bulletin) {
+    const x = bulletin.x;
+    const y = bulletin.y - 70;
+    // Tooltip card with the SWIIRL FOR HIRE flyer text.
+    const container = this.add.container(x, y).setDepth(60).setAlpha(0);
+    const bg = this.add.graphics();
+    bg.fillStyle(0xffd24a, 1);
+    bg.lineStyle(2, 0x5C3BA3, 1);
+    bg.fillRoundedRect(-90, -36, 180, 64, 8);
+    bg.strokeRoundedRect(-90, -36, 180, 64, 8);
+    // Little arrow pointing down to the board.
+    bg.fillStyle(0xffd24a, 1);
+    bg.fillTriangle(-8, 28, 8, 28, 0, 40);
+    bg.lineStyle(2, 0x5C3BA3, 1);
+    bg.lineBetween(-8, 28, 0, 40);
+    bg.lineBetween(0, 40, 8, 28);
+    const title = this.add.text(0, -22, "SWIIRL  FOR  HIRE", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "12px", fontStyle: "900",
+      color: "#5C3BA3", letterSpacing: 2,
+    }).setOrigin(0.5);
+    const sub = this.add.text(0, -4, "callbacks in < 24h", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "10px",
+      color: "#5C3BA3",
+    }).setOrigin(0.5);
+    const tag = this.add.text(0, 14, "✦  community  insights  ✦", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "9px", fontStyle: "700",
+      color: "#5C3BA3", letterSpacing: 2,
+    }).setOrigin(0.5);
+    container.add([bg, title, sub, tag]);
+    // Pop in, hold, fade out.
+    this.tweens.add({
+      targets: container,
+      alpha: 1, y: y - 8,
+      duration: 280, ease: "Back.easeOut",
+      onComplete: () => {
+        this.time.delayedCall(2200, () => {
+          this.tweens.add({
+            targets: container,
+            alpha: 0, y: y - 20,
+            duration: 320, ease: "Quad.easeIn",
+            onComplete: () => container.destroy(),
+          });
+        });
+      },
+    });
+    // Tiny audio + score reward so it feels earned.
+    import("../audio.js").then(m => m.SFX.collect?.());
+    this.addScore?.(50, x, y);
   }
 
   buildBouncePad(x, y) {
@@ -1031,6 +1112,11 @@ export class GameScene extends Phaser.Scene {
         this.showActBanner(next.banner);
       }
     }
+
+    // Pascal surprise — "Read the bulletin." Standing still next to a
+    // community bulletin board for ~1.5 s reveals a tooltip with the
+    // SWIIRL FOR HIRE flyer. Each board fires once per level. Spike v1.
+    this._tickBulletinRead(time, dt);
 
     // Insight magnetism — orbs gravitate toward the player when nearby.
     if (this.insights && this.player.body.enable) {
