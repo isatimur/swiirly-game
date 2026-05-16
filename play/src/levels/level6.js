@@ -18,13 +18,14 @@ const ground   = (x1, x2)       => ({ kind: "ground", x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles) => ({ kind: "platform", x, y, w: wTiles });
 const brick    = (x, y)         => ({ kind: "brick", x, y });
 
-// Vertical wall = stacked bricks at a fixed x column from y1 down to y2.
-// Bricks are 64×64; player wall-jumps off the side. Intermediate ledges
-// double as rest stops if you need to pause and look up.
+// Vertical shaft wall = stacked 'shaftBrick' tiles at a fixed x column.
+// Each is 64×64 with the tile_shaft_wall texture — a girder frame plus a
+// glass pane with city-lights behind it. Stacking them looks like a real
+// elevator shaft instead of a brick stack.
 function wallColumn(x, yTop, yBottom) {
   const out = [];
   for (let y = yTop; y < yBottom; y += TILE) {
-    out.push(brick(x, y));
+    out.push({ kind: "shaftBrick", x, y });
   }
   return out;
 }
@@ -56,6 +57,12 @@ export const level6 = {
     // the brand reveal. Bricks fill from 120 down to GROUND_Y-64.
     ...wallColumn(0, 120, GROUND_Y - 64),
     ...wallColumn(736, 120, GROUND_Y - 64),
+
+    // Bottom warm-up — two starter bricks on the sides so the ground floor
+    // isn't a barren landing zone before the first real climb hop. Spawn
+    // x is 400 so these stay off the drop path.
+    brick(180, GROUND_Y - 110),
+    brick(560, GROUND_Y - 110),
 
     // Climbing platforms, zig-zagging up the shaft. Each pair (left/right)
     // is roughly 200 px apart vertically — within a chained double-jump

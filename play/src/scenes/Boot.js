@@ -28,7 +28,7 @@ export const SKINS = ["classic", "beanie", "ninja", "rookie"];
 export const DEFAULT_SKIN = "beanie";
 
 const WORLD_IMAGES = [
-  "tile_ground", "tile_grass", "tile_platform", "tile_brick",
+  "tile_ground", "tile_grass", "tile_platform", "tile_brick", "tile_shaft_wall",
   // Per-level themed obstacles (one signature per level — bulletin board in
   // the park, cubicle wall in the office, velvet rope in the brand HQ,
   // server rack in the data lake, marble pillar at the summit).

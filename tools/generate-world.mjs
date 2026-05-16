@@ -237,6 +237,46 @@ const marblePillarSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" heig
 </svg>`;
 await svgToPng(marblePillarSvg, "obstacle_marble_pillar.png", 96, 96);
 
+// ============================================================================
+// SHAFT WALL — vertically tileable wall section for the bonus level.
+// Steel girder frame top + bottom (so tiles butt cleanly), glass window in
+// the middle with a faint warm interior glow. 64×64 — same footprint as the
+// other tiles so it slots into the existing collision system unchanged.
+// ============================================================================
+const shaftWallSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- girder frame (steel-grey) -->
+  <rect x="0" y="0" width="64" height="64" fill="#3a3d44"/>
+  <!-- top + bottom horizontal beams -->
+  <rect x="0" y="0" width="64" height="6" fill="#1f2127"/>
+  <rect x="0" y="58" width="64" height="6" fill="#1f2127"/>
+  <!-- rivets along the beams -->
+  ${[6, 18, 30, 42, 54].map(x => `<circle cx="${x}" cy="3" r="1.4" fill="#5a5d64"/>`).join("")}
+  ${[6, 18, 30, 42, 54].map(x => `<circle cx="${x}" cy="61" r="1.4" fill="#5a5d64"/>`).join("")}
+  <!-- vertical mullions / pillars -->
+  <rect x="0" y="6" width="6" height="52" fill="#1f2127"/>
+  <rect x="58" y="6" width="6" height="52" fill="#1f2127"/>
+  <!-- window pane — warm interior glow with a subtle gradient -->
+  <defs>
+    <linearGradient id="pane" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#3a4858"/>
+      <stop offset="0.5" stop-color="#5a4838"/>
+      <stop offset="1" stop-color="#2a2018"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="52" height="52" fill="url(#pane)"/>
+  <!-- city-light specks behind the glass -->
+  <rect x="14" y="14" width="6" height="4" fill="#ffd24a" opacity="0.55"/>
+  <rect x="26" y="18" width="4" height="3" fill="#7dc4ff" opacity="0.45"/>
+  <rect x="40" y="14" width="5" height="4" fill="#ffd24a" opacity="0.55"/>
+  <rect x="18" y="34" width="4" height="3" fill="#ff8fbe" opacity="0.45"/>
+  <rect x="36" y="38" width="6" height="3" fill="#ffd24a" opacity="0.5"/>
+  <rect x="44" y="46" width="4" height="3" fill="#7dc4ff" opacity="0.5"/>
+  <!-- window cross — thin steel cross dividing the pane into quarters -->
+  <rect x="30" y="6" width="2" height="52" fill="#1f2127" opacity="0.85"/>
+  <rect x="6" y="30" width="52" height="2" fill="#1f2127" opacity="0.85"/>
+</svg>`;
+await svgToPng(shaftWallSvg, "tile_shaft_wall.png", TILE, TILE);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
@@ -606,6 +646,7 @@ await svgToPng(bgExecutiveSvg, "bg_executive.png", 2560, 720);
 console.log("World assets generated:");
 console.log("  tiles:    tile_ground, tile_grass, tile_platform, tile_brick");
 console.log("  obstacles: bulletin_board, cubicle_wall, velvet_rope, server_rack, marble_pillar");
+console.log("  shaft:     tile_shaft_wall");
 console.log("  decor:    cloud, sparkle");
 console.log("  enemies:  jargon_blob, ghost, paperwork, projectile_paper, boss, deadline_bot");
 console.log("  pickups:  insight, signal_speed, signal_shield, signal_growth");

@@ -140,6 +140,10 @@ export class GameScene extends Phaser.Scene {
         });
       } else if (t.kind === "obstacle") {
         this.buildObstacle(t.x, t.texture);
+      } else if (t.kind === "shaftBrick") {
+        // Like a brick, but uses the shaft-wall texture for the bonus
+        // level. Same 64×64 collision footprint as a regular brick.
+        this.buildShaftBrick(t.x, t.y);
       }
     }
 
@@ -540,6 +544,11 @@ export class GameScene extends Phaser.Scene {
     b.refreshBody();
   }
 
+  buildShaftBrick(x, y) {
+    const b = this.platforms.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_shaft_wall");
+    b.refreshBody();
+  }
+
   /** Themed obstacle — 96×96 sprite with a slightly tighter hitbox so the
    *  pointy tops (picket-fence spikes, marble capital flourish, rope arc)
    *  don't unfairly block jumps. Sits at ground level with the bottom of
@@ -788,35 +797,60 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  /** Wind zone — invisible-ish rectangle that pushes the player horizontally
-   *  while inside. Visualized with drifting particles. */
+  /** Wind zone — visibly tinted rectangle that pushes the player horizontally
+   *  while inside. Animated streaks + arrow tags telegraph the direction. */
   buildWindZone(x, y, w, h, force) {
     const zone = { x, y, w, h, force };
     this.windZones.push(zone);
-    // Visual: animated streak particles drifting in the wind direction.
     const dir = Math.sign(force) || 1;
-    const colorHex = 0xb8e0ff;
-    for (let i = 0; i < 8; i++) {
+    // Headwind = warm red tint, tailwind = cool cyan tint. Player reads
+    // direction without thinking about it.
+    const colorHex = dir > 0 ? 0x9adcff : 0xff8f9a;
+    // Tinted fill + visible border (was 0.04 / 0.18 — practically invisible).
+    const fill = this.add.rectangle(x + w / 2, y + h / 2, w, h, colorHex, 0.18).setDepth(2);
+    fill.setStrokeStyle(2, colorHex, 0.7);
+    // Directional arrows tiled across the zone — players can't miss it.
+    const arrowChar = dir > 0 ? "▶" : "◀";
+    const cols = Math.max(2, Math.floor(w / 120));
+    const rows = Math.max(2, Math.floor(h / 120));
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const ax = x + (c + 0.5) * (w / cols);
+        const ay = y + (r + 0.5) * (h / rows);
+        const arrow = this.add.text(ax, ay, arrowChar, {
+          fontFamily: "system-ui, sans-serif",
+          fontSize: "32px", fontStyle: "900",
+          color: dir > 0 ? "#9adcff" : "#ff8f9a",
+        }).setOrigin(0.5).setDepth(3).setAlpha(0.55);
+        // Subtle pulse so the zone reads as ACTIVE, not decorative.
+        this.tweens.add({
+          targets: arrow, alpha: 0.85, scale: 1.08,
+          duration: 600 + Math.random() * 400,
+          yoyo: true, repeat: -1,
+          delay: (r + c) * 120,
+          ease: "Sine.easeInOut",
+        });
+      }
+    }
+    // Drifting streak particles for motion.
+    for (let i = 0; i < 12; i++) {
       const px = x + Math.random() * w;
       const py = y + Math.random() * h;
-      const streak = this.add.rectangle(px, py, 18, 2, colorHex, 0.6).setDepth(4);
+      const streak = this.add.rectangle(px, py, 24, 2, colorHex, 0.7).setDepth(4);
       this.tweens.add({
         targets: streak,
         x: dir > 0 ? x + w + 30 : x - 30,
         alpha: 0,
-        duration: 1200 + Math.random() * 800,
+        duration: 1000 + Math.random() * 600,
         repeat: -1,
         delay: Math.random() * 1200,
         onRepeat: () => {
           streak.x = dir > 0 ? x - 30 : x + w + 30;
           streak.y = y + Math.random() * h;
-          streak.alpha = 0.6;
+          streak.alpha = 0.7;
         },
       });
     }
-    // Subtle bordering rectangle so the zone is at least partly visible.
-    const border = this.add.rectangle(x + w / 2, y + h / 2, w, h, colorHex, 0.04).setDepth(2);
-    border.setStrokeStyle(1, colorHex, 0.18);
   }
 
   spawnSparkles(x, y, count = 6) {
@@ -1118,15 +1152,9 @@ export class GameScene extends Phaser.Scene {
     if (this.bgDataLake.alpha > 0)  this.bgDataLake.tilePositionX  = cam.scrollX * 0.5;
     if (this.bgExecutive.alpha > 0) this.bgExecutive.tilePositionX = cam.scrollX * 0.5;
 
-    // Camera lean — subtle rotation in the direction of the player's
-    // velocity sells speed without affecting gameplay. Capped at 0.4°
-    // (0.007 rad) so it never reads as motion-sickness inducing.
-    // Re-centers within a few frames when the player stops.
-    if (this.player?.body) {
-      const speedRatio = this.player.body.velocity.x / PHYSICS.runSpeed;
-      const targetRot = Math.max(-0.007, Math.min(0.007, speedRatio * 0.007));
-      cam.rotation += (targetRot - cam.rotation) * 0.08;
-    }
+    // Camera stays level — the previous "lean into direction" experiment
+    // read as motion-sickness, not speed. Removed.
+    if (cam.rotation !== 0) cam.rotation = 0;
 
     // Crossfade to tower bg when entering the boss arena.
     if (this.boss && this.player.x > this.level.bossArenaStart) {
@@ -1191,9 +1219,19 @@ export class GameScene extends Phaser.Scene {
           const beltTop = belt.body.y;
           if (px < left - 4 || px > right + 4) continue;
           if (Math.abs(py - beltTop) > 12) continue;
-          // Add belt-direction velocity component on top of player's own input.
-          this.player.body.velocity.x += belt.beltDir * 220 * (dt / 1000) * 6;
-          this.player.body.velocity.x = Phaser.Math.Clamp(this.player.body.velocity.x, -560, 560);
+          // Snap player to belt speed unless they're actively fighting it.
+          // Previous additive force was overwritten by Player.preUpdate's
+          // own velocity logic each frame — net push was ~22 px/s, nowhere
+          // near "conveyor" feel. Now: if player's velocity in the belt
+          // direction is below belt speed AND they're not pressing the
+          // opposite direction (>40 px/s opposing), force vx to belt speed.
+          const beltSpeed = belt.beltDir * 220;
+          const vx = this.player.body.velocity.x;
+          if (belt.beltDir > 0 && vx < beltSpeed && vx > -40) {
+            this.player.body.velocity.x = beltSpeed;
+          } else if (belt.beltDir < 0 && vx > beltSpeed && vx < 40) {
+            this.player.body.velocity.x = beltSpeed;
+          }
           break;
         }
       }
