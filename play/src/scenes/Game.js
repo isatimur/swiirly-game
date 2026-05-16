@@ -543,25 +543,30 @@ export class GameScene extends Phaser.Scene {
     return o;
   }
 
-  /** Pascal surprise — "Read the bulletin." Spike. When the player stands
-   *  within 56 px of a bulletin board and isn't running for ~1.5 s, a
-   *  flyer tooltip pops in and the camera nudges in. Fires once per
-   *  bulletin per level (readDone flag). */
+  /** Pascal surprise — "Read the bulletin." Walk-by trigger: the moment
+   *  the player passes within 80 px of a bulletin board, the flyer
+   *  tooltip pops above it. Each board fires exactly once per level.
+   *  A subtle yellow glow telegraphs proximity from 140 px so the player
+   *  notices something's interactive before triggering it. */
   _tickBulletinRead(time, dt) {
     if (!this.player || !this.platforms) return;
-    const px = this.player.x;
-    const moving = Math.abs(this.player.body?.velocity?.x ?? 0) > 50;
+    const px = this.player.x, py = this.player.y;
     this.platforms.getChildren().forEach((o) => {
       if (o.obstacleKey !== "obstacle_bulletin_board" || o.readDone) return;
       const dx = Math.abs(px - o.x);
-      if (dx < 56 && !moving) {
-        o.standTime += dt;
-        if (o.standTime >= 1500) {
-          o.readDone = true;
-          this._spawnBulletinTooltip(o);
-        }
-      } else {
-        o.standTime = 0;
+      const dy = Math.abs(py - o.y);
+      // Telegraph glow when getting close — yellow tint scaled by distance.
+      if (dx < 140 && dy < 140) {
+        const t = 1 - (dx / 140);
+        o.setTint(Phaser.Display.Color.GetColor(255, 255, 255 * (1 - t * 0.4)));
+      } else if (o.tintTopLeft !== 0xffffff) {
+        o.clearTint();
+      }
+      // Walk-by trigger — fire as soon as the player is in proximity.
+      if (dx < 80 && dy < 140) {
+        o.readDone = true;
+        o.clearTint();
+        this._spawnBulletinTooltip(o);
       }
     });
   }
