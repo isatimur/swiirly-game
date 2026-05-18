@@ -144,6 +144,10 @@ export class GameScene extends Phaser.Scene {
         // Like a brick, but uses the shaft-wall texture for the bonus
         // level. Same 64×64 collision footprint as a regular brick.
         this.buildShaftBrick(t.x, t.y);
+      } else if (t.kind === "oneWayFloor") {
+        // Jump-through brick floor for the L6 arena cap — the player
+        // rises up through it from the shaft, then lands on top.
+        this.buildOneWayFloor(t.x1, t.x2, t.y);
       }
     }
 
@@ -551,6 +555,19 @@ export class GameScene extends Phaser.Scene {
   buildShaftBrick(x, y) {
     const b = this.platforms.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_shaft_wall");
     b.refreshBody();
+  }
+
+  /** Jump-through floor — only the TOP of each brick is solid. Player rising
+   *  from below passes straight through; player falling lands on top. Used
+   *  for the L6 arena cap so the shaft player can enter the bowl. */
+  buildOneWayFloor(x1, x2, y) {
+    for (let x = x1; x < x2; x += TILE_SIZE) {
+      const b = this.platforms.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_shaft_wall");
+      b.body.checkCollision.down  = false;
+      b.body.checkCollision.left  = false;
+      b.body.checkCollision.right = false;
+      b.refreshBody();
+    }
   }
 
   /** Themed obstacle — 96×96 sprite with a slightly tighter hitbox so the

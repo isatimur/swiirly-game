@@ -71,8 +71,10 @@ export const level6 = {
     ...wallColumn(400, 600, GROUND_Y - 64),
     ...wallColumn(1136, 600, GROUND_Y - 64),
 
-    // ---- ARENA FLOOR — full 1600-wide cap at y=600 ----
-    ...floorStrip(0, 1600, 600),
+    // ---- ARENA FLOOR — one-way (jump-through) so the climbing player
+    // rises up through it from the shaft, then stands on top. Boss + player
+    // can both walk on it normally once above. Full 1600-wide cap at y=600.
+    { kind: "oneWayFloor", x1: 0, x2: 1600, y: 600 },
 
     // ---- DECORATIVE PILLARS at the outer edges of the bowl ----
     // Short shaftBrick columns rising from the arena floor up into the
