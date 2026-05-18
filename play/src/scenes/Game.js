@@ -585,6 +585,19 @@ export class GameScene extends Phaser.Scene {
         m.Music.play("level" + this.levelNum);
         m.Music.setIntensity(0.45);
       });
+      // Brand "go-touch-me" glow — pulsing yellow halo behind the brand
+      // once the boss is down, so the player knows where to go next.
+      if (this.brand && !this._brandHalo) {
+        this._brandHalo = this.add.circle(this.brand.x, this.brand.y - 60, 90, 0xffd24a, 0.25)
+          .setDepth(this.brand.depth - 1)
+          .setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({
+          targets: this._brandHalo,
+          alpha: 0.55, scale: 1.3,
+          duration: 700, yoyo: true, repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      }
     };
     this.game.events.on("player-hurt", onPlayerHurt);
     this.game.events.once("player-died", onPlayerDied);
