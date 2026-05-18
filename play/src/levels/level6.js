@@ -79,13 +79,11 @@ export const level6 = {
     // (No roof — open sky above. Player jumps from the upper staircase
     // step directly to the brand.)
 
-    // ---- STAIRCASE TO THE ROOF — two centered steps stacked directly
-    // under the roof hole. Same x range so the climb reads as 'stairs'
-    // not 'scattered platforms.' Each drop = 140px (single-jump 176px
-    // covers cleanly). Player walks the arena floor, jumps up onto step
-    // one, then step two, then straight up through the hole to brand.
-    platform(560, 460, 4),               // step 1 — middle stair (y=460, x=560-816)
-    platform(560, 320, 4),               // step 2 — top stair under hole (y=320, x=560-816)
+    // ---- APPROACH STEPS — pushed to the edges so the boss has a clear
+    // center to fight in. Left step low, right step high, then chain
+    // double-jump to the brand at (688, 200).
+    platform(320, 460, 3),               // left step (x=320-512 at y=460)
+    platform(1088, 320, 3),              // right step (x=1088-1280 at y=320)
 
     // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
     platform(520, GROUND_Y - 220, 3),
