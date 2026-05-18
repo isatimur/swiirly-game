@@ -76,11 +76,8 @@ export const level6 = {
     // Boss has plenty of room; less brick clutter at the edges.
     { kind: "oneWayFloor", x1: 400, x2: 1200, y: 600 },
 
-    // ---- ROOF FLOOR — two symmetric short segments either side of the
-    // staircase hole (x=560-816). Each side is now ~3 tiles instead of
-    // the previous lopsided 4 / 7. Cleaner read.
-    { kind: "oneWayFloor", x1: 400, x2: 560,  y: 200 },
-    { kind: "oneWayFloor", x1: 816, x2: 976,  y: 200 },
+    // (No roof — open sky above. Player jumps from the upper staircase
+    // step directly to the brand.)
 
     // ---- STAIRCASE TO THE ROOF — two centered steps stacked directly
     // under the roof hole. Same x range so the climb reads as 'stairs'
