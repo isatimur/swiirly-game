@@ -493,21 +493,22 @@ export const IncompetenceManager = BossBase;
  *  active from the start, larger sprite, more HP. Sits in an open arena
  *  at the top of the L6 shaft. */
 export class TheBoard extends TheCEO {
-  constructor(scene, x, y, health = 14) {
+  constructor(scene, x, y, health = 18) {
     super(scene, x, y, health);
     this.displayName = "THE BOARD";
     this.setScale((this.scaleX || 1) * 1.6);
-    // Tighter attack cadence than the CEO — every phase fires faster.
-    this.summonInterval = 3800;
-    this.dashInterval   = 3200;
-    this.spreadInterval = 2600;
+    // Hardest cadence in the game. The CEO's intervals were 5000 / 4200 /
+    // 3600 ms; THE BOARD nearly halves them. Combined with the always-on
+    // phase 3 below, expect overlapping attacks the whole fight.
+    this.summonInterval = 2600;
+    this.dashInterval   = 2200;
+    this.spreadInterval = 1800;
+    // Crimson tint from the jump — no soft phases.
+    this.bossTint = 0xff4040;
+    this.setTint(this.bossTint);
   }
-  // All phases active immediately — there's no soft start in a boardroom.
-  get phase() {
-    const r = this.health / this.maxHealth;
-    if (r > 0.66) return 2;  // start at phase 2 (summon + base attacks)
-    return 3;                // bottom 2/3 of HP runs the full phase-3 kit
-  }
+  // Always max phase. Final-boss energy.
+  get phase() { return 3; }
 }
 
 export function makeBoss(scene, levelNum, x, y, health) {

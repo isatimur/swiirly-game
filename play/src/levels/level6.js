@@ -51,8 +51,10 @@ export const level6 = {
   groundY: GROUND_Y,
   // Spawn inside the centered shaft (x=464–1136 interior, center=800).
   spawn: { x: 800, y: GROUND_Y - 80 },
-  brandPos: { x: 800, y: 160 },
-  miniBoss: { x: 800, y: 600, health: 14 },
+  // Brand sits ON TOP of the rooftop-door pedestal at the very top of the
+  // bowl. Approach platforms feed up to it.
+  brandPos: { x: 784, y: 240 },
+  miniBoss: { x: 800, y: 600, health: 18 },
   insightsRequired: 14,
   bossArenaTop: 700,
   bossArenaStart: 99999,
@@ -72,21 +74,16 @@ export const level6 = {
     ...wallColumn(1136, 600, GROUND_Y - 64),
 
     // ---- ARENA FLOOR — one-way (jump-through) so the climbing player
-    // rises up through it from the shaft, then stands on top. Boss + player
-    // can both walk on it normally once above. Full 1600-wide cap at y=600.
-    { kind: "oneWayFloor", x1: 0, x2: 1600, y: 600 },
+    // rises up through it from the shaft, then stands on top. Boss roams
+    // it. Trimmed to the centered band x=320–1280 so the bowl reads as
+    // a focused rooftop, not a brick highway.
+    { kind: "oneWayFloor", x1: 320, x2: 1280, y: 600 },
 
-    // ---- DECORATIVE PILLARS at the outer edges of the bowl ----
-    // Short shaftBrick columns rising from the arena floor up into the
-    // arena — visual framing only, the player can wall-jump off them.
-    ...wallColumn(64,   240, 600),
-    ...wallColumn(1472, 240, 600),
-
-    // ---- APPROACH PLATFORMS (post-fight route to the brand) ----
-    // Staggered left → right → center-top. Single-jump reachable each step.
-    platform(480, 440, 4),
-    platform(896, 280, 4),
-    platform(672, 220, 4),
+    // ---- APPROACH ROUTE (sparse, post-fight climb to the brand) ----
+    // Three small steps staggered left → right → center-top pedestal.
+    platform(440, 460, 3),               // first hop, left side
+    platform(960, 360, 3),               // second hop, right side
+    platform(720, 240, 2),               // top pedestal — brand stands here
 
     // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
     platform(520, GROUND_Y - 220, 3),

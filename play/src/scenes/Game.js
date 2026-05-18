@@ -210,6 +210,32 @@ export class GameScene extends Phaser.Scene {
     // The question mark hovers ABOVE the brand's head.
     this.brand = new Brand(this, lvl.brandPos.x, lvl.brandPos.y);
 
+    // L6 rooftop-door pedestal — a small painted door + sign behind the
+    // brand so it reads as "the rooftop exit" instead of a floating
+    // figure in the sky. Drawn purely as decoration behind the brand.
+    if (this.levelNum === 6) {
+      const bx = this.brand.x, by = this.brand.y;
+      const door = this.add.graphics().setDepth(this.brand.depth - 1);
+      // Door frame (shaft-girder palette)
+      door.fillStyle(0x3a3d44, 1);
+      door.fillRect(bx - 36, by - 78, 72, 78);
+      door.fillStyle(0x1f2127, 1);
+      door.fillRect(bx - 30, by - 72, 60, 72);
+      // Door pane glow
+      door.fillStyle(0xffd24a, 0.55);
+      door.fillRect(bx - 26, by - 68, 52, 52);
+      // Door handle
+      door.fillStyle(0xc8c0b8, 1);
+      door.fillCircle(bx + 14, by - 36, 3);
+      // "ROOFTOP" sign above the door
+      this.add.text(bx, by - 96, "▲  ROOFTOP", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "13px", fontStyle: "900",
+        color: "#FFD24A", letterSpacing: 4,
+        stroke: "#1f2127", strokeThickness: 3,
+      }).setOrigin(0.5);
+    }
+
     const qmY = this.brand.y - 200; // 40px above the brand's head
     this.brandQuestionMark = this.add.text(this.brand.x, qmY, "?", {
       fontFamily: "serif",
