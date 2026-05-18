@@ -517,15 +517,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   buildGround(x, w) {
-    // Top "grass" tile band with darker tiles below.
+    // Top "grass" tile band with darker tiles below. The ground band lives
+    // at the level's groundY (defaults to L1's GROUND_TOP_Y) — vertical
+    // levels like L6 use a different floor line, so reading from the level
+    // data instead of the imported constant matters.
+    const groundY = this.level.groundY ?? GROUND_TOP_Y;
     const tilesAcross = Math.ceil(w / TILE_SIZE);
     for (let i = 0; i < tilesAcross; i++) {
       const tx = x + i * TILE_SIZE;
-      const top = this.platforms.create(tx + TILE_SIZE / 2, GROUND_TOP_Y + TILE_SIZE / 2, "tile_grass");
+      const top = this.platforms.create(tx + TILE_SIZE / 2, groundY + TILE_SIZE / 2, "tile_grass");
       top.refreshBody();
       // Add 1-2 rows of "dirt" tiles below for visual depth (not collidable).
-      this.add.image(tx + TILE_SIZE / 2, GROUND_TOP_Y + TILE_SIZE * 1.5, "tile_ground").setDepth(-1);
-      this.add.image(tx + TILE_SIZE / 2, GROUND_TOP_Y + TILE_SIZE * 2.5, "tile_ground").setDepth(-1);
+      this.add.image(tx + TILE_SIZE / 2, groundY + TILE_SIZE * 1.5, "tile_ground").setDepth(-1);
+      this.add.image(tx + TILE_SIZE / 2, groundY + TILE_SIZE * 2.5, "tile_ground").setDepth(-1);
     }
   }
 

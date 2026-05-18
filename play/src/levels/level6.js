@@ -34,6 +34,9 @@ export const level6 = {
   name: "Up and to the Right",
   width: 800,
   height: 3200,
+  // Vertical level — Game.buildGround reads this so the floor tiles land
+  // at the bottom of the shaft (y=3104) instead of L1's imported 656.
+  groundY: GROUND_Y,
   // Spawn at the bottom-center, falling in from just above the floor.
   spawn: { x: 400, y: GROUND_Y - 80 },
   brandPos: { x: 400, y: 120 },
