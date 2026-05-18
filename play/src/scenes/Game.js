@@ -217,31 +217,34 @@ export class GameScene extends Phaser.Scene {
       const bx = this.brand.x, by = this.brand.y;
       // Distant city skyline behind the rooftop — staggered dark
       // rectangles with lit windows, parallax-free (just decor).
-      const skyline = this.add.graphics().setDepth(-15);
-      const skyBuildings = [
-        { x:  120, w:  90, h: 200, c: 0x1a1f2a },
-        { x:  220, w: 130, h: 260, c: 0x0e1320 },
-        { x:  370, w:  80, h: 180, c: 0x161b26 },
-        { x:  480, w: 110, h: 240, c: 0x0e1320 },
-        { x:  620, w:  70, h: 160, c: 0x1a1f2a },
-        { x:  720, w: 100, h: 220, c: 0x0e1320 },
-        { x:  860, w:  90, h: 200, c: 0x161b26 },
-        { x:  980, w: 120, h: 280, c: 0x0e1320 },
-        { x: 1130, w:  80, h: 190, c: 0x1a1f2a },
-        { x: 1240, w: 110, h: 240, c: 0x0e1320 },
-        { x: 1380, w:  80, h: 170, c: 0x161b26 },
-      ];
-      for (const b of skyBuildings) {
-        const top = 600 - b.h;
-        skyline.fillStyle(b.c, 1);
-        skyline.fillRect(b.x, top, b.w, b.h);
-        // Lit windows — a sparse 3-column grid of warm specks.
-        skyline.fillStyle(0xffd28a, 0.55);
-        const rows = Math.floor(b.h / 24);
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < 3; c++) {
-            if (((r * 3 + c + b.x) % 5) === 0) continue;  // skip some
-            skyline.fillRect(b.x + 8 + c * (b.w - 16) / 2.4, top + 8 + r * 24, 6, 5);
+      // Skipped on mobile: the per-rect graphics calls add real GPU cost
+      // when combined with the rest of the L6 effects.
+      if (!IS_MOBILE) {
+        const skyline = this.add.graphics().setDepth(-15);
+        const skyBuildings = [
+          { x:  120, w:  90, h: 200, c: 0x1a1f2a },
+          { x:  220, w: 130, h: 260, c: 0x0e1320 },
+          { x:  370, w:  80, h: 180, c: 0x161b26 },
+          { x:  480, w: 110, h: 240, c: 0x0e1320 },
+          { x:  620, w:  70, h: 160, c: 0x1a1f2a },
+          { x:  720, w: 100, h: 220, c: 0x0e1320 },
+          { x:  860, w:  90, h: 200, c: 0x161b26 },
+          { x:  980, w: 120, h: 280, c: 0x0e1320 },
+          { x: 1130, w:  80, h: 190, c: 0x1a1f2a },
+          { x: 1240, w: 110, h: 240, c: 0x0e1320 },
+          { x: 1380, w:  80, h: 170, c: 0x161b26 },
+        ];
+        for (const b of skyBuildings) {
+          const top = 600 - b.h;
+          skyline.fillStyle(b.c, 1);
+          skyline.fillRect(b.x, top, b.w, b.h);
+          skyline.fillStyle(0xffd28a, 0.55);
+          const rows = Math.floor(b.h / 24);
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < 3; c++) {
+              if (((r * 3 + c + b.x) % 5) === 0) continue;
+              skyline.fillRect(b.x + 8 + c * (b.w - 16) / 2.4, top + 8 + r * 24, 6, 5);
+            }
           }
         }
       }

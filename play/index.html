@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
     <!-- Base href fixes asset resolution when the page is served at /play
          (no trailing slash, via Vercel's cleanUrls). Without this, every
          relative path resolves against / instead of /play/, and every
@@ -347,6 +347,20 @@
       <div class="rotate-icon">⟳</div>
       <p>Rotate your phone to landscape for the best experience</p>
     </div>
+    <script>
+      // iOS Safari ignores user-scalable=no inside the viewport meta — these
+      // explicit listeners block the pinch and the double-tap zoom that
+      // happen when the player taps two on-screen controls at once.
+      document.addEventListener("gesturestart",  (e) => e.preventDefault());
+      document.addEventListener("gesturechange", (e) => e.preventDefault());
+      document.addEventListener("gestureend",    (e) => e.preventDefault());
+      let _lastTouchEnd = 0;
+      document.addEventListener("touchend", (e) => {
+        const now = Date.now();
+        if (now - _lastTouchEnd < 320) e.preventDefault();
+        _lastTouchEnd = now;
+      }, { passive: false });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <script type="module" src="./src/main.js"></script>
   </body>
