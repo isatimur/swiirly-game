@@ -262,6 +262,75 @@ export class GameScene extends Phaser.Scene {
         color: "#FFD24A", letterSpacing: 4,
         stroke: "#1f2127", strokeThickness: 3,
       }).setOrigin(0.5);
+
+      // ----- L6 EASTER EGGS -----
+      // 1. Sticky note on the rooftop door — easy to miss, gold paper
+      //    with handwritten-looking text. Stuck slightly off-square.
+      const sticky = this.add.container(bx + 22, by - 60);
+      const sg = this.add.graphics();
+      sg.fillStyle(0xffd24a, 1);
+      sg.fillRect(-10, -10, 20, 18);
+      sg.lineStyle(0.6, 0xa07820, 1);
+      sg.strokeRect(-10, -10, 20, 18);
+      const st = this.add.text(0, -2, "Q4\nplan", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "5px", fontStyle: "700",
+        color: "#5C3BA3", align: "center",
+      }).setOrigin(0.5);
+      sticky.add([sg, st]);
+      sticky.setAngle(-8).setDepth(this.brand.depth);
+
+      // 2. Floating "BOARD MEETING — postponed" memo drifting past the
+      //    skyline. Anyone watching for more than 6 seconds will notice
+      //    one slow-drift past the right-roof segment.
+      const memo = this.add.container(1280 + 80, 320);
+      const mg = this.add.graphics();
+      mg.fillStyle(0xf8efdc, 0.9);
+      mg.fillRect(-32, -22, 64, 44);
+      mg.lineStyle(1, 0x5C3BA3, 0.8);
+      mg.strokeRect(-32, -22, 64, 44);
+      const mt = this.add.text(0, -8, "BOARD\nMEETING", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "7px", fontStyle: "900",
+        color: "#5C3BA3", align: "center", letterSpacing: 1,
+      }).setOrigin(0.5);
+      const mt2 = this.add.text(0, 9, "postponed.", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "6px", fontStyle: "italic",
+        color: "#8B63C9", align: "center",
+      }).setOrigin(0.5);
+      memo.add([mg, mt, mt2]);
+      memo.setDepth(-10).setAngle(-3);
+      this.tweens.add({
+        targets: memo,
+        x: -120, y: 380,
+        angle: 8,
+        duration: 22000,
+        repeat: -1,
+        ease: "Linear",
+      });
+
+      // 3. Shooting star — arcs across the sky on a random schedule, low
+       //    depth so it's clearly background. Whole arc takes ~1.4s.
+      const fireShootingStar = () => {
+        const sx = Phaser.Math.Between(40, 200);
+        const sy = Phaser.Math.Between(80, 220);
+        const star = this.add.rectangle(sx, sy, 3, 3, 0xffffff, 1).setDepth(-12);
+        const trail = this.add.rectangle(sx - 18, sy - 8, 32, 2, 0xffe0a0, 0.7).setDepth(-12);
+        this.tweens.add({
+          targets: [star, trail],
+          x: "+=420", y: "+=180", alpha: 0,
+          duration: 1400, ease: "Quad.easeIn",
+          onComplete: () => { star.destroy(); trail.destroy(); },
+        });
+      };
+      const scheduleStar = () => {
+        this.time.delayedCall(Phaser.Math.Between(8000, 16000), () => {
+          fireShootingStar();
+          scheduleStar();
+        });
+      };
+      scheduleStar();
     }
 
     const qmY = this.brand.y - 200; // 40px above the brand's head
