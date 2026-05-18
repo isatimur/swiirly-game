@@ -75,15 +75,30 @@ export const level6 = {
 
     // ---- ARENA FLOOR — one-way (jump-through) so the climbing player
     // rises up through it from the shaft, then stands on top. Boss roams
-    // it. Trimmed to the centered band x=320–1280 so the bowl reads as
-    // a focused rooftop, not a brick highway.
+    // it. Centered 320–1280 band.
     { kind: "oneWayFloor", x1: 320, x2: 1280, y: 600 },
 
-    // ---- APPROACH ROUTE (sparse, post-fight climb to the brand) ----
-    // Three small steps staggered left → right → center-top pedestal.
+    // ---- ARENA COVER — two waist-high platforms on the floor that the
+    // player can duck behind during the boss's projectile fan + that the
+    // boss can leap onto / dash around. Boss has 960px of floor with two
+    // 128-wide breaks — still room to roam.
+    platform(496, 540, 2),
+    platform(1024, 540, 2),
+
+    // ---- APPROACH ROUTE (post-fight climb to the brand) ----
+    // Two steps to a launch platform RIGHT under the hole in the roof.
     platform(440, 460, 3),               // first hop, left side
-    platform(960, 360, 3),               // second hop, right side
-    platform(720, 240, 2),               // top pedestal — brand stands here
+    platform(960, 380, 3),               // second hop, right side
+
+    // ---- ROOF FLOOR — one-way with a HOLE in the middle at x=688–880.
+    // Player jumps up through the hole onto the rooftop where the brand
+    // stands. Two segments: left (x=320–688) and right (x=880–1280).
+    { kind: "oneWayFloor", x1: 320,  x2: 688,  y: 240 },
+    { kind: "oneWayFloor", x1: 880,  x2: 1280, y: 240 },
+
+    // Launch platform just under the hole — chained from the right step,
+    // the player double-jumps off this through the roof gap.
+    platform(688, 320, 3),
 
     // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
     platform(520, GROUND_Y - 220, 3),
