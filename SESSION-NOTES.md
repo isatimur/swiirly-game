@@ -71,6 +71,26 @@ localStorage.setItem("swiirl.runsCompleted", "3"); location.reload()  // unlock 
 
 ## Pending — pick from this list to start the next thread
 
+0. **L6 top must be reworked from scratch — REALISTIC direction.** The
+   current shaft → staircase → roof → brand composition was iterated
+   six times and never landed. User feedback in order: "trash,"
+   "still trash," "still trash because not realistic." Stop iterating
+   bricks. Start with realistic rooftop reference: railings around the
+   edge, an HVAC unit, an antenna or satellite dish, a maintenance
+   shed, water tower, painted helipad H. The arena floor should look
+   like CONCRETE, not stacked bricks. Boss + brand live ON the
+   rooftop. Probably no roof / hole / staircase at all — just a flat
+   realistic rooftop with architectural props for cover and identity.
+   Generate a new `tile_rooftop_concrete.png` and a few prop sprites
+   (HVAC, antenna, helipad-H) via `tools/generate-world.mjs`. Strip
+   the existing roof/staircase blocks from `level6.js`. Files to
+   touch: `tools/generate-world.mjs`, `play/src/scenes/Boot.js`,
+   `play/src/scenes/Game.js` (the L6 dressing block currently has
+   the rooftop-door graphic — replace it with the realistic prop
+   placements), `play/src/levels/level6.js`. Bonus assets to consider
+   for next pass: a satellite dish, a small clouds-passing-by depth
+   layer, anti-aliased white painted helipad H.
+
 1. **Proper DEV mode** — Konami code `↑↑↓↓←→←→ J SPACE` on Menu unlocks
    a "🔧 DEV" pause-menu row that persists in localStorage. Items:
    level select 1–6, infinite lives toggle, no-clip toggle, FPS overlay.
