@@ -51,8 +51,8 @@ export const level6 = {
   groundY: GROUND_Y,
   // Spawn inside the centered shaft (x=464–1136 interior, center=800).
   spawn: { x: 800, y: GROUND_Y - 80 },
-  // Brand sits in the rooftop centered above the roof's hole.
-  brandPos: { x: 768, y: 200 },
+  // Brand sits on the rooftop above the center staircase hole.
+  brandPos: { x: 688, y: 200 },
   miniBoss: { x: 800, y: 600, health: 18 },
   insightsRequired: 14,
   bossArenaTop: 700,
@@ -77,18 +77,19 @@ export const level6 = {
     // open ground to dash + telegraph attacks.
     { kind: "oneWayFloor", x1: 320, x2: 1280, y: 600 },
 
-    // ---- ROOF FLOOR — one-way with a 224-wide centered HOLE. Two long
-    // segments at y=200, gap in the middle. Cleaner than fragmented
-    // strips. Player jumps up through the hole onto the rooftop.
-    { kind: "oneWayFloor", x1: 320, x2: 656,  y: 200 },
-    { kind: "oneWayFloor", x1: 880, x2: 1280, y: 200 },
+    // ---- ROOF FLOOR — one-way with a centered HOLE for the staircase.
+    // Hole spans x=560-816 (4 tiles, 256px) so the staircase below
+    // and the brand above share the same vertical column.
+    { kind: "oneWayFloor", x1: 320, x2: 560,  y: 200 },
+    { kind: "oneWayFloor", x1: 816, x2: 1280, y: 200 },
 
-    // ---- APPROACH ROUTE — three minimal steps from arena floor to the
-    // hole. Left step, right step, then a launch platform centered under
-    // the hole. Double-jump chains the gaps.
-    platform(400, 440, 3),               // left step (y=440, x=400-592)
-    platform(1008, 340, 3),              // right step (y=340, x=1008-1200)
-    platform(656, 280, 3),               // launch under the hole (x=656-848)
+    // ---- STAIRCASE TO THE ROOF — two centered steps stacked directly
+    // under the roof hole. Same x range so the climb reads as 'stairs'
+    // not 'scattered platforms.' Each drop = 140px (single-jump 176px
+    // covers cleanly). Player walks the arena floor, jumps up onto step
+    // one, then step two, then straight up through the hole to brand.
+    platform(560, 460, 4),               // step 1 — middle stair (y=460, x=560-816)
+    platform(560, 320, 4),               // step 2 — top stair under hole (y=320, x=560-816)
 
     // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
     platform(520, GROUND_Y - 220, 3),

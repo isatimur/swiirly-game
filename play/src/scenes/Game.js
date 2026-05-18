@@ -210,24 +210,52 @@ export class GameScene extends Phaser.Scene {
     // The question mark hovers ABOVE the brand's head.
     this.brand = new Brand(this, lvl.brandPos.x, lvl.brandPos.y);
 
-    // L6 rooftop-door pedestal — a small painted door + sign behind the
-    // brand so it reads as "the rooftop exit" instead of a floating
-    // figure in the sky. Drawn purely as decoration behind the brand.
+    // L6 rooftop dressing — city skyline silhouette far behind, then the
+    // rooftop-door pedestal painted right behind the brand. Sells "this
+    // is the top of a building" instead of "a figure floating in sky."
     if (this.levelNum === 6) {
       const bx = this.brand.x, by = this.brand.y;
+      // Distant city skyline behind the rooftop — staggered dark
+      // rectangles with lit windows, parallax-free (just decor).
+      const skyline = this.add.graphics().setDepth(-15);
+      const skyBuildings = [
+        { x:  120, w:  90, h: 200, c: 0x1a1f2a },
+        { x:  220, w: 130, h: 260, c: 0x0e1320 },
+        { x:  370, w:  80, h: 180, c: 0x161b26 },
+        { x:  480, w: 110, h: 240, c: 0x0e1320 },
+        { x:  620, w:  70, h: 160, c: 0x1a1f2a },
+        { x:  720, w: 100, h: 220, c: 0x0e1320 },
+        { x:  860, w:  90, h: 200, c: 0x161b26 },
+        { x:  980, w: 120, h: 280, c: 0x0e1320 },
+        { x: 1130, w:  80, h: 190, c: 0x1a1f2a },
+        { x: 1240, w: 110, h: 240, c: 0x0e1320 },
+        { x: 1380, w:  80, h: 170, c: 0x161b26 },
+      ];
+      for (const b of skyBuildings) {
+        const top = 600 - b.h;
+        skyline.fillStyle(b.c, 1);
+        skyline.fillRect(b.x, top, b.w, b.h);
+        // Lit windows — a sparse 3-column grid of warm specks.
+        skyline.fillStyle(0xffd28a, 0.55);
+        const rows = Math.floor(b.h / 24);
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < 3; c++) {
+            if (((r * 3 + c + b.x) % 5) === 0) continue;  // skip some
+            skyline.fillRect(b.x + 8 + c * (b.w - 16) / 2.4, top + 8 + r * 24, 6, 5);
+          }
+        }
+      }
+
+      // Rooftop-door pedestal — small painted door + sign behind the brand.
       const door = this.add.graphics().setDepth(this.brand.depth - 1);
-      // Door frame (shaft-girder palette)
       door.fillStyle(0x3a3d44, 1);
       door.fillRect(bx - 36, by - 78, 72, 78);
       door.fillStyle(0x1f2127, 1);
       door.fillRect(bx - 30, by - 72, 60, 72);
-      // Door pane glow
       door.fillStyle(0xffd24a, 0.55);
       door.fillRect(bx - 26, by - 68, 52, 52);
-      // Door handle
       door.fillStyle(0xc8c0b8, 1);
       door.fillCircle(bx + 14, by - 36, 3);
-      // "ROOFTOP" sign above the door
       this.add.text(bx, by - 96, "▲  ROOFTOP", {
         fontFamily: "system-ui, sans-serif",
         fontSize: "13px", fontStyle: "900",
