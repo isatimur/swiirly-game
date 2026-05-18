@@ -14,7 +14,6 @@ const CREDITS = [
   { kind: "name",    text: "Daniel Mohanrao  ·  CEO" },
   { kind: "name",    text: "Anna Istomina  ·  Head of Product Design" },
   { kind: "name",    text: "Charles Eklund  ·  COO" },
-  { kind: "name",    text: "Tim Isa  ·  CTO" },
   { kind: "blank" },
   { kind: "header",  text: "STANDING  ON  SHOULDERS" },
   { kind: "name",    text: "Shigeru Miyamoto — Super Mario Bros." },
