@@ -249,22 +249,7 @@ export class GameScene extends Phaser.Scene {
         }
       }
 
-      // Rooftop-door pedestal — small painted door + sign behind the brand.
-      const door = this.add.graphics().setDepth(this.brand.depth - 1);
-      door.fillStyle(0x3a3d44, 1);
-      door.fillRect(bx - 36, by - 78, 72, 78);
-      door.fillStyle(0x1f2127, 1);
-      door.fillRect(bx - 30, by - 72, 60, 72);
-      door.fillStyle(0xffd24a, 0.55);
-      door.fillRect(bx - 26, by - 68, 52, 52);
-      door.fillStyle(0xc8c0b8, 1);
-      door.fillCircle(bx + 14, by - 36, 3);
-      this.add.text(bx, by - 96, "▲  ROOFTOP", {
-        fontFamily: "system-ui, sans-serif",
-        fontSize: "13px", fontStyle: "900",
-        color: "#FFD24A", letterSpacing: 4,
-        stroke: "#1f2127", strokeThickness: 3,
-      }).setOrigin(0.5);
+      // (Door pedestal removed — brand sits on the arena floor now.)
 
       // ----- L6 EASTER EGGS -----
       // 1. Sticky note on the rooftop door — easy to miss, gold paper

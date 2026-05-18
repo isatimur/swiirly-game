@@ -51,8 +51,9 @@ export const level6 = {
   groundY: GROUND_Y,
   // Spawn inside the centered shaft (x=464–1136 interior, center=800).
   spawn: { x: 800, y: GROUND_Y - 80 },
-  // Brand sits on the rooftop above the center staircase hole.
-  brandPos: { x: 688, y: 200 },
+  // Brand sits at the right edge of the arena floor — reachable just by
+  // walking once the boss is down. No climbing puzzle.
+  brandPos: { x: 1100, y: 600 },
   miniBoss: { x: 800, y: 600, health: 18 },
   insightsRequired: 14,
   bossArenaTop: 700,
@@ -79,11 +80,8 @@ export const level6 = {
     // (No roof — open sky above. Player jumps from the upper staircase
     // step directly to the brand.)
 
-    // ---- APPROACH STEPS — pushed to the edges so the boss has a clear
-    // center to fight in. Left step low, right step high, then chain
-    // double-jump to the brand at (688, 200).
-    platform(320, 460, 3),               // left step (x=320-512 at y=460)
-    platform(1088, 320, 3),              // right step (x=1088-1280 at y=320)
+    // (No staircase, no roof — brand sits on the arena floor itself,
+    // reached by walking once the boss is down.)
 
     // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
     platform(520, GROUND_Y - 220, 3),
