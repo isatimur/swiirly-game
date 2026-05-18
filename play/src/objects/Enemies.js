@@ -489,6 +489,27 @@ export class TheCEO extends BossBase {
 export const IncompetenceManager = BossBase;
 
 // Factory: pick the right boss subclass for a given level number.
+/** THE BOARD — bonus-level mega-boss. Scaled-up CEO with all three phases
+ *  active from the start, larger sprite, more HP. Sits in an open arena
+ *  at the top of the L6 shaft. */
+export class TheBoard extends TheCEO {
+  constructor(scene, x, y, health = 14) {
+    super(scene, x, y, health);
+    this.displayName = "THE BOARD";
+    this.setScale((this.scaleX || 1) * 1.6);
+    // Tighter attack cadence than the CEO — every phase fires faster.
+    this.summonInterval = 3800;
+    this.dashInterval   = 3200;
+    this.spreadInterval = 2600;
+  }
+  // All phases active immediately — there's no soft start in a boardroom.
+  get phase() {
+    const r = this.health / this.maxHealth;
+    if (r > 0.66) return 2;  // start at phase 2 (summon + base attacks)
+    return 3;                // bottom 2/3 of HP runs the full phase-3 kit
+  }
+}
+
 export function makeBoss(scene, levelNum, x, y, health) {
   switch (levelNum) {
     case 1: return new HotTakeHank(scene, x, y, health);
@@ -496,6 +517,7 @@ export function makeBoss(scene, levelNum, x, y, health) {
     case 3: return new VPVibes(scene, x, y, health);
     case 4: return new TheAlgorithm(scene, x, y, health);
     case 5: return new TheCEO(scene, x, y, health);
+    case 6: return new TheBoard(scene, x, y, health);
     default: return new BossBase(scene, x, y, health);
   }
 }

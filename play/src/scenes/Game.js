@@ -1161,7 +1161,15 @@ export class GameScene extends Phaser.Scene {
     if (cam.rotation !== 0) cam.rotation = 0;
 
     // Crossfade to tower bg when entering the boss arena.
-    if (this.boss && this.player.x > this.level.bossArenaStart) {
+    // Horizontal levels trigger the boss arena when player.x crosses
+    // bossArenaStart; vertical levels (L6) use bossArenaTop and trigger
+    // when player.y rises ABOVE it (smaller y = higher up).
+    const inBossArena = this.boss && (
+      this.level.bossArenaTop != null
+        ? this.player.y < this.level.bossArenaTop
+        : this.player.x > this.level.bossArenaStart
+    );
+    if (inBossArena) {
       this.bgTower.setAlpha(Math.min(1, this.bgTower.alpha + 0.01));
       this.bgNear.setAlpha(Math.max(0.3, this.bgNear.alpha - 0.005));
       if (!this.bossActive && !this.boss.dead) {

@@ -40,10 +40,15 @@ export const level6 = {
   // Spawn at the bottom-center, falling in from just above the floor.
   spawn: { x: 400, y: GROUND_Y - 80 },
   brandPos: { x: 400, y: 120 },
-  // No boss in the bonus run — the climb itself is the boss.
-  miniBoss: null,
+  // Boss arena at the top of the shaft — THE BOARD waits on an open
+  // floor at y=600. Player climbs, walls end, arena opens, fight begins.
+  miniBoss: { x: 400, y: 540, health: 14 },
   insightsRequired: 14,
-  // Pushed above the world height so the boss-arena trigger never fires.
+  // Vertical boss trigger — fires when player.y is BELOW this value
+  // (smaller y = higher up). Set just below the arena floor so the boss
+  // entrance kicks in as the player crosses the top of the shaft.
+  bossArenaTop: 700,
+  // bossArenaStart is x-based and unused on vertical levels.
   bossArenaStart: 99999,
 
   // Act banners trigger as the player passes vertical milestones.
@@ -54,12 +59,23 @@ export const level6 = {
   checkpoints: [],
 
   terrain: [
-    // Floor strip.
+    // Floor strip — bottom of the shaft.
     ground(0, 800),
-    // Left + right walls. y starts at 120 so the very top is clear for
-    // the brand reveal. Bricks fill from 120 down to GROUND_Y-64.
-    ...wallColumn(0, 120, GROUND_Y - 64),
-    ...wallColumn(736, 120, GROUND_Y - 64),
+    // Left + right shaft walls. y starts at 600 (NOT 120) so the top 600px
+    // is open arena where THE BOARD waits. Bricks fill 600 → GROUND_Y-64.
+    ...wallColumn(0, 600, GROUND_Y - 64),
+    ...wallColumn(736, 600, GROUND_Y - 64),
+
+    // ARENA FLOOR — a full-width brick platform at y=600 that caps the
+    // shaft and gives the boss + player a footing for the fight. The
+    // player climbs onto this from the highest shaft platform.
+    ...Array.from({ length: 13 }, (_, i) => brick(i * 64, 600)),
+
+    // Approach platforms inside the arena — single hops the player can
+    // use to reach the brand AFTER the boss is down. Two staggered to
+    // make the post-fight climb intentional, not trivial.
+    platform(180, 380, 3),
+    platform(440, 240, 3),
 
     // Bottom warm-up — two starter bricks on the sides so the ground floor
     // isn't a barren landing zone before the first real climb hop. Spawn
