@@ -33,7 +33,7 @@ const CREDITS = [
   { kind: "blank" },
   { kind: "title",   text: "thank  you  for  playing" },
   { kind: "blank" },
-  { kind: "note",    text: "press  SPACE  to  return  to  the  menu" },
+  { kind: "note",    text: "press  SPACE  to  start  a  new  run" },
 ];
 
 export class CreditsScene extends Phaser.Scene {
@@ -103,20 +103,22 @@ export class CreditsScene extends Phaser.Scene {
     Music.play("menu");
     Music.setIntensity(0.6);
 
-    // Return to menu — SPACE, ENTER, click, or gamepad-cross.
-    const goMenu = () => {
+    // After the credits, the only path is to start a fresh run from
+    // Level 1 — bypass the Menu so settings + ranks aren't a detour.
+    // CharacterSelect → Game (level 1, the default).
+    const playAgain = () => {
       if (window.__pauseModalOpen) return;
       this.cameras.main.fadeOut(420, 26, 15, 46);
-      this.time.delayedCall(440, () => this.scene.start("Menu"));
+      this.time.delayedCall(440, () => this.scene.start("CharacterSelect"));
     };
-    this.input.keyboard.once("keydown-SPACE", goMenu);
-    this.input.keyboard.once("keydown-ENTER", goMenu);
-    this.input.once("pointerdown", goMenu);
-    this.game.events.once("gamepad-cross", goMenu);
-    this.events.once("shutdown", () => this.game.events.off("gamepad-cross", goMenu));
+    this.input.keyboard.once("keydown-SPACE", playAgain);
+    this.input.keyboard.once("keydown-ENTER", playAgain);
+    this.input.once("pointerdown", playAgain);
+    this.game.events.once("gamepad-cross", playAgain);
+    this.events.once("shutdown", () => this.game.events.off("gamepad-cross", playAgain));
 
-    // Auto-return after the scroll finishes (with a small post-tail beat).
-    this.time.delayedCall(scrollDuration + 1200, () => goMenu());
+    // Auto-advance after the scroll finishes (with a small post-tail beat).
+    this.time.delayedCall(scrollDuration + 1200, () => playAgain());
 
     this.cameras.main.fadeIn(500, 26, 15, 46);
   }
