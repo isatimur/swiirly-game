@@ -1,15 +1,22 @@
-// Bonus — "Up and to the Right". A vertical climb that finally puts the
-// wall-jump and double-jump to work. Two brick columns form a 3200-tall
-// shaft; alternating platforms zig-zag up the gap. Player climbs from
-// floor (y=3100) to brand (y=80). Falling = restart at bottom.
+// Bonus — "Up and to the Right". A vertical climb that ends in a wide
+// boss arena ("Arena Bowl" layout):
 //
-// Theme: the corporate ladder, literalized. Reached by beating L5.
+//   x:    0 .................. 400 ... 1200 .................. 1600
+//   y=0   |   sky    |          | brand   |          |   sky    |
+//                                  ↑
+//                              ARENA  (full 1600 wide, floor at y=600)
+//   y=600                          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//   y=600                          █ shaft walls (x=400 + x=1136)
+//   y=...                          █                █
+//   y=...                          █  climb route  █
+//   y=...                          █                █
+//   y=3040                         █                █
+//   y=3104                ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//                                       FLOOR
 //
-// POSITIONING CONVENTION (same as horizontal levels):
-//   * Origin (0.5, 1.0) on world sprites — y is the feet.
-//   * Tile size 64. GROUND_Y = 3104 (floor of the shaft).
-//   * Camera follows the player vertically (Phaser handles this once we
-//     set bounds via lvl.height = 3200).
+// THE BOARD waits on the arena floor (y=600). Two approach platforms
+// stagger the way to the brand at the top center. Decorative shaft-wall
+// pillars at the outer edges (x=64, x=1472) frame the arena.
 
 const TILE = 64;
 const GROUND_Y = 3104;
@@ -18,10 +25,7 @@ const ground   = (x1, x2)       => ({ kind: "ground", x: x1, w: x2 - x1 });
 const platform = (x, y, wTiles) => ({ kind: "platform", x, y, w: wTiles });
 const brick    = (x, y)         => ({ kind: "brick", x, y });
 
-// Vertical shaft wall = stacked 'shaftBrick' tiles at a fixed x column.
-// Each is 64×64 with the tile_shaft_wall texture — a girder frame plus a
-// glass pane with city-lights behind it. Stacking them looks like a real
-// elevator shaft instead of a brick stack.
+// Vertical wall column of shaftBrick tiles between y1 and y2 at fixed x.
 function wallColumn(x, yTop, yBottom) {
   const out = [];
   for (let y = yTop; y < yBottom; y += TILE) {
@@ -30,28 +34,29 @@ function wallColumn(x, yTop, yBottom) {
   return out;
 }
 
+// Horizontal floor strip of shaftBrick tiles between x1 and x2 at fixed y.
+// Used for the arena floor (caps the shaft + extends sideways into the bowl).
+function floorStrip(x1, x2, y) {
+  const out = [];
+  for (let x = x1; x < x2; x += TILE) {
+    out.push({ kind: "shaftBrick", x, y });
+  }
+  return out;
+}
+
 export const level6 = {
   name: "Up and to the Right",
-  width: 800,
+  width: 1600,
   height: 3200,
-  // Vertical level — Game.buildGround reads this so the floor tiles land
-  // at the bottom of the shaft (y=3104) instead of L1's imported 656.
   groundY: GROUND_Y,
-  // Spawn at the bottom-center, falling in from just above the floor.
-  spawn: { x: 400, y: GROUND_Y - 80 },
-  brandPos: { x: 400, y: 120 },
-  // Boss arena at the top of the shaft — THE BOARD waits on an open
-  // floor at y=600. Player climbs, walls end, arena opens, fight begins.
-  miniBoss: { x: 400, y: 540, health: 14 },
+  // Spawn inside the centered shaft (x=464–1136 interior, center=800).
+  spawn: { x: 800, y: GROUND_Y - 80 },
+  brandPos: { x: 800, y: 160 },
+  miniBoss: { x: 800, y: 600, health: 14 },
   insightsRequired: 14,
-  // Vertical boss trigger — fires when player.y is BELOW this value
-  // (smaller y = higher up). Set just below the arena floor so the boss
-  // entrance kicks in as the player crosses the top of the shaft.
   bossArenaTop: 700,
-  // bossArenaStart is x-based and unused on vertical levels.
   bossArenaStart: 99999,
 
-  // Act banners trigger as the player passes vertical milestones.
   actTriggers: [
     { x: 0, y: 2200, banner: "Act 2 — Middle Management" },
     { x: 0, y: 1100, banner: "Act 3 — Executive Floor" },
@@ -59,93 +64,86 @@ export const level6 = {
   checkpoints: [],
 
   terrain: [
-    // Floor strip — bottom of the shaft.
-    ground(0, 800),
-    // Left + right shaft walls. y starts at 600 (NOT 120) so the top 600px
-    // is open arena where THE BOARD waits. Bricks fill 600 → GROUND_Y-64.
-    ...wallColumn(0, 600, GROUND_Y - 64),
-    ...wallColumn(736, 600, GROUND_Y - 64),
+    // ---- BOTTOM FLOOR (full width) ----
+    ground(0, 1600),
 
-    // ARENA FLOOR — a full-width brick platform at y=600 that caps the
-    // shaft and gives the boss + player a footing for the fight. The
-    // player climbs onto this from the highest shaft platform.
-    ...Array.from({ length: 13 }, (_, i) => brick(i * 64, 600)),
+    // ---- SHAFT WALLS (centered, x=400 and x=1136, from arena down to floor) ----
+    ...wallColumn(400, 600, GROUND_Y - 64),
+    ...wallColumn(1136, 600, GROUND_Y - 64),
 
-    // Approach platforms inside the arena — single hops the player can
-    // use to reach the brand AFTER the boss is down. Two staggered to
-    // make the post-fight climb intentional, not trivial.
-    platform(180, 380, 3),
-    platform(440, 240, 3),
+    // ---- ARENA FLOOR — full 1600-wide cap at y=600 ----
+    ...floorStrip(0, 1600, 600),
 
-    // Bottom warm-up — two starter bricks on the sides so the ground floor
-    // isn't a barren landing zone before the first real climb hop. Spawn
-    // x is 400 so these stay off the drop path.
-    brick(180, GROUND_Y - 110),
-    brick(560, GROUND_Y - 110),
+    // ---- DECORATIVE PILLARS at the outer edges of the bowl ----
+    // Short shaftBrick columns rising from the arena floor up into the
+    // arena — visual framing only, the player can wall-jump off them.
+    ...wallColumn(64,   240, 600),
+    ...wallColumn(1472, 240, 600),
 
-    // Climbing platforms, zig-zagging up the shaft. Each pair (left/right)
-    // is roughly 200 px apart vertically — within a chained double-jump
-    // (~329 px) so a clean run reads as a rhythm.
-    platform(120, GROUND_Y - 220, 3),
-    platform(500, GROUND_Y - 380, 3),
-    platform(160, GROUND_Y - 560, 3),
-    platform(500, GROUND_Y - 760, 3),
-    platform(140, GROUND_Y - 940, 3),
-    platform(500, GROUND_Y - 1140, 3),
-    platform(160, GROUND_Y - 1340, 3),
-    platform(500, GROUND_Y - 1540, 3),
-    platform(140, GROUND_Y - 1740, 3),
-    platform(500, GROUND_Y - 1940, 3),
-    platform(160, GROUND_Y - 2140, 3),
-    platform(500, GROUND_Y - 2340, 3),
-    platform(140, GROUND_Y - 2540, 3),
-    platform(280, GROUND_Y - 2720, 4),  // wider — final rest stop
-    platform(280, GROUND_Y - 2900, 4),  // approach to the brand
+    // ---- APPROACH PLATFORMS (post-fight route to the brand) ----
+    // Staggered left → right → center-top. Single-jump reachable each step.
+    platform(480, 440, 4),
+    platform(896, 280, 4),
+    platform(672, 220, 4),
+
+    // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
+    platform(520, GROUND_Y - 220, 3),
+    platform(900, GROUND_Y - 380, 3),
+    platform(560, GROUND_Y - 560, 3),
+    platform(900, GROUND_Y - 760, 3),
+    platform(540, GROUND_Y - 940, 3),
+    platform(900, GROUND_Y - 1140, 3),
+    platform(560, GROUND_Y - 1340, 3),
+    platform(900, GROUND_Y - 1540, 3),
+    platform(540, GROUND_Y - 1740, 3),
+    platform(900, GROUND_Y - 1940, 3),
+    platform(560, GROUND_Y - 2140, 3),
+    platform(900, GROUND_Y - 2340, 3),
+    platform(540, GROUND_Y - 2540, 3),
+    platform(680, GROUND_Y - 2720, 4),
+
+    // ---- BOTTOM WARM-UP ----
+    brick(580, GROUND_Y - 110),
+    brick(960, GROUND_Y - 110),
   ],
 
   enemies: [
-    // Floating ghosts patrol horizontally at altitude — force the player
-    // to time their wall-jumps. Three checkpoints, one per "act."
-    { type: "ghost",       x: 400, y: GROUND_Y - 580, range: 200 },
-    { type: "ghost",       x: 400, y: GROUND_Y - 1180, range: 200 },
-    { type: "ghost",       x: 400, y: GROUND_Y - 1780, range: 200 },
-    { type: "ghost",       x: 400, y: GROUND_Y - 2380, range: 200 },
-    // One paperwork pile on the floor — first taste of combat.
-    { type: "paperwork",   x: 600, y: GROUND_Y },
+    // Ghosts patrol horizontally inside the climbing shaft (x 464–1136).
+    { type: "ghost", x: 800, y: GROUND_Y - 580, range: 200 },
+    { type: "ghost", x: 800, y: GROUND_Y - 1180, range: 200 },
+    { type: "ghost", x: 800, y: GROUND_Y - 1780, range: 200 },
+    { type: "ghost", x: 800, y: GROUND_Y - 2380, range: 200 },
+    // Paperwork pile on the floor — first taste of combat.
+    { type: "paperwork", x: 1000, y: GROUND_Y },
   ],
 
-  // Insights line the climbing path so following the visual breadcrumb is
-  // the same as following the optimal climb route. 14 total (matches
-  // insightsRequired so a clean run delivers the brand at the top).
+  // Insights line the climbing path (centered around x=800 with side offsets).
   insights: [
-    { x: 200, y: GROUND_Y - 260 },
-    { x: 560, y: GROUND_Y - 420 },
-    { x: 220, y: GROUND_Y - 600 },
-    { x: 560, y: GROUND_Y - 800 },
-    { x: 200, y: GROUND_Y - 980 },
-    { x: 560, y: GROUND_Y - 1180 },
-    { x: 220, y: GROUND_Y - 1380 },
-    { x: 560, y: GROUND_Y - 1580 },
-    { x: 200, y: GROUND_Y - 1780 },
-    { x: 560, y: GROUND_Y - 1980 },
-    { x: 220, y: GROUND_Y - 2180 },
-    { x: 560, y: GROUND_Y - 2380 },
-    { x: 350, y: GROUND_Y - 2760 },
-    { x: 350, y: GROUND_Y - 2940 },
+    { x: 600, y: GROUND_Y - 260 },
+    { x: 960, y: GROUND_Y - 420 },
+    { x: 620, y: GROUND_Y - 600 },
+    { x: 960, y: GROUND_Y - 800 },
+    { x: 600, y: GROUND_Y - 980 },
+    { x: 960, y: GROUND_Y - 1180 },
+    { x: 620, y: GROUND_Y - 1380 },
+    { x: 960, y: GROUND_Y - 1580 },
+    { x: 600, y: GROUND_Y - 1780 },
+    { x: 960, y: GROUND_Y - 1980 },
+    { x: 620, y: GROUND_Y - 2180 },
+    { x: 960, y: GROUND_Y - 2380 },
+    { x: 750, y: GROUND_Y - 2760 },
+    { x: 800, y: 320 },  // inside the arena, between approach platforms
   ],
 
   signals: [
-    // Speed boost at mid-climb to telegraph "you're halfway."
-    { type: "speed",  x: 400, y: GROUND_Y - 1440 },
-    // Growth signal near the top for the final push.
-    { type: "growth", x: 400, y: GROUND_Y - 2640 },
+    { type: "speed",  x: 800, y: GROUND_Y - 1440 },
+    { type: "growth", x: 800, y: GROUND_Y - 2640 },
   ],
 
   clouds: [
-    // Sparse — the climb gets quieter as you go up. Clouds drift past
-    // the windows at the top giving a sense of altitude.
     { x: 200, y: 280, scale: 0.7 },
-    { x: 580, y: 480, scale: 0.9 },
-    { x: 260, y: 760, scale: 0.6 },
+    { x: 1280, y: 360, scale: 0.9 },
+    { x: 480, y: 180, scale: 0.8 },
+    { x: 1100, y: 240, scale: 0.7 },
   ],
 };
