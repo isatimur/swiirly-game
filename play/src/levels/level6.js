@@ -72,16 +72,15 @@ export const level6 = {
     ...wallColumn(400, 600, GROUND_Y - 64),
     ...wallColumn(1136, 600, GROUND_Y - 64),
 
-    // ---- ARENA FLOOR — one-way at y=600, x=320-1280. Boss roams the
-    // full 960px. No cover platforms — clearer composition, boss has
-    // open ground to dash + telegraph attacks.
-    { kind: "oneWayFloor", x1: 320, x2: 1280, y: 600 },
+    // ---- ARENA FLOOR — trimmed centered band x=400-1200 (~800 wide).
+    // Boss has plenty of room; less brick clutter at the edges.
+    { kind: "oneWayFloor", x1: 400, x2: 1200, y: 600 },
 
-    // ---- ROOF FLOOR — one-way with a centered HOLE for the staircase.
-    // Hole spans x=560-816 (4 tiles, 256px) so the staircase below
-    // and the brand above share the same vertical column.
-    { kind: "oneWayFloor", x1: 320, x2: 560,  y: 200 },
-    { kind: "oneWayFloor", x1: 816, x2: 1280, y: 200 },
+    // ---- ROOF FLOOR — two symmetric short segments either side of the
+    // staircase hole (x=560-816). Each side is now ~3 tiles instead of
+    // the previous lopsided 4 / 7. Cleaner read.
+    { kind: "oneWayFloor", x1: 400, x2: 560,  y: 200 },
+    { kind: "oneWayFloor", x1: 816, x2: 976,  y: 200 },
 
     // ---- STAIRCASE TO THE ROOF — two centered steps stacked directly
     // under the roof hole. Same x range so the climb reads as 'stairs'
