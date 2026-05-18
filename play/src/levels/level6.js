@@ -51,9 +51,8 @@ export const level6 = {
   groundY: GROUND_Y,
   // Spawn inside the centered shaft (x=464–1136 interior, center=800).
   spawn: { x: 800, y: GROUND_Y - 80 },
-  // Brand sits ON TOP of the rooftop-door pedestal at the very top of the
-  // bowl. Approach platforms feed up to it.
-  brandPos: { x: 784, y: 240 },
+  // Brand sits in the rooftop centered above the roof's hole.
+  brandPos: { x: 768, y: 200 },
   miniBoss: { x: 800, y: 600, health: 18 },
   insightsRequired: 14,
   bossArenaTop: 700,
@@ -73,32 +72,23 @@ export const level6 = {
     ...wallColumn(400, 600, GROUND_Y - 64),
     ...wallColumn(1136, 600, GROUND_Y - 64),
 
-    // ---- ARENA FLOOR — one-way (jump-through) so the climbing player
-    // rises up through it from the shaft, then stands on top. Boss roams
-    // it. Centered 320–1280 band.
+    // ---- ARENA FLOOR — one-way at y=600, x=320-1280. Boss roams the
+    // full 960px. No cover platforms — clearer composition, boss has
+    // open ground to dash + telegraph attacks.
     { kind: "oneWayFloor", x1: 320, x2: 1280, y: 600 },
 
-    // ---- ARENA COVER — two waist-high platforms on the floor that the
-    // player can duck behind during the boss's projectile fan + that the
-    // boss can leap onto / dash around. Boss has 960px of floor with two
-    // 128-wide breaks — still room to roam.
-    platform(496, 540, 2),
-    platform(1024, 540, 2),
+    // ---- ROOF FLOOR — one-way with a 224-wide centered HOLE. Two long
+    // segments at y=200, gap in the middle. Cleaner than fragmented
+    // strips. Player jumps up through the hole onto the rooftop.
+    { kind: "oneWayFloor", x1: 320, x2: 656,  y: 200 },
+    { kind: "oneWayFloor", x1: 880, x2: 1280, y: 200 },
 
-    // ---- APPROACH ROUTE (post-fight climb to the brand) ----
-    // Two steps to a launch platform RIGHT under the hole in the roof.
-    platform(440, 460, 3),               // first hop, left side
-    platform(960, 380, 3),               // second hop, right side
-
-    // ---- ROOF FLOOR — one-way with a HOLE in the middle at x=688–880.
-    // Player jumps up through the hole onto the rooftop where the brand
-    // stands. Two segments: left (x=320–688) and right (x=880–1280).
-    { kind: "oneWayFloor", x1: 320,  x2: 688,  y: 240 },
-    { kind: "oneWayFloor", x1: 880,  x2: 1280, y: 240 },
-
-    // Launch platform just under the hole — chained from the right step,
-    // the player double-jumps off this through the roof gap.
-    platform(688, 320, 3),
+    // ---- APPROACH ROUTE — three minimal steps from arena floor to the
+    // hole. Left step, right step, then a launch platform centered under
+    // the hole. Double-jump chains the gaps.
+    platform(400, 440, 3),               // left step (y=440, x=400-592)
+    platform(1008, 340, 3),              // right step (y=340, x=1008-1200)
+    platform(656, 280, 3),               // launch under the hole (x=656-848)
 
     // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
     platform(520, GROUND_Y - 220, 3),
