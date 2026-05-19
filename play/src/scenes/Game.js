@@ -341,6 +341,31 @@ export class GameScene extends Phaser.Scene {
         });
       };
       scheduleStar();
+
+      // 4. HVAC vapor wisp — small upward-drifting rectangle off the fan
+      //    grate at x=300, y=590 (just above the deck-anchored HVAC top).
+      //    Repeats every 1800ms. Mobile-skip to keep the GPU load down.
+      if (!IS_MOBILE) {
+        const spawnVapor = () => {
+          const v = this.add.rectangle(300 + Phaser.Math.Between(-6, 6), 510, 12, 8, 0xeeeaf5, 0.55).setDepth(-6);
+          this.tweens.add({
+            targets: v,
+            y: 460,
+            alpha: 0,
+            scaleX: 1.6, scaleY: 1.6,
+            duration: 1800,
+            ease: "Sine.easeOut",
+            onComplete: () => v.destroy(),
+          });
+        };
+        const scheduleVapor = () => {
+          this.time.delayedCall(Phaser.Math.Between(1400, 2200), () => {
+            spawnVapor();
+            scheduleVapor();
+          });
+        };
+        scheduleVapor();
+      }
     }
 
     const qmY = this.brand.y - 200; // 40px above the brand's head
