@@ -424,6 +424,32 @@ const waterTowerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" heigh
 </svg>`;
 await svgToPng(waterTowerSvg, "prop_water_tower.png", 192, 260);
 
+const satelliteDishSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="128" viewBox="0 0 144 128">
+  <!-- Drop shadow -->
+  <ellipse cx="72" cy="125" rx="42" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- Tripod legs -->
+  <line x1="56" y1="124" x2="72" y2="80" stroke="#3A3D44" stroke-width="3"/>
+  <line x1="88" y1="124" x2="72" y2="80" stroke="#3A3D44" stroke-width="3"/>
+  <line x1="72" y1="124" x2="72" y2="80" stroke="#3A3D44" stroke-width="3"/>
+  <!-- Tripod base plate -->
+  <ellipse cx="72" cy="124" rx="20" ry="3" fill="#3A3D44"/>
+  <!-- Mounting arm linking tripod to dish back -->
+  <rect x="68" y="68" width="8" height="22" fill="#5a5d64"/>
+  <!-- Dish (parabolic ellipse, slightly skyward) -->
+  <ellipse cx="72" cy="48" rx="56" ry="40" fill="#5a5d64" stroke="#1F2127" stroke-width="2"/>
+  <ellipse cx="72" cy="48" rx="48" ry="34" fill="#3A3D44"/>
+  <!-- Concentric rings inside the dish -->
+  <ellipse cx="72" cy="48" rx="36" ry="26" fill="none" stroke="#1F2127" stroke-width="1" opacity="0.6"/>
+  <ellipse cx="72" cy="48" rx="22" ry="16" fill="none" stroke="#1F2127" stroke-width="1" opacity="0.6"/>
+  <!-- Center feedhorn -->
+  <circle cx="72" cy="48" r="6" fill="#1F2127"/>
+  <line x1="72" y1="48" x2="72" y2="30" stroke="#1F2127" stroke-width="2"/>
+  <circle cx="72" cy="28" r="4" fill="#5a5d64" stroke="#1F2127" stroke-width="1"/>
+  <!-- Sun-reflection highlight on the dish surface -->
+  <ellipse cx="58" cy="36" rx="10" ry="6" fill="#bdb5cf" opacity="0.4"/>
+</svg>`;
+await svgToPng(satelliteDishSvg, "prop_satellite_dish.png", 144, 128);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
