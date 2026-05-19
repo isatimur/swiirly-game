@@ -490,6 +490,27 @@ const helipadHSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height=
 </svg>`;
 await svgToPng(helipadHSvg, "prop_helipad_h.png", 320, 32);
 
+const ventStackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="80" viewBox="0 0 48 80">
+  <!-- Drop shadow -->
+  <ellipse cx="24" cy="77" rx="18" ry="2" fill="#1A0F2E" opacity="0.32"/>
+  <!-- Base flange -->
+  <rect x="8" y="68" width="32" height="8" fill="#1F2127"/>
+  <!-- Pipe body -->
+  <rect x="14" y="20" width="20" height="50" fill="#3A3D44" stroke="#1F2127" stroke-width="1.5"/>
+  <!-- Rivets on the pipe -->
+  <circle cx="18" cy="34" r="1" fill="#5a5d64"/>
+  <circle cx="30" cy="34" r="1" fill="#5a5d64"/>
+  <circle cx="18" cy="54" r="1" fill="#5a5d64"/>
+  <circle cx="30" cy="54" r="1" fill="#5a5d64"/>
+  <!-- Mushroom-cap rain cap on top -->
+  <ellipse cx="24" cy="20" rx="18" ry="4" fill="#5a5d64" stroke="#1F2127" stroke-width="1.5"/>
+  <ellipse cx="24" cy="14" rx="14" ry="6" fill="#3A3D44" stroke="#1F2127" stroke-width="1.5"/>
+  <!-- Side bevels -->
+  <rect x="14" y="20" width="2" height="48" fill="#1F2127" opacity="0.5"/>
+  <rect x="32" y="20" width="2" height="48" fill="#1F2127" opacity="0.5"/>
+</svg>`;
+await svgToPng(ventStackSvg, "prop_vent_stack.png", 48, 80);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
@@ -860,6 +881,7 @@ console.log("World assets generated:");
 console.log("  tiles:    tile_ground, tile_grass, tile_platform, tile_brick");
 console.log("  obstacles: bulletin_board, cubicle_wall, velvet_rope, server_rack, marble_pillar");
 console.log("  shaft:     tile_shaft_wall");
+console.log("  rooftop:   tile_rooftop_concrete + 8 props (parapet, hvac, shed, water_tower, dish, antenna, helipad_h, vent_stack)");
 console.log("  decor:    cloud, sparkle");
 console.log("  enemies:  jargon_blob, ghost, paperwork, projectile_paper, boss, deadline_bot");
 console.log("  pickups:  insight, signal_speed, signal_shield, signal_growth");
