@@ -8,7 +8,7 @@ import { PERSONA_ASSET_KEYS } from "../characters.js";
 // /play/assets/* as Cache-Control: immutable, which trains browsers to
 // never revalidate even on hard-refresh — adding ?v=N busts old caches
 // because the URL becomes a fresh resource the browser hasn't seen.
-const ASSET_VERSION = "10";
+const ASSET_VERSION = "11";
 
 // Pose names — every Swiirl skin ships this same 17-frame set, extracted
 // by tools/extract-character-sheet.mjs from a 1+8+4+4 grid sheet.
@@ -29,6 +29,10 @@ export const DEFAULT_SKIN = "beanie";
 
 const WORLD_IMAGES = [
   "tile_ground", "tile_grass", "tile_platform", "tile_brick", "tile_shaft_wall",
+  // L6 rooftop — concrete deck + 8 industrial props for the bonus boss arena.
+  "tile_rooftop_concrete",
+  "prop_parapet", "prop_hvac", "prop_maintenance_shed", "prop_water_tower",
+  "prop_satellite_dish", "prop_antenna_mast", "prop_helipad_h", "prop_vent_stack",
   // Per-level themed obstacles (one signature per level — bulletin board in
   // the park, cubicle wall in the office, velvet rope in the brand HQ,
   // server rack in the data lake, marble pillar at the summit).
