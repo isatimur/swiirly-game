@@ -330,6 +330,32 @@ const parapetSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="4
 </svg>`;
 await svgToPng(parapetSvg, "prop_parapet.png", 64, 48);
 
+const hvacSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="96" viewBox="0 0 160 96">
+  <!-- Drop shadow on the deck beneath -->
+  <ellipse cx="80" cy="93" rx="74" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- Mounting frame -->
+  <rect x="4" y="84" width="152" height="8" fill="#1F2127"/>
+  <!-- Body -->
+  <rect x="8" y="20" width="144" height="68" fill="#3A3D44" stroke="#5C3BA3" stroke-width="2"/>
+  <!-- Top fan housing -->
+  <rect x="20" y="10" width="120" height="14" fill="#5a5d64" stroke="#1F2127" stroke-width="1.5"/>
+  <!-- Three fan grates -->
+  <circle cx="56" cy="17" r="5" fill="none" stroke="#1F2127" stroke-width="1"/>
+  <circle cx="80" cy="17" r="5" fill="none" stroke="#1F2127" stroke-width="1"/>
+  <circle cx="104" cy="17" r="5" fill="none" stroke="#1F2127" stroke-width="1"/>
+  <!-- Side louvers (horizontal lines across the body) -->
+  ${[28, 36, 44, 52, 60, 68, 76].map(y => `<line x1="14" y1="${y}" x2="146" y2="${y}" stroke="#1F2127" stroke-width="1.5"/>`).join("")}
+  <!-- Branding sticker (bubblegum-pink Swiirl easter egg) -->
+  <rect x="56" y="32" width="48" height="14" fill="#FF8FBE" opacity="0.85" rx="2"/>
+  <text x="80" y="42" font-family="system-ui, sans-serif" font-size="7" fill="#5C3BA3" text-anchor="middle" font-weight="900">PROP OF THE BOARD</text>
+  <!-- Yellow warning stripe across the base -->
+  <rect x="8" y="80" width="144" height="3" fill="#FFD24A" opacity="0.8"/>
+  <!-- Side bevels -->
+  <rect x="8" y="24" width="3" height="60" fill="#1F2127" opacity="0.6"/>
+  <rect x="149" y="24" width="3" height="60" fill="#1F2127" opacity="0.6"/>
+</svg>`;
+await svgToPng(hvacSvg, "prop_hvac.png", 160, 96);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
