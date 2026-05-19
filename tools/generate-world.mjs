@@ -391,6 +391,39 @@ const maintenanceShedSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" 
 </svg>`;
 await svgToPng(maintenanceShedSvg, "prop_maintenance_shed.png", 192, 144);
 
+const waterTowerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="260" viewBox="0 0 192 260">
+  <!-- Drop shadow at the base -->
+  <ellipse cx="96" cy="257" rx="88" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- Four steel legs forming the stand -->
+  <rect x="24"  y="180" width="6" height="78" fill="#3A3D44" stroke="#1F2127" stroke-width="1"/>
+  <rect x="60"  y="180" width="6" height="78" fill="#3A3D44" stroke="#1F2127" stroke-width="1"/>
+  <rect x="126" y="180" width="6" height="78" fill="#3A3D44" stroke="#1F2127" stroke-width="1"/>
+  <rect x="162" y="180" width="6" height="78" fill="#3A3D44" stroke="#1F2127" stroke-width="1"/>
+  <!-- Cross-bracing between leg pairs -->
+  <line x1="27"  y1="220" x2="63"  y2="246" stroke="#3A3D44" stroke-width="2"/>
+  <line x1="63"  y1="220" x2="27"  y2="246" stroke="#3A3D44" stroke-width="2"/>
+  <line x1="129" y1="220" x2="165" y2="246" stroke="#3A3D44" stroke-width="2"/>
+  <line x1="165" y1="220" x2="129" y2="246" stroke="#3A3D44" stroke-width="2"/>
+  <!-- Wood-stave cylinder body -->
+  <rect x="14" y="70" width="164" height="120" fill="#7a5a3a" stroke="#1F2127" stroke-width="2"/>
+  <!-- Wood staves (vertical lines) -->
+  ${[24, 38, 52, 66, 80, 94, 108, 122, 136, 150, 164].map(x => `<line x1="${x}" y1="72" x2="${x}" y2="188" stroke="#5a3a20" stroke-width="1.5" opacity="0.7"/>`).join("")}
+  <!-- Steel band hoops around the cylinder -->
+  <rect x="12" y="86"  width="168" height="4" fill="#3A3D44" stroke="#1F2127" stroke-width="0.5"/>
+  <rect x="12" y="118" width="168" height="4" fill="#3A3D44" stroke="#1F2127" stroke-width="0.5"/>
+  <rect x="12" y="150" width="168" height="4" fill="#3A3D44" stroke="#1F2127" stroke-width="0.5"/>
+  <rect x="12" y="178" width="168" height="4" fill="#3A3D44" stroke="#1F2127" stroke-width="0.5"/>
+  <!-- Conical roof -->
+  <path d="M14,70 L96,4 L178,70 Z" fill="#3A3D44" stroke="#1F2127" stroke-width="2"/>
+  <!-- Roof highlight (sunlit side) -->
+  <path d="M14,70 L96,4 L96,70 Z" fill="#5a5d64" opacity="0.7"/>
+  <!-- Faint Swiirl Co. lettering on the tower body -->
+  <text x="96" y="135" font-family="serif" font-size="14" fill="#FFD24A" text-anchor="middle" font-style="italic" opacity="0.45">swiirl co.</text>
+  <!-- Overall outline -->
+  <rect x="14" y="70" width="164" height="120" fill="none" stroke="#5C3BA3" stroke-width="1.5" opacity="0.4"/>
+</svg>`;
+await svgToPng(waterTowerSvg, "prop_water_tower.png", 192, 260);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
