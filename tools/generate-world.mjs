@@ -473,6 +473,23 @@ const antennaMastSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" heigh
 </svg>`;
 await svgToPng(antennaMastSvg, "prop_antenna_mast.png", 64, 220);
 
+const helipadHSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="32" viewBox="0 0 320 32">
+  <!-- Faded white outer circle (squashed to read as floor-painted, not aerial-view) -->
+  <ellipse cx="160" cy="16" rx="120" ry="14" fill="none" stroke="#EEE6F5" stroke-width="4" opacity="0.85"/>
+  <!-- Inner H paint -->
+  <rect x="142" y="6"  width="6" height="22" fill="#EEE6F5" opacity="0.9"/>
+  <rect x="172" y="6"  width="6" height="22" fill="#EEE6F5" opacity="0.9"/>
+  <rect x="142" y="14" width="36" height="6" fill="#EEE6F5" opacity="0.9"/>
+  <!-- Scuff marks across the paint -->
+  <rect x="120" y="18" width="14" height="2" fill="#1F2127" opacity="0.25"/>
+  <rect x="190" y="11" width="20" height="2" fill="#1F2127" opacity="0.20"/>
+  <rect x="80"  y="14" width="10" height="2" fill="#1F2127" opacity="0.20"/>
+  <rect x="220" y="20" width="18" height="2" fill="#1F2127" opacity="0.22"/>
+  <!-- Faded gold inner ring (Swiirl easter-egg accent) -->
+  <ellipse cx="160" cy="16" rx="100" ry="11" fill="none" stroke="#FFD24A" stroke-width="1" opacity="0.35"/>
+</svg>`;
+await svgToPng(helipadHSvg, "prop_helipad_h.png", 320, 32);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
