@@ -301,11 +301,13 @@ function leapStreak(scene, x, y, color) {
 
 export const ATTACKS = {
   // SWIIRL — single arc swipe in front, deals 1 damage.
+  // Crouched: hitbox drops from chest (-80) to crouched-torso (-36) so short
+  // enemies (DeadlineBot, PaperworkPile) sit inside the arc reliably.
   swipe(player, time) {
     const t = ATTACK_TUNING.swipe;
     const scene = player.scene;
     const x = player.x + player.facing * (t.range / 2 + 8);
-    const y = player.y - 80;
+    const y = player.y + (player.state === "crouch" ? -36 : -80);
     spawnHitbox(scene, x, y, t.range, t.height, t.hitboxMs, t.damage, {
       knockbackX: t.knockbackX, attackId: nextAttackId("swipe"),
     });
@@ -363,6 +365,7 @@ export const ATTACKS = {
   },
 
   // SPARK — light swipe that chains. Hold-then-release triggers a heavy hit.
+  // Crouched: same hitbox-y drop as swipe so the chain combo works from low pose.
   chain(player, time) {
     const t = ATTACK_TUNING.chain;
     const scene = player.scene;
@@ -370,7 +373,7 @@ export const ATTACKS = {
     const range  = heavy ? t.heavyRange : t.range;
     const damage = heavy ? t.heavyDamage : t.damage;
     const x = player.x + player.facing * (range / 2 + 6);
-    const y = player.y - 80;
+    const y = player.y + (player.state === "crouch" ? -36 : -80);
     spawnHitbox(scene, x, y, range, t.height, t.hitboxMs, damage, {
       knockbackX: t.knockbackX, attackId: nextAttackId(heavy ? "chain_heavy" : "chain_light"),
     });
@@ -390,20 +393,23 @@ export const ATTACKS = {
   },
 
   // GUARDIAN — short dash with a forward hitbox that also doubles as a parry.
+  // Crouched: shield arc drops to crouched-torso height so a bash from crouch
+  // hits low enemies and parries low projectiles.
   shieldBash(player, time) {
     const t = ATTACK_TUNING.shieldBash;
     const scene = player.scene;
+    const yOffset = player.state === "crouch" ? -36 : -80;
     player.setVelocityX(player.facing * t.dashSpeed);
     player._bashEndAt = time + t.dashMs;
     const x = player.x + player.facing * (t.range / 2 + 6);
-    const y = player.y - 80;
+    const y = player.y + yOffset;
     const hb = spawnHitbox(scene, x, y, t.range, t.height, t.hitboxMs, t.damage, {
       knockbackX: 280, attackId: nextAttackId("shield_bash"), pierce: true,
     });
     hb.parry = !!t.parry;
     hb._followPlayer = player;
     hb._followOffsetX = player.facing * (t.range / 2 + 6);
-    hb._followOffsetY = -80;
+    hb._followOffsetY = yOffset;
     // Big visible shield held in front during the dash.
     shieldGraphic(scene, player, player.facing, t.dashMs, 0xffd24a);
     // A small leading swipe arc to sell the impact moment.
