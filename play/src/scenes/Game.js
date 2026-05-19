@@ -147,7 +147,7 @@ export class GameScene extends Phaser.Scene {
       } else if (t.kind === "oneWayFloor") {
         // Jump-through brick floor for the L6 arena cap — the player
         // rises up through it from the shaft, then lands on top.
-        this.buildOneWayFloor(t.x1, t.x2, t.y);
+        this.buildOneWayFloor(t.x1, t.x2, t.y, t.textureKey);
       }
     }
 
@@ -684,9 +684,9 @@ export class GameScene extends Phaser.Scene {
   /** Jump-through floor — only the TOP of each brick is solid. Player rising
    *  from below passes straight through; player falling lands on top. Used
    *  for the L6 arena cap so the shaft player can enter the bowl. */
-  buildOneWayFloor(x1, x2, y) {
+  buildOneWayFloor(x1, x2, y, textureKey = "tile_shaft_wall") {
     for (let x = x1; x < x2; x += TILE_SIZE) {
-      const b = this.platforms.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, "tile_shaft_wall");
+      const b = this.platforms.create(x + TILE_SIZE / 2, y + TILE_SIZE / 2, textureKey);
       b.body.checkCollision.down  = false;
       b.body.checkCollision.left  = false;
       b.body.checkCollision.right = false;
