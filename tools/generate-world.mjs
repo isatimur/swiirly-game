@@ -277,6 +277,39 @@ const shaftWallSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height=
 </svg>`;
 await svgToPng(shaftWallSvg, "tile_shaft_wall.png", TILE, TILE);
 
+// ============================================================================
+// L6 ROOFTOP — concrete deck tile + 8 industrial props for the bonus level
+// boss arena. The deck is tileable horizontally; right-edge joint creates a
+// slab-edge line every 64px when laid in a row. All props use origin (0.5, 1.0)
+// — the y-coordinate is the feet on the deck.
+// ============================================================================
+
+const rooftopConcreteSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="rc" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a39bb5"/>
+      <stop offset="1" stop-color="#7f7a90"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="url(#rc)"/>
+  <!-- Faint drain stain -->
+  <ellipse cx="22" cy="44" rx="11" ry="3" fill="#5C3BA3" opacity="0.12"/>
+  <!-- Gravel ballast specks -->
+  <circle cx="9"  cy="14" r="1" fill="#5C3BA3" opacity="0.25"/>
+  <circle cx="38" cy="11" r="1" fill="#1F2127" opacity="0.30"/>
+  <circle cx="52" cy="28" r="1" fill="#5C3BA3" opacity="0.20"/>
+  <circle cx="17" cy="33" r="1" fill="#1F2127" opacity="0.25"/>
+  <circle cx="44" cy="48" r="1" fill="#5C3BA3" opacity="0.20"/>
+  <circle cx="29" cy="56" r="1" fill="#1F2127" opacity="0.25"/>
+  <circle cx="58" cy="52" r="1" fill="#5C3BA3" opacity="0.20"/>
+  <!-- Top expansion-joint groove + highlight (creates a horizontal joint line at every tile boundary when stacked) -->
+  <rect x="0" y="0" width="64" height="2" fill="#5C3BA3" opacity="0.45"/>
+  <rect x="0" y="2" width="64" height="2" fill="#bdb5cf" opacity="0.5"/>
+  <!-- Right-edge vertical joint (creates a slab boundary every 64px when tiled horizontally) -->
+  <rect x="62" y="0" width="2" height="64" fill="#5C3BA3" opacity="0.35"/>
+</svg>`;
+await svgToPng(rooftopConcreteSvg, "tile_rooftop_concrete.png", TILE, TILE);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
