@@ -222,6 +222,21 @@ export class GameScene extends Phaser.Scene {
           this.add.image(p.x, p.y, p.key).setOrigin(0.5, 1.0).setDepth(p.depth ?? -5);
         }
       }
+      // Tile the parapet sprite along the rooftop's front edge so the
+      // parapet reads as one continuous wall + rail. 64×48 image, anchored
+      // (0, 1.0) so each tile's bottom edge sits at y=600 (the deck top).
+      // Mobile-skip to keep the foreground sprite count lean.
+      if (!IS_MOBILE) {
+        for (let px = 0; px < 1600; px += 64) {
+          this.add.image(px, 600, "prop_parapet").setOrigin(0, 1.0).setDepth(-8);
+        }
+      }
+
+      // Painted helipad H — wide thin floor decal centered on the deck at
+      // x=800. Origin (0.5, 0.0) so the TOP of the sprite sits at y=600
+      // (the deck line) and the H paints downward into the visible deck
+      // band. Depth -6 puts it above the concrete tiles but below the boss.
+      this.add.image(800, 600, "prop_helipad_h").setOrigin(0.5, 0.0).setDepth(-6);
       // Distant city skyline behind the rooftop — staggered dark
       // rectangles with lit windows, parallax-free (just decor).
       // Skipped on mobile: the per-rect graphics calls add real GPU cost
