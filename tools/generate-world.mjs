@@ -356,6 +356,41 @@ const hvacSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="96"
 </svg>`;
 await svgToPng(hvacSvg, "prop_hvac.png", 160, 96);
 
+const maintenanceShedSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="144" viewBox="0 0 192 144">
+  <!-- Drop shadow -->
+  <ellipse cx="96" cy="141" rx="88" ry="3" fill="#1A0F2E" opacity="0.32"/>
+  <!-- Vent pipe poking out the top -->
+  <rect x="40" y="0" width="14" height="38" fill="#3A3D44" stroke="#1F2127" stroke-width="1"/>
+  <ellipse cx="47" cy="0" rx="9" ry="3" fill="#5a5d64"/>
+  <!-- Shed body -->
+  <rect x="8" y="34" width="176" height="106" fill="#8a8398" stroke="#5C3BA3" stroke-width="2"/>
+  <!-- Darker roof-line band at top -->
+  <rect x="4" y="34" width="184" height="10" fill="#5a536b"/>
+  <!-- Wall horizontal texture lines -->
+  <rect x="8" y="60" width="176" height="1" fill="#5C3BA3" opacity="0.25"/>
+  <rect x="8" y="90" width="176" height="1" fill="#5C3BA3" opacity="0.25"/>
+  <rect x="8" y="120" width="176" height="1" fill="#5C3BA3" opacity="0.25"/>
+  <!-- Door frame -->
+  <rect x="128" y="62" width="50" height="80" fill="none" stroke="#1F2127" stroke-width="2"/>
+  <!-- Door (dark steel) -->
+  <rect x="130" y="64" width="46" height="76" fill="#3A3D44" stroke="#1F2127" stroke-width="2"/>
+  <!-- Door window -->
+  <rect x="138" y="74" width="30" height="14" fill="#1F2127"/>
+  <rect x="140" y="76" width="26" height="10" fill="#5a4838"/>
+  <!-- Door handle -->
+  <circle cx="158" cy="106" r="3" fill="#FFD24A"/>
+  <!-- 'Ajar' shadow inside the doorframe — suggests the door is open -->
+  <path d="M176,64 L182,68 L182,138 L176,140 Z" fill="#1F2127" opacity="0.6"/>
+  <!-- Signage above the door -->
+  <rect x="120" y="48" width="66" height="14" fill="#FFD24A" opacity="0.9" stroke="#5C3BA3" stroke-width="1"/>
+  <text x="153" y="58" font-family="system-ui, sans-serif" font-size="7" fill="#5C3BA3" text-anchor="middle" font-weight="900">BOARD ONLY</text>
+  <!-- Yellow warning stripe along bottom -->
+  <rect x="8" y="134" width="176" height="4" fill="#FFD24A" opacity="0.7"/>
+  <!-- Drain stain -->
+  <ellipse cx="60" cy="128" rx="20" ry="2" fill="#5C3BA3" opacity="0.20"/>
+</svg>`;
+await svgToPng(maintenanceShedSvg, "prop_maintenance_shed.png", 192, 144);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
