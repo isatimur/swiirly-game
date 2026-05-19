@@ -310,6 +310,26 @@ const rooftopConcreteSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" h
 </svg>`;
 await svgToPng(rooftopConcreteSvg, "tile_rooftop_concrete.png", TILE, TILE);
 
+const parapetSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48">
+  <!-- Concrete wall body -->
+  <rect x="0" y="14" width="64" height="34" fill="#8a8398"/>
+  <!-- Top coping (darker cap) -->
+  <rect x="0" y="14" width="64" height="6" fill="#5a536b"/>
+  <!-- Steel pipe handrail floating above the coping -->
+  <rect x="0" y="6" width="64" height="4" fill="#3A3D44"/>
+  <!-- Posts at left and right edges connecting rail to coping -->
+  <rect x="2" y="10" width="3" height="6" fill="#3A3D44"/>
+  <rect x="59" y="10" width="3" height="6" fill="#3A3D44"/>
+  <!-- Yellow warning stripe along the inside lip -->
+  <rect x="0" y="20" width="64" height="2" fill="#FFD24A" opacity="0.7"/>
+  <!-- Drain stains -->
+  <ellipse cx="18" cy="34" rx="6" ry="1.5" fill="#5C3BA3" opacity="0.20"/>
+  <ellipse cx="48" cy="40" rx="5" ry="1.2" fill="#5C3BA3" opacity="0.18"/>
+  <!-- Outline -->
+  <rect x="0" y="14" width="64" height="34" fill="none" stroke="#5C3BA3" stroke-width="1.5" opacity="0.5"/>
+</svg>`;
+await svgToPng(parapetSvg, "prop_parapet.png", 64, 48);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
