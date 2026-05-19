@@ -215,6 +215,13 @@ export class GameScene extends Phaser.Scene {
     // is the top of a building" instead of "a figure floating in sky."
     if (this.levelNum === 6) {
       const bx = this.brand.x, by = this.brand.y;
+      // Render declarative rooftop props (level.props). Each entry has
+      // key/x/y/depth — origin (0.5, 1.0) so y is the feet on the deck.
+      if (Array.isArray(lvl.props)) {
+        for (const p of lvl.props) {
+          this.add.image(p.x, p.y, p.key).setOrigin(0.5, 1.0).setDepth(p.depth ?? -5);
+        }
+      }
       // Distant city skyline behind the rooftop — staggered dark
       // rectangles with lit windows, parallax-free (just decor).
       // Skipped on mobile: the per-rect graphics calls add real GPU cost
