@@ -548,7 +548,7 @@ export class GameScene extends Phaser.Scene {
       this.game.events.emit("brand-meter", 1, this.player.insights, this.level.insightsRequired);
       // Place Swiirl directly inside the brand's body so the next overlap
       // check fires the cutscene immediately.
-      this.player.setPosition(this.level.brandPos.x, GROUND_TOP_Y - 60);
+      this.player.setPosition(this.level.brandPos.x, this.level.brandPos.y - 60);
       this.player.setVelocity(0, 0);
       this.player._invulnUntil = this.time.now + 5000;
       if (this.boss) {
