@@ -1,22 +1,15 @@
-// Bonus — "Up and to the Right". A vertical climb that ends in a wide
-// boss arena ("Arena Bowl" layout):
+// Bonus — "Up and to the Right". A vertical climb up a centered shaft
+// (x=400..1136, y=600..3104) that ends inside a maintenance shed at the
+// top. The player emerges from the shed door onto a full-width concrete
+// rooftop where THE BOARD waits on a painted helipad H.
 //
-//   x:    0 .................. 400 ... 1200 .................. 1600
-//   y=0   |   sky    |          | brand   |          |   sky    |
-//                                  ↑
-//                              ARENA  (full 1600 wide, floor at y=600)
-//   y=600                          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-//   y=600                          █ shaft walls (x=400 + x=1136)
-//   y=...                          █                █
-//   y=...                          █  climb route  █
-//   y=...                          █                █
-//   y=3040                         █                █
-//   y=3104                ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-//                                       FLOOR
-//
-// THE BOARD waits on the arena floor (y=600). Two approach platforms
-// stagger the way to the brand at the top center. Decorative shaft-wall
-// pillars at the outer edges (x=64, x=1472) frame the arena.
+//   y=0    sky + distant skyline silhouette
+//   y=600  CONCRETE ROOFTOP DECK (x=0..1600, one-way from below)
+//          props sit on the deck — see `props` field below
+//          BOARD boss on helipad H, brand silhouetted against water tower
+//   y=600..664   shed interior — shaft cap is hidden here
+//   y=664..3040  climbing shaft (zig-zag platforms, ghosts patrol)
+//   y=3104       building ground floor — player spawns at (800, 3024)
 
 const TILE = 64;
 const GROUND_Y = 3104;
@@ -53,7 +46,7 @@ export const level6 = {
   spawn: { x: 800, y: GROUND_Y - 80 },
   // Brand sits at the right edge of the arena floor — reachable just by
   // walking once the boss is down. No climbing puzzle.
-  brandPos: { x: 1100, y: 600 },
+  brandPos: { x: 1300, y: 600 },
   miniBoss: { x: 800, y: 600, health: 18 },
   insightsRequired: 14,
   bossArenaTop: 700,
@@ -66,29 +59,35 @@ export const level6 = {
   checkpoints: [],
 
   terrain: [
-    // ---- BOTTOM FLOOR (full width) ----
+    // ---- BUILDING GROUND FLOOR (full width) ----
     ground(0, 1600),
 
-    // ---- SHAFT WALLS (centered, x=400 and x=1136, from arena down to floor) ----
-    ...wallColumn(400, 600, GROUND_Y - 64),
-    ...wallColumn(1136, 600, GROUND_Y - 64),
+    // ---- SHAFT WALLS — centered, x=400 and x=1136, run from y=664 (just
+    // below the rooftop deck) down to ground level. Players climb between
+    // these walls. They stop at y=664 (one tile below the deck) so the
+    // shed at the top can hide the hole. ----
+    ...wallColumn(400,  664, GROUND_Y - 64),
+    ...wallColumn(1136, 664, GROUND_Y - 64),
 
-    // ---- ARENA FLOOR — trimmed centered band x=400-1200 (~800 wide).
-    // Boss has plenty of room; less brick clutter at the edges.
-    { kind: "oneWayFloor", x1: 400, x2: 1200, y: 600 },
+    // ---- ROOFTOP CONCRETE DECK — full width, one-way (player rises
+    // through it inside the shed footprint). ----
+    { kind: "oneWayFloor", x1: 0, x2: 1600, y: 600, textureKey: "tile_rooftop_concrete" },
 
-    // (No roof — open sky above. Player jumps from the upper staircase
-    // step directly to the brand.)
+    // ---- HIDDEN SHED INTERIOR — two short walls forming the shed's
+    // interior + a landing platform inside. Once the player lands on the
+    // platform they walk right past x=912 and emerge out the shed door. ----
+    ...wallColumn(720, 600, 664),
+    ...wallColumn(912, 600, 664),
+    platform(816, 664, 2),
 
-    // (No staircase, no roof — brand sits on the arena floor itself,
-    // reached by walking once the boss is down.)
-
-    // ---- SHAFT CLIMB PLATFORMS (zig-zag inside the shaft interior, x 464–1136) ----
-    platform(520, GROUND_Y - 220, 3),
-    platform(900, GROUND_Y - 380, 3),
-    platform(560, GROUND_Y - 560, 3),
-    platform(900, GROUND_Y - 760, 3),
-    platform(540, GROUND_Y - 940, 3),
+    // ---- SHAFT CLIMB PLATFORMS — zig-zag between the shaft walls.
+    // The old topmost platform at GROUND_Y-2720 (y=384) is REMOVED — the
+    // new arrival point is the landing platform inside the shed (y=664). ----
+    platform(520, GROUND_Y - 220,  3),
+    platform(900, GROUND_Y - 380,  3),
+    platform(560, GROUND_Y - 560,  3),
+    platform(900, GROUND_Y - 760,  3),
+    platform(540, GROUND_Y - 940,  3),
     platform(900, GROUND_Y - 1140, 3),
     platform(560, GROUND_Y - 1340, 3),
     platform(900, GROUND_Y - 1540, 3),
@@ -97,11 +96,25 @@ export const level6 = {
     platform(560, GROUND_Y - 2140, 3),
     platform(900, GROUND_Y - 2340, 3),
     platform(540, GROUND_Y - 2540, 3),
-    platform(680, GROUND_Y - 2720, 4),
 
-    // ---- BOTTOM WARM-UP ----
+    // ---- BOTTOM WARM-UP BRICKS ----
     brick(580, GROUND_Y - 110),
     brick(960, GROUND_Y - 110),
+  ],
+
+  // Declarative rooftop-prop placements. Game.js iterates this and adds an
+  // image per entry. All entries use the default origin (0.5, 1.0) so the
+  // y-coordinate is the feet on the deck (y=600). Helipad H is NOT here —
+  // it's a floor decal rendered separately in the Game.js dressing block.
+  // Depths: tower/shed/HVAC/vent -5, dish/antenna -7. Skyline -15, parapet
+  // -8 are owned by the dressing block.
+  props: [
+    { key: "prop_vent_stack",       x: 180,  y: 600, depth: -5 },
+    { key: "prop_hvac",             x: 300,  y: 600, depth: -5 },
+    { key: "prop_maintenance_shed", x: 816,  y: 600, depth: -5 },
+    { key: "prop_water_tower",      x: 1280, y: 600, depth: -5 },
+    { key: "prop_satellite_dish",   x: 1280, y: 460, depth: -7 },
+    { key: "prop_antenna_mast",     x: 1500, y: 600, depth: -7 },
   ],
 
   enemies: [
@@ -129,7 +142,7 @@ export const level6 = {
     { x: 620, y: GROUND_Y - 2180 },
     { x: 960, y: GROUND_Y - 2380 },
     { x: 750, y: GROUND_Y - 2760 },
-    { x: 800, y: 320 },  // inside the arena, between approach platforms
+    { x: 1100, y: 540 },  // arena insight — between helipad H and water tower, just above deck
   ],
 
   signals: [
