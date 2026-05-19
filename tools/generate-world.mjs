@@ -450,6 +450,29 @@ const satelliteDishSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="144" he
 </svg>`;
 await svgToPng(satelliteDishSvg, "prop_satellite_dish.png", 144, 128);
 
+const antennaMastSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="220" viewBox="0 0 64 220">
+  <!-- Drop shadow at the base -->
+  <ellipse cx="32" cy="217" rx="20" ry="2.5" fill="#1A0F2E" opacity="0.32"/>
+  <!-- Base plate -->
+  <rect x="20" y="210" width="24" height="6" fill="#3A3D44" stroke="#1F2127" stroke-width="1"/>
+  <!-- Two vertical legs forming the mast (narrow at top, wider at base) -->
+  <line x1="26" y1="20" x2="22" y2="210" stroke="#1F2127" stroke-width="2"/>
+  <line x1="38" y1="20" x2="42" y2="210" stroke="#1F2127" stroke-width="2"/>
+  <!-- Cross-bracing X pattern -->
+  ${[20, 40, 60, 80, 100, 120, 140, 160, 180].map(y => `<line x1="${(26 - (y - 20) * 0.02).toFixed(2)}" y1="${y}" x2="${(42 + (y - 20) * 0.02).toFixed(2)}" y2="${y + 20}" stroke="#1F2127" stroke-width="1"/><line x1="${(42 + (y - 20) * 0.02).toFixed(2)}" y1="${y}" x2="${(26 - (y - 20) * 0.02).toFixed(2)}" y2="${y + 20}" stroke="#1F2127" stroke-width="1"/>`).join("")}
+  <!-- Horizontal cross-bars -->
+  ${[20, 40, 60, 80, 100, 120, 140, 160, 180, 200].map(y => `<line x1="${(26 - (y - 20) * 0.02).toFixed(2)}" y1="${y}" x2="${(38 + (y - 20) * 0.02).toFixed(2)}" y2="${y}" stroke="#1F2127" stroke-width="1"/>`).join("")}
+  <!-- Tip antenna spike -->
+  <line x1="32" y1="20" x2="32" y2="4" stroke="#1F2127" stroke-width="1.5"/>
+  <!-- Gold aircraft-warning light at the tip + halo -->
+  <circle cx="32" cy="4" r="6" fill="#FFD24A" opacity="0.3"/>
+  <circle cx="32" cy="4" r="3" fill="#FFD24A"/>
+  <!-- Guy wires fading down off-canvas -->
+  <line x1="32" y1="40" x2="0"  y2="200" stroke="#1F2127" stroke-width="0.5" opacity="0.5"/>
+  <line x1="32" y1="40" x2="64" y2="200" stroke="#1F2127" stroke-width="0.5" opacity="0.5"/>
+</svg>`;
+await svgToPng(antennaMastSvg, "prop_antenna_mast.png", 64, 220);
+
 const cloudSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60" viewBox="0 0 160 60">
   <ellipse cx="40" cy="40" rx="34" ry="20" fill="#FFFFFF" opacity="0.85"/>
   <ellipse cx="80" cy="32" rx="38" ry="24" fill="#FFFFFF" opacity="0.85"/>
