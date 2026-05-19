@@ -274,9 +274,9 @@ export class GameScene extends Phaser.Scene {
       // (Door pedestal removed — brand sits on the arena floor now.)
 
       // ----- L6 EASTER EGGS -----
-      // 1. Sticky note on the rooftop door — easy to miss, gold paper
-      //    with handwritten-looking text. Stuck slightly off-square.
-      const sticky = this.add.container(bx + 22, by - 60);
+      // 1. Sticky note on the maintenance shed door — gold paper stuck
+      //    slightly off-square, just above the door handle.
+      const sticky = this.add.container(870, 540);
       const sg = this.add.graphics();
       sg.fillStyle(0xffd24a, 1);
       sg.fillRect(-10, -10, 20, 18);
