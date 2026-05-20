@@ -165,6 +165,7 @@ export const level5 = {
     { type: "speed",  x: 2950, y: GROUND_Y - MID  },
     { type: "shield", x: 5400, y: GROUND_Y - 180  },
     { type: "growth", x: 8400, y: GROUND_Y - HIGH },
+    { type: "shield", x: 9250, y: GROUND_Y - MID  },
   ],
 
   // ============================================================
