@@ -45,7 +45,7 @@ export const level1 = {
   checkpoints: [
     { after: 1500, respawnX: 1500 },
     { after: 2700, respawnX: 3300 },
-    { after: 5500, respawnX: 5800 },
+    { after: 5500, respawnX: 5900 },
   ],
 
   // ============================================================================
