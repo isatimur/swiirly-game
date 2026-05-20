@@ -32,6 +32,7 @@ export const level5 = {
     { after: 2000, respawnX: 2200 },
     { after: 3900, respawnX: 4100 },
     { after: 8300, respawnX: 8500 },
+    { after: 8900, respawnX: 9100 },
   ],
 
   // ============================================================
