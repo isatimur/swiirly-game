@@ -161,6 +161,44 @@ export class GameScene extends Phaser.Scene {
     else if (this.levelNum === 4) tintTiles(0x60a0b0);
     else if (this.levelNum === 5) tintTiles(0x8090c8);
 
+    // L5 finale — distant city skyline behind the C-Suite arena (x≈9000–
+    // 11500). Staggered dark buildings with lit windows, depth -15, no
+    // physics, no parallax. Modeled on the L6 rooftop skyline. Mobile-skip:
+    // per-rect graphics calls cost real GPU when the shard zone is active.
+    if (this.levelNum === 5 && !IS_MOBILE) {
+      const skyline = this.add.graphics().setDepth(-15);
+      const skyBuildings = [
+        { x:  9050, w: 110, h: 240, c: 0x1a1f2a },
+        { x:  9200, w: 150, h: 320, c: 0x0e1320 },
+        { x:  9400, w:  90, h: 210, c: 0x161b26 },
+        { x:  9540, w: 130, h: 290, c: 0x0e1320 },
+        { x:  9720, w:  80, h: 180, c: 0x1a1f2a },
+        { x:  9850, w: 120, h: 270, c: 0x0e1320 },
+        { x: 10020, w: 100, h: 230, c: 0x161b26 },
+        { x: 10170, w: 140, h: 340, c: 0x0e1320 },
+        { x: 10360, w:  90, h: 200, c: 0x1a1f2a },
+        { x: 10500, w: 130, h: 300, c: 0x0e1320 },
+        { x: 10690, w: 100, h: 220, c: 0x161b26 },
+        { x: 10840, w: 150, h: 330, c: 0x0e1320 },
+        { x: 11040, w:  90, h: 210, c: 0x1a1f2a },
+        { x: 11180, w: 130, h: 280, c: 0x0e1320 },
+        { x: 11370, w: 100, h: 240, c: 0x161b26 },
+      ];
+      for (const b of skyBuildings) {
+        const top = GROUND_TOP_Y - b.h;
+        skyline.fillStyle(b.c, 1);
+        skyline.fillRect(b.x, top, b.w, b.h);
+        skyline.fillStyle(0xffd28a, 0.55);
+        const rows = Math.floor(b.h / 24);
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < 3; c++) {
+            if (((r * 3 + c + b.x) % 5) === 0) continue;
+            skyline.fillRect(b.x + 8 + c * (b.w - 16) / 2.4, top + 8 + r * 24, 6, 5);
+          }
+        }
+      }
+    }
+
     // World floor (catch falls into pits).
     this.physics.world.setBoundsCollision(true, true, false, false);
     this.deathLine = lvl.height + 80;
