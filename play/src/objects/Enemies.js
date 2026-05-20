@@ -415,8 +415,8 @@ export class TheAlgorithm extends BossBase {
     this.setVelocity(0, 0);
     if (time - this.lastAttackAt > this.spreadInterval) {
       this.lastAttackAt = time;
-      this.telegraph(280);
-      this.scene.time.delayedCall(280, () => {
+      this.telegraph(480);
+      this.scene.time.delayedCall(480, () => {
         if (this.dead) return;
         const p = this.scene.player;
         if (p) this.fireProjectileFan(p.x, p.y, 5, 0.18, 240, 0x40c0e0);
