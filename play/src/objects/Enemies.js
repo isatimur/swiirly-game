@@ -342,6 +342,19 @@ export class ManagerMike extends BossBase {
     if (time - this.lastAttackAt > this.summonInterval) {
       this.lastAttackAt = time;
       this.telegraph(280);
+      // Expanding red ring at Mike's feet so the summon reads during a
+      // busy fight — the tint flash alone is easy to miss.
+      const ring = this.scene.add.circle(this.x, this.y, 14, 0xff5c5c, 0)
+        .setStrokeStyle(4, 0xff5c5c, 0.9).setDepth(this.depth - 1);
+      this.scene.tweens.add({
+        targets: ring,
+        radius: 70,
+        alpha: 0,
+        duration: 280,
+        ease: "Quad.easeOut",
+        onUpdate: (_, t) => ring.setRadius(14 + (70 - 14) * t.progress),
+        onComplete: () => ring.destroy(),
+      });
       this.scene.time.delayedCall(280, () => {
         if (!this.dead) this.summonJargonBlob();
       });
