@@ -106,6 +106,7 @@ export const level1 = {
   enemies: [
     // Act 1
     { type: "jargon_blob", x:  700, y: GROUND_Y, range:  60 },
+    { type: "jargon_blob", x: 1750, y: GROUND_Y, range:  90 },
     { type: "jargon_blob", x: 1900, y: GROUND_Y, range: 120 },
 
     // Act 2
