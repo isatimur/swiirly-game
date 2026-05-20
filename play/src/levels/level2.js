@@ -141,13 +141,11 @@ export const level2 = {
     { x: 6490, y: GROUND_Y - 250 },
     { x: 6800, y: GROUND_Y - 370 },
 
-    // Act 3 (6)
+    // Act 3 (4)
     { x: 7150, y: GROUND_Y - LOW },
     { x: 7350, y: GROUND_Y - LOW },
     { x: 7550, y: GROUND_Y - LOW },
-    { x: 8150, y: GROUND_Y - LOW },
     { x: 8280, y: GROUND_Y - LOW },
-    { x: 8420, y: GROUND_Y - LOW },
   ],
 
   // ============================================================
