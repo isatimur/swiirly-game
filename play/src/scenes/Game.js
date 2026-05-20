@@ -591,9 +591,14 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Hidden dev shortcut: B teleports player into the boss arena (boss alive).
+    // Prefer the boss's own spawn — L6's bossArenaStart is a sentinel (99999)
+    // because its arena is vertical, so the old bossArenaStart+100 sent the
+    // player off-world. Every level defines miniBoss { x, y }.
     this.input.keyboard.on("keydown-B", () => {
-      const arenaX = this.level.bossArenaStart + 100;
-      this.player.setPosition(arenaX, GROUND_TOP_Y - 100);
+      const mb = this.level.miniBoss;
+      const arenaX = mb ? mb.x - 140 : this.level.bossArenaStart + 100;
+      const arenaY = mb ? mb.y - 80  : GROUND_TOP_Y - 100;
+      this.player.setPosition(arenaX, arenaY);
       this.player.setVelocity(0, 0);
       this.player._invulnUntil = this.time.now + 1500;
     });
