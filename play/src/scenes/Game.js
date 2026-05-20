@@ -199,6 +199,24 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // L1 ONLY — teaching aid: mark each patrolling jargon_blob's range bounds
+    // with two faint pulsing ground decals so a new player reads the patrol
+    // extent without learning it by collision. Later levels don't need this.
+    // No setDepth: created after the ground tiles (so it draws on top of them)
+    // and before the player (so the player draws on top of it).
+    if (this.levelNum === 1) {
+      for (const e of lvl.enemies) {
+        if (e.type !== "jargon_blob" || !e.range) continue;
+        for (const mx of [e.x - e.range, e.x + e.range]) {
+          const dot = this.add.circle(mx, GROUND_TOP_Y - 6, 5, 0xffd24a, 0.30);
+          this.tweens.add({
+            targets: dot, alpha: 0.12, scale: 1.4,
+            duration: 1100, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+          });
+        }
+      }
+    }
+
     // World floor (catch falls into pits).
     this.physics.world.setBoundsCollision(true, true, false, false);
     this.deathLine = lvl.height + 80;
