@@ -112,6 +112,8 @@ export const level3 = {
     { type: "jargon_blob", x: 6600, y: GROUND_Y, range: 180 },
     { type: "paperwork",   x: 6900, y: GROUND_Y },
     { type: "ghost",       x: 7500, y: GROUND_Y - 200, range:  80 },
+    { type: "paperwork",   x: 7700, y: GROUND_Y },
+    { type: "ghost",       x: 7950, y: GROUND_Y - 200, range:  90 },
 
     // Act 3
     { type: "jargon_blob", x: 8350, y: GROUND_Y, range:  80 },
