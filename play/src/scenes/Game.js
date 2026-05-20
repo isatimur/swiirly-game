@@ -155,7 +155,8 @@ export class GameScene extends Phaser.Scene {
     // own group so they're already excluded from this pass.
     const tintTiles = (color) =>
       this.platforms.getChildren().forEach(tile => tile.setTint(color));
-    if (this.levelNum === 2)      tintTiles(0x9ab0cc);
+    if (this.levelNum === 1)      tintTiles(0xf5ecd0);
+    else if (this.levelNum === 2) tintTiles(0x9ab0cc);
     else if (this.levelNum === 3) tintTiles(0xcc9070);
     else if (this.levelNum === 4) tintTiles(0x60a0b0);
     else if (this.levelNum === 5) tintTiles(0x8090c8);
