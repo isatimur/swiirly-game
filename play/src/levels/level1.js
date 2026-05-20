@@ -160,7 +160,7 @@ export const level1 = {
   // SIGNALS (power-ups)
   // ============================================================================
   signals: [
-    { type: "speed",  x: 2050, y: GROUND_Y - MID },
+    { type: "speed",  x: 2330, y: GROUND_Y - 300 },
     { type: "shield", x: 4360, y: GROUND_Y - 180 },
     { type: "growth", x: 5950, y: GROUND_Y - HIGH },
   ],
