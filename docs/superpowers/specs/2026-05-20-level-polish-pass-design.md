@@ -2,17 +2,17 @@
 
 Date: 2026-05-20
 Status: Approved, ready for implementation plan
-Scope: 16 verified fixes across Levels 1–6 (audit-driven + 1 playtest find)
+Scope: 15 verified fixes across Levels 1–6 (audit-driven + 1 playtest find)
 
 ## Problem
 
 A 6-agent per-level audit surfaced 20 candidate issues. Verification against
-the actual level files cut 5 as bogus (left/right confusion, a non-existent
-"death pit," already-implemented conveyor arrows, an insight-math error, an
-"insight floats" non-issue). The 15 survivors are real and each has an exact
-file:line and a concrete fix. A 16th item (L_7) was found while playtesting:
-the `B` dev-cheat is broken on L6. This spec consolidates all 16 so they ship
-as one coherent polish pass.
+the actual code cut 6 as bogus (left/right confusion, a non-existent "death
+pit," already-implemented conveyor arrows, an insight-math error, an "insight
+floats" non-issue, and an already-telegraphed wind zone). The 14 survivors are
+real and each has an exact file:line and a concrete fix. A 15th item (L_7) was
+found while playtesting: the `B` dev-cheat is broken on L6. This spec
+consolidates all 15 so they ship as one coherent polish pass.
 
 ## Verification notes (why these 15, not 20)
 
@@ -22,6 +22,7 @@ Dropped on inspection:
 - **L6 "14th insight floats"** — insights float 60–400px above ground in every level by design.
 - **L3 "Act 3 insights non-optional"** — Act1+Act2 = 21 insights ≥ 18 required, so Act 3's are skippable.
 - **L2 "conveyors need direction arrows"** — `buildConveyor` (Game.js:865) already renders animated marching ▶/◀ arrows.
+- **L3 "wind zone has no telegraph"** — `buildWindZone` (Game.js:994) already renders a tinted fill box, a visible border, pulsing ▶/◀ arrows, and drifting streaks. The zone is heavily telegraphed.
 
 ## Goals
 
@@ -39,7 +40,7 @@ Dropped on inspection:
   fixes the dev-only `B` cheat, which is not L6 gameplay)
 - Firestore leaderboard (separate spec, paused)
 
-## The 16 fixes
+## The 15 fixes
 
 Severity: **High** = materially changes pacing/fairness. **Medium** = noticeable
 polish. **Low** = cosmetic / minor tuning / dev-only.
@@ -178,14 +179,11 @@ extent — a new player learns the bounds by collision.
 flag graphics, depth -10) at `enemy.x ± range` on the ground line. L1 ONLY —
 this is a teaching aid for the intro level; later levels don't need it.
 
-#### L_3 — L3 wind zone has no telegraph
-`play/src/levels/level3.js` line 58 — `windZone(3000, …, -280)` shoves the
-player backward with no warning. `play/src/scenes/Game.js` `buildWindZone`.
-**Fix:** in `buildWindZone` (or an L3 dressing path), spawn a few drifting
-directional particle streaks just before the zone's left edge (x ≈ 2700–3000)
-so the player sees the gust coming. Reuse the existing wind-particle system
-`buildWindZone` already sets up (`windZones[].particles`) — just extend the
-spawn region ~300px left of the zone, or add a one-off telegraph puff.
+#### L_3 — DROPPED (audit error)
+The audit claimed the L3 wind zone has no telegraph. `buildWindZone`
+(Game.js:994) already renders a tinted fill box, a visible border, pulsing
+▶/◀ arrows, and drifting streaks. The zone is heavily telegraphed. No fix
+needed — ID retired, kept as a placeholder so later IDs stay stable.
 
 #### L_4 — L1 speed signal placed before its lesson
 `play/src/levels/level1.js` line 162 — `{ type: "speed", x: 2050, y: GROUND_Y - MID }`.
@@ -250,7 +248,7 @@ Group by file to minimise context-switching:
 3. **`level3.js`** — M5, M7 (boss run-up enemy, sparse-stretch enemies)
 4. **`level5.js`** — M10, M11 (shard-zone signal, mid-Act-3 checkpoint)
 5. **`Enemies.js`** — M3, M9 (Mike summon ring, Algorithm telegraph lengthen)
-6. **`Game.js`** — L_1, H4, L_2, L_3, L_7 (L1 tint, L5 skyline, L1 patrol flags, L3 wind telegraph, B-cheat fix)
+6. **`Game.js`** — L_1, H4, L_2, L_7 (L1 tint, L5 skyline, L1 patrol flags, B-cheat fix)
 
 Each fix is its own atomic commit.
 
@@ -272,7 +270,6 @@ No test runner — manual at `http://localhost:3100/play/` (dev server on 3100;
   the shards and that dying in the shard zone respawns at x=9100.
 - **L_1** — L1 tiles read warmer; compare side-by-side with L2.
 - **L_2** — L1 patrol markers appear at each jargon_blob's range bounds.
-- **L_3** — approaching the L3 wind zone shows a gust telegraph.
 - **L_4 / L_5 / L_6** — verify signal/checkpoint/insight positions in-game.
 - **L_7** — on L6, press `B`; confirm the player teleports next to THE BOARD on
   the rooftop (not off-world). Spot-check `B` on L1–L5 still lands in the arena.
@@ -288,7 +285,7 @@ play/src/levels/level2.js   — H3, L_6
 play/src/levels/level3.js   — M5, M7
 play/src/levels/level5.js   — M10, M11
 play/src/objects/Enemies.js — M3, M9
-play/src/scenes/Game.js     — L_1, H4, L_2, L_3, L_7
+play/src/scenes/Game.js     — L_1, H4, L_2, L_7
 ```
 
 No new assets, no `ASSET_VERSION` bump (no HTML/asset changes — the L5 skyline
