@@ -2,7 +2,7 @@
 
 Date: 2026-05-20
 Status: Approved, ready for implementation plan
-Scope: 15 verified fixes across Levels 1–5 (audit-driven)
+Scope: 16 verified fixes across Levels 1–6 (audit-driven + 1 playtest find)
 
 ## Problem
 
@@ -10,8 +10,9 @@ A 6-agent per-level audit surfaced 20 candidate issues. Verification against
 the actual level files cut 5 as bogus (left/right confusion, a non-existent
 "death pit," already-implemented conveyor arrows, an insight-math error, an
 "insight floats" non-issue). The 15 survivors are real and each has an exact
-file:line and a concrete fix. This spec consolidates them so they ship as one
-coherent polish pass.
+file:line and a concrete fix. A 16th item (L_7) was found while playtesting:
+the `B` dev-cheat is broken on L6. This spec consolidates all 16 so they ship
+as one coherent polish pass.
 
 ## Verification notes (why these 15, not 20)
 
@@ -34,13 +35,14 @@ Dropped on inspection:
 - L5 marble-prop overhaul + brand pedestal — deferred to its own design pass
 - L5 falling-shard haptic/audio cue (audit item "M12") — deferred; not part of the approved 15
 - New enemies, new bosses, new mechanics
-- Any L6 change — L6 just shipped and audited clean
+- Any L6 content/gameplay change — L6 just shipped and audited clean (L_7 only
+  fixes the dev-only `B` cheat, which is not L6 gameplay)
 - Firestore leaderboard (separate spec, paused)
 
-## The 15 fixes
+## The 16 fixes
 
 Severity: **High** = materially changes pacing/fairness. **Medium** = noticeable
-polish. **Low** = cosmetic / minor tuning.
+polish. **Low** = cosmetic / minor tuning / dev-only.
 
 ### HIGH
 
@@ -217,6 +219,28 @@ x=8280 as a single gentle post-boss "cool-down" pickup. Pure deletion — no
 relocation, no coordinate collisions. This is the lowest-priority item — drop
 it entirely if the implementation plan is getting long.
 
+#### L_7 — L6 `B` dev-cheat teleports the player off-world
+`play/src/scenes/Game.js` lines 537–542. The hidden `B` dev shortcut teleports
+the player to `this.level.bossArenaStart + 100`. L6's `bossArenaStart` is the
+sentinel `99999` (L6 has a vertical arena, not a horizontal one), so `B` sends
+the player to x=100099 — far outside the 1600-wide level — into the void, where
+they fall and die. Found during playtest verification.
+**Fix:** prefer the boss's own spawn position. Every level defines a
+`miniBoss: { x, y }`, so teleport relative to that when present:
+```js
+this.input.keyboard.on("keydown-B", () => {
+  const mb = this.level.miniBoss;
+  const arenaX = mb ? mb.x - 140 : this.level.bossArenaStart + 100;
+  const arenaY = mb ? mb.y - 80  : GROUND_TOP_Y - 100;
+  this.player.setPosition(arenaX, arenaY);
+  this.player.setVelocity(0, 0);
+  this.player._invulnUntil = this.time.now + 1500;
+});
+```
+This lands the player just left of and above the boss on every level,
+including L6, and falls back to the old behavior only if a level somehow has
+no `miniBoss`. Dev-only — no player-facing impact.
+
 ## Implementation order
 
 Group by file to minimise context-switching:
@@ -226,7 +250,7 @@ Group by file to minimise context-switching:
 3. **`level3.js`** — M5, M7 (boss run-up enemy, sparse-stretch enemies)
 4. **`level5.js`** — M10, M11 (shard-zone signal, mid-Act-3 checkpoint)
 5. **`Enemies.js`** — M3, M9 (Mike summon ring, Algorithm telegraph lengthen)
-6. **`Game.js`** — L_1, H4, L_2, L_3 (L1 tint, L5 skyline, L1 patrol flags, L3 wind telegraph)
+6. **`Game.js`** — L_1, H4, L_2, L_3, L_7 (L1 tint, L5 skyline, L1 patrol flags, L3 wind telegraph, B-cheat fix)
 
 Each fix is its own atomic commit.
 
@@ -250,6 +274,8 @@ No test runner — manual at `http://localhost:3100/play/` (dev server on 3100;
 - **L_2** — L1 patrol markers appear at each jargon_blob's range bounds.
 - **L_3** — approaching the L3 wind zone shows a gust telegraph.
 - **L_4 / L_5 / L_6** — verify signal/checkpoint/insight positions in-game.
+- **L_7** — on L6, press `B`; confirm the player teleports next to THE BOARD on
+  the rooftop (not off-world). Spot-check `B` on L1–L5 still lands in the arena.
 
 For each level, also confirm nothing else regressed (enemies still collide,
 insights still collectible, level still completable).
@@ -262,7 +288,7 @@ play/src/levels/level2.js   — H3, L_6
 play/src/levels/level3.js   — M5, M7
 play/src/levels/level5.js   — M10, M11
 play/src/objects/Enemies.js — M3, M9
-play/src/scenes/Game.js     — L_1, H4, L_2, L_3
+play/src/scenes/Game.js     — L_1, H4, L_2, L_3, L_7
 ```
 
 No new assets, no `ASSET_VERSION` bump (no HTML/asset changes — the L5 skyline
