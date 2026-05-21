@@ -323,9 +323,10 @@ export const ATTACKS = {
     const scene = player.scene;
     const vx = player.facing * t.projectileSpeed;
     const startX = player.x + player.facing * 18;
-    // Lower the bolt origin to mid-torso so the 56-tall body covers both
-    // standing enemies AND short ones (paperwork piles).
-    const startY = player.y - 56;
+    // Bolt origin: mid-torso (-56) when standing so the 56-tall body covers
+    // both standing and short enemies. Crouched, it drops to -36 so the shot
+    // passes THROUGH short enemies (DeadlineBot) instead of over their heads.
+    const startY = player.y + (player.state === "crouch" ? -36 : -56);
     const boltP = spawnProjectile(scene, startX, startY, vx, 0, t.projectileLife, t.damage, 0x9adcff);
     boltP.attackId = nextAttackId("bolt");
     projectileTrail(scene, startX, startY, 0x9adcff);
