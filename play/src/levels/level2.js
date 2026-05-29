@@ -9,6 +9,9 @@ const platform = (x, y, wTiles) => ({ kind: "platform",  x, y,  w: wTiles  });
 const brick    = (x, y)         => ({ kind: "brick",     x, y               });
 const bouncePad = (x, y)        => ({ kind: "bouncePad", x, y               });
 const conveyor = (x, y, wTiles, dir) => ({ kind: "conveyor", x, y, w: wTiles, dir });
+// Vertical fast-track lift: dir -1 carries up, +1 carries down. y = top of the
+// topmost tile; column spans hTiles*64 downward. Ride-through (not solid).
+const lift = (x, y, hTiles, dir) => ({ kind: "lift", x, y, h: hTiles, dir });
 const cubicle  = (x)            => ({ kind: "obstacle", x, texture: "obstacle_cubicle_wall" });
 
 const LOW  = 70;
@@ -48,7 +51,11 @@ export const level2 = {
     brick(1164, GROUND_Y - 180),
     brick(1228, GROUND_Y - 240),
     brick(1292, GROUND_Y - 300),
-    // pit 1500–1800
+    // pit 1500–1800 — FAST TRACK "Boost Bridge": run across low, OR take the
+    // high express → down-lift elevator onto solid ground (both forward = safe).
+    conveyor(1510, GROUND_Y - 70, 4, 1),    // low bridge across the pit
+    conveyor(1550, GROUND_Y - 250, 4, 1),   // high express lane → feeds the down-lift
+    lift(1820, GROUND_Y - 250, 3, 1),       // down-lift elevator, lands on ground(1800–2800)
     ground(1800, 2800),
     platform(2100, GROUND_Y - 170, 4),
     platform(2400, GROUND_Y - 320, 3),
@@ -58,7 +65,9 @@ export const level2 = {
     brick(2664, GROUND_Y - 140),
 
     // --- Act 2 ---
-    // pit 2800–3200
+    // pit 2800–3200 — FAST TRACK "Double-Decker Express" (both forward = safe over a pit)
+    conveyor(2810, GROUND_Y - 70, 5, 1),    // low bridge across the pit
+    conveyor(2870, GROUND_Y - 250, 4, 1),   // high express skyway / reward lane
     ground(3200, 4400),
     cubicle(3320),                  // cubicle maze entry
     conveyor(3700, GROUND_Y - 200, 3, -1),  // BACKWARD belt — challenge!
@@ -74,6 +83,7 @@ export const level2 = {
     brick(4928, GROUND_Y - 220),
     brick(4736, GROUND_Y - 360),
     brick(4992, GROUND_Y - 360),
+    lift(5080, GROUND_Y - 300, 4, -1),       // FAST TRACK up-lift — elevator to the upper route (over solid ground)
     platform(5200, GROUND_Y - 230, 3),
     platform(5500, GROUND_Y - 340, 3),
     cubicle(5360),                  // mid-act navigation beat

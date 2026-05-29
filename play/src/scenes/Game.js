@@ -119,6 +119,7 @@ export class GameScene extends Phaser.Scene {
     this.playerObstacles = this.physics.add.staticGroup();
     this.windZones = [];        // Array of { x, y, w, h, force, particles[] }
     this.fallingShardSpawners = []; // Array of { interval, lastSpawn, xRange }
+    this.liftZones = [];        // Vertical fast-track columns: { x, y, w, h, dir } — ride-through, no collider
     for (const t of lvl.terrain) {
       if (t.kind === "ground") {
         this.buildGround(t.x, t.w);
@@ -130,6 +131,8 @@ export class GameScene extends Phaser.Scene {
         this.buildBouncePad(t.x, t.y);
       } else if (t.kind === "conveyor") {
         this.buildConveyor(t.x, t.y, t.w, t.dir ?? 1);
+      } else if (t.kind === "lift") {
+        this.buildLift(t.x, t.y, t.h, t.dir ?? -1);
       } else if (t.kind === "windZone") {
         this.buildWindZone(t.x, t.y, t.w, t.h, t.force ?? 220);
       } else if (t.kind === "fallingShards") {
@@ -953,6 +956,36 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Vertical lift fast-track — a ride-through orange column that carries the
+   *  player up (dir -1) or down (dir +1). Visual-only tiles (no collider); the
+   *  carry force is applied in update() via this.liftZones. */
+  buildLift(x, y, hTiles, dir) {
+    const cx = x + TILE_SIZE / 2;
+    for (let i = 0; i < hTiles; i++) {
+      const ty = y + i * TILE_SIZE;
+      this.add.image(cx, ty + TILE_SIZE / 2, "tile_platform")
+        .setTint(0xffb45a)            // lighter orange so a lift reads apart from a belt
+        .setAlpha(0.92).setDepth(2);
+      // Marching arrow climbs/descends the column for a "moving lift" feel.
+      const arrowChar = dir < 0 ? "▲" : "▼";
+      const arrow = this.add.text(cx, ty + TILE_SIZE / 2, arrowChar, {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "16px",
+        fontStyle: "900",
+        color: "#ffffff",
+      }).setOrigin(0.5).setDepth(3).setAlpha(0.85);
+      this.tweens.add({
+        targets: arrow,
+        y: arrow.y + dir * 24,
+        duration: 600,
+        repeat: -1,
+        ease: "Linear",
+        onRepeat: () => { arrow.y = ty + TILE_SIZE / 2 - dir * 12; },
+      });
+    }
+    this.liftZones.push({ x, y, w: TILE_SIZE, h: hTiles * TILE_SIZE, dir });
+  }
+
   /**
    * Per-level ambient particle effects (atmospheric flair, screen-fixed).
    * Each level gets a distinct vibe through drifting visual elements.
@@ -1496,6 +1529,26 @@ export class GameScene extends Phaser.Scene {
           }
           break;
         }
+      }
+    }
+
+    // Vertical lift fast-tracks: carry the player up/down while inside the column.
+    if (this.liftZones.length && this.player.body.enable) {
+      const px = this.player.x;
+      const py = this.player.y; // feet
+      for (const lz of this.liftZones) {
+        if (px < lz.x - 4 || px > lz.x + lz.w + 4) continue;
+        if (py < lz.y - 8 || py > lz.y + lz.h + 24) continue;
+        const vy = this.player.body.velocity.y;
+        if (lz.dir < 0) {
+          // Up: -260 beats gravity for a steady ride. A real jump (vy < -260)
+          // is preserved so the player can still boost off the top.
+          if (vy > -260) this.player.body.velocity.y = -260;
+        } else {
+          // Down: gentle carry. A jump (vy < -40) lets the player escape upward.
+          if (vy < 200 && vy > -40) this.player.body.velocity.y = 200;
+        }
+        break;
       }
     }
 
