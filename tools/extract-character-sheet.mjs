@@ -36,6 +36,14 @@ const FRAME_NAMES = [
   "collect", "hurt", "celebrate", "bounce",
 ];
 
+// Set from CLI flags in main(). STRIP_DARK_CHECKER off for light-bg sheets
+// whose character wears near-black clothing (otherwise the dark-checker rule
+// eats the garment). STRIP_SOFT_SHADOW on to remove a baked mid-gray ground
+// shadow — flood-fill keeps it safe because only bg-connected pixels are cut,
+// so interior grays survive.
+let STRIP_DARK_CHECKER = true;
+let STRIP_SOFT_SHADOW = false;
+
 function isBgPixel(r, g, b) {
   // Light gray / white checker — page background.
   if (r > 235 && g > 235 && b > 235) return true;
@@ -46,10 +54,18 @@ function isBgPixel(r, g, b) {
   // match this (b−g ≈ 0), so they stay opaque inside the body.
   if (r > 215 && b > 230 && b >= r && r >= g && (b - g) >= 10) return true;
   // Dark gray / black checker — original swiirl-sheet-v2 case.
-  if (r <= 55 && g <= 55 && b <= 55) {
+  if (STRIP_DARK_CHECKER && r <= 55 && g <= 55 && b <= 55) {
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     if (max - min <= 12) return true;
+  }
+  // Soft mid-gray ground shadow — desaturated, neither bright white nor dark.
+  // Only removed where flood-fill can reach it from the background, so the
+  // character's interior grays (sole, jacket folds) are never touched.
+  if (STRIP_SOFT_SHADOW) {
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max >= 110 && max <= 225 && (max - min) <= 22) return true;
   }
   return false;
 }
@@ -238,13 +254,18 @@ async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath, fillR
 async function main() {
   const [, , sourceArg, prefixRaw, outWArg, outHArg, outDirArg, fillRatioArg, uniformArg] = process.argv;
   if (!sourceArg || prefixRaw === undefined) {
-    console.error("usage: node tools/extract-character-sheet.mjs <source.png> <prefix|'none'> [outW] [outH] [outDir] [fillRatio] [uniform]");
+    console.error("usage: node tools/extract-character-sheet.mjs <source.png> <prefix|'none'> [outW] [outH] [outDir] [fillRatio] [uniform] [flags…]");
     console.error("  prefix='none' or '' writes bare frame names (idle.png, walk_1.png, ...) for the player sheet");
     console.error("  fillRatio (default 1.0): leave canvas margin. 0.65 ≈ old player size.");
     console.error("  uniform='uniform'|'1': scale every frame by ONE factor (from idle) so poses keep");
     console.error("    their true relative size — crouch comes out shorter than idle, not blown up to fit.");
+    console.error("  nodark: keep near-black garments — skip the dark-checker background rule.");
+    console.error("  softshadow: strip a baked mid-gray ground shadow so feet sit on the floor.");
     process.exit(1);
   }
+  const flags = process.argv.slice(8);
+  STRIP_DARK_CHECKER = !flags.includes("nodark");
+  STRIP_SOFT_SHADOW = flags.includes("softshadow");
   const prefix = (prefixRaw === "none") ? "" : prefixRaw;
   const outW = parseInt(outWArg ?? "120", 10);
   const outH = parseInt(outHArg ?? "140", 10);
