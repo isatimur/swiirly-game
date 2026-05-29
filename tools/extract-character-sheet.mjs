@@ -191,16 +191,19 @@ function cropBlob(rgba, W, blob) {
   return { rgba: out, width: w, height: h };
 }
 
-async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath, fillRatio = 1.0) {
+async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath, fillRatio = 1.0, forcedScale = null) {
   // Use sharp to resize the cropped frame to fit inside (outW × fillRatio)
   // by (outH × fillRatio) while preserving aspect, then place bottom-center
   // on a transparent outW × outH canvas. fillRatio < 1 leaves margin around
   // the character — used for the player sheet so the visible character
   // height stays around 60% of the canvas, matching the old extraction
   // sizes that the existing PLAYER.spriteScale + hitbox values are tuned to.
+  // forcedScale (when set) applies ONE scale to every frame of a character so
+  // poses keep their true relative size — a crouch comes out shorter than the
+  // idle instead of each frame being independently blown up to fill the canvas.
   const targetW = outW * fillRatio;
   const targetH = outH * fillRatio;
-  const scale = Math.min(targetW / srcW, targetH / srcH);
+  const scale = forcedScale ?? Math.min(targetW / srcW, targetH / srcH);
   const fitW = Math.max(1, Math.round(srcW * scale));
   const fitH = Math.max(1, Math.round(srcH * scale));
   const resized = await sharp(srcBuf, { raw: { width: srcW, height: srcH, channels: 4 } })
@@ -210,11 +213,17 @@ async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath, fillR
 
   const offsetX = Math.floor((outW - fitW) / 2);
   const offsetY = outH - fitH; // feet at bottom
+  // A pose taller/wider than the idle can exceed the canvas under forcedScale;
+  // clip gracefully at the edges rather than writing out of bounds.
   const canvas = Buffer.alloc(outW * outH * 4);
   for (let y = 0; y < fitH; y++) {
+    const cy = offsetY + y;
+    if (cy < 0 || cy >= outH) continue;
     for (let x = 0; x < fitW; x++) {
+      const cx = offsetX + x;
+      if (cx < 0 || cx >= outW) continue;
       const s = (y * fitW + x) * 4;
-      const d = ((offsetY + y) * outW + (offsetX + x)) * 4;
+      const d = (cy * outW + cx) * 4;
       canvas[d]     = resized[s];
       canvas[d + 1] = resized[s + 1];
       canvas[d + 2] = resized[s + 2];
@@ -227,11 +236,13 @@ async function writeFrameToCanvas(srcBuf, srcW, srcH, outW, outH, outPath, fillR
 }
 
 async function main() {
-  const [, , sourceArg, prefixRaw, outWArg, outHArg, outDirArg, fillRatioArg] = process.argv;
+  const [, , sourceArg, prefixRaw, outWArg, outHArg, outDirArg, fillRatioArg, uniformArg] = process.argv;
   if (!sourceArg || prefixRaw === undefined) {
-    console.error("usage: node tools/extract-character-sheet.mjs <source.png> <prefix|'none'> [outW] [outH] [outDir] [fillRatio]");
+    console.error("usage: node tools/extract-character-sheet.mjs <source.png> <prefix|'none'> [outW] [outH] [outDir] [fillRatio] [uniform]");
     console.error("  prefix='none' or '' writes bare frame names (idle.png, walk_1.png, ...) for the player sheet");
     console.error("  fillRatio (default 1.0): leave canvas margin. 0.65 ≈ old player size.");
+    console.error("  uniform='uniform'|'1': scale every frame by ONE factor (from idle) so poses keep");
+    console.error("    their true relative size — crouch comes out shorter than idle, not blown up to fit.");
     process.exit(1);
   }
   const prefix = (prefixRaw === "none") ? "" : prefixRaw;
@@ -239,6 +250,7 @@ async function main() {
   const outH = parseInt(outHArg ?? "140", 10);
   const OUT_DIR = outDirArg ? resolve(ROOT, outDirArg) : DEFAULT_OUT_DIR;
   const fillRatio = fillRatioArg ? parseFloat(fillRatioArg) : 1.0;
+  const uniform = uniformArg === "uniform" || uniformArg === "1";
   await mkdir(OUT_DIR, { recursive: true });
 
   console.log(`[${prefix}] loading ${basename(sourceArg)}…`);
@@ -265,6 +277,12 @@ async function main() {
   // etc.) — used for the Swiirl player sheet because Boot.js loads its frames
   // by bare names. Any other prefix writes `<prefix>_<frame>.png` and also a
   // `<prefix>.png` alias for the idle frame.
+  // Uniform mode: derive one scale from the idle frame (flat[0]) so the idle
+  // lands at the same target height as non-uniform extraction (outH×fillRatio),
+  // keeping cross-character alignment, while every other pose is scaled by that
+  // same factor and therefore preserves its real proportions.
+  const forcedScale = uniform ? (outH * fillRatio) / flat[0].bbox.h : null;
+
   const noPrefix = prefix === "" || prefix === "_";
   for (let i = 0; i < FRAME_NAMES.length; i++) {
     const name = FRAME_NAMES[i];
@@ -272,14 +290,14 @@ async function main() {
     const cropped = cropBlob(rgba, W, blob);
     const file = noPrefix ? `${name}.png` : `${prefix}_${name}.png`;
     const outPath = resolve(OUT_DIR, file);
-    await writeFrameToCanvas(cropped.rgba, cropped.width, cropped.height, outW, outH, outPath, fillRatio);
+    await writeFrameToCanvas(cropped.rgba, cropped.width, cropped.height, outW, outH, outPath, fillRatio, forcedScale);
   }
   if (!noPrefix) {
     const cropped0 = cropBlob(rgba, W, flat[0]);
     await writeFrameToCanvas(cropped0.rgba, cropped0.width, cropped0.height, outW, outH,
-      resolve(OUT_DIR, `${prefix}.png`), fillRatio);
+      resolve(OUT_DIR, `${prefix}.png`), fillRatio, forcedScale);
   }
-  console.log(`[${prefix || "(no-prefix)"}] wrote ${FRAME_NAMES.length} frames${noPrefix ? "" : " + alias"} → ${outW}×${outH} @ fill=${fillRatio}`);
+  console.log(`[${prefix || "(no-prefix)"}] wrote ${FRAME_NAMES.length} frames${noPrefix ? "" : " + alias"} → ${outW}×${outH} @ fill=${fillRatio}${uniform ? ` uniform(scale=${forcedScale.toFixed(3)})` : ""}`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
