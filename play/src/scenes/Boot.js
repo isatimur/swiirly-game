@@ -8,7 +8,7 @@ import { PERSONA_ASSET_KEYS } from "../characters.js";
 // /play/assets/* as Cache-Control: immutable, which trains browsers to
 // never revalidate even on hard-refresh — adding ?v=N busts old caches
 // because the URL becomes a fresh resource the browser hasn't seen.
-const ASSET_VERSION = "14";
+const ASSET_VERSION = "15";
 
 // Pose names — every Swiirl skin ships this same 17-frame set, extracted
 // by tools/extract-character-sheet.mjs from a 1+8+4+4 grid sheet.
