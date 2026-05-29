@@ -393,6 +393,52 @@ export const ATTACKS = {
     return heavy ? t.cooldown + 120 : t.cooldown;
   },
 
+  // WHIRLWIND — 360° spin striking both sides simultaneously.
+  whirlwind(player, time) {
+    const t = ATTACK_TUNING.whirlwind;
+    const scene = player.scene;
+    const y = player.y + (player.state === "crouch" ? -36 : -80);
+    const id = nextAttackId("whirlwind");
+    spawnHitbox(scene, player.x + (t.range / 2 + 8), y, t.range, t.height, t.hitboxMs, t.damage, {
+      knockbackX: t.knockbackX, attackId: id,
+    });
+    spawnHitbox(scene, player.x - (t.range / 2 + 8), y, t.range, t.height, t.hitboxMs, t.damage, {
+      knockbackX: t.knockbackX, attackId: id,
+    });
+    slashArc(scene, player.x, player.y, +1, 0xc77dff);
+    slashArc(scene, player.x, player.y, -1, 0xc77dff);
+    shockwaveRing(scene, player.x, y, 80, 0xc77dff);
+    SFX.attackHeavy?.();
+    player._attackUntil = time + t.hitboxMs;
+    return t.cooldown;
+  },
+
+  // BOOMERANG — thrown projectile that reverses and flies back through the player.
+  // pierce: true so it hits on the way out AND on the return pass; dedup window
+  // (~200ms in EnemyBase) means each enemy still takes at most one hit per pass.
+  boomerang(player, time) {
+    const t = ATTACK_TUNING.boomerang;
+    const scene = player.scene;
+    const vx = player.facing * t.projectileSpeed;
+    const startX = player.x + player.facing * 18;
+    const startY = player.y + (player.state === "crouch" ? -36 : -56);
+    const p = spawnProjectile(scene, startX, startY, vx, 0, t.projectileLife, t.damage, 0xff8f9c, {
+      knockbackX: t.knockbackX, pierce: true,
+    });
+    p.attackId = nextAttackId("boomerang");
+    // Force spin so it reads as a thrown disc regardless of which texture branch loaded.
+    scene.tweens.add({ targets: p, angle: 360, duration: 400, repeat: -1 });
+    // Reverse direction after outMs — guard against body being gone if enemy
+    // destroyed the projectile or it hit its lifeMs timer first.
+    scene.time.delayedCall(t.outMs, () => {
+      if (p && p.active && p.body) p.body.setVelocityX(-vx);
+    });
+    projectileTrail(scene, startX, startY, 0xff8f9c);
+    SFX.attackBolt?.();
+    player._attackUntil = time + 140;
+    return t.cooldown;
+  },
+
   // GUARDIAN — short dash with a forward hitbox that also doubles as a parry.
   // Crouched: shield arc drops to crouched-torso height so a bash from crouch
   // hits low enemies and parries low projectiles.

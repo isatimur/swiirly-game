@@ -82,4 +82,6 @@ export const ATTACK_TUNING = {
   groundPound: { cooldown: 720, damage: 2, shockwaveRange: 200, slamVy: 1200, leapVy: -340 },
   chain:       { cooldown: 180, damage: 1, hitboxMs: 130, range: 120, height: 120, knockbackX: 200, heavyChargeMs: 380, heavyDamage: 2, heavyRange: 180 },
   shieldBash:  { cooldown: 600, damage: 1, dashSpeed: 540, dashMs: 240, hitboxMs: 260, range: 150, height: 140, parry: true },
+  whirlwind:   { cooldown: 520, damage: 1, hitboxMs: 200, range: 120, height: 130, knockbackX: 220 },
+  boomerang:   { cooldown: 560, damage: 1, projectileSpeed: 520, projectileLife: 1300, outMs: 560, knockbackX: 180 },
 };
