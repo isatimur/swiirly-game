@@ -11,6 +11,7 @@ import { VIEW } from "../config.js";
 import { SFX, Music } from "../audio.js";
 import { CHARACTERS } from "../characters.js";
 import { PAD } from "../gamepad.js";
+import { STORY, saveStory } from "../story.js";
 
 export class CharacterSelectScene extends Phaser.Scene {
   constructor() { super("CharacterSelect"); }
@@ -179,8 +180,18 @@ export class CharacterSelectScene extends Phaser.Scene {
     SFX.win();
     this.cameras.main.fadeOut(450, 26, 15, 46);
     this.time.delayedCall(470, () => {
-      this.scene.start("Game");
-      this.scene.launch("HUD");
+      if (this.registry.get("storyMode")) {
+        // Begin a fresh story run: persist the starting state and play the
+        // opening cutscene, which then starts Game level 1 (+ HUD).
+        saveStory({ mission: 0, level: 1, character: chosen.id });
+        this.registry.set("storyMission", 0);
+        this.scene.start("Cutscene", {
+          beats: STORY.opening, next: "Game", nextData: { level: 1 },
+        });
+      } else {
+        this.scene.start("Game");
+        this.scene.launch("HUD");
+      }
     });
   }
 }
