@@ -71,7 +71,7 @@ export const STORY = {
       ] },
     ],
     5: [
-      { type: "line", speaker: "THE BOARD", portrait: "boss",
+      { type: "line", speaker: "THE BOARD", portrait: "enemy_boss",
         text: "Final offer. We acquire you, you get rich, and the mission becomes... a line in the deck. Sign here." },
       { type: "choice", prompt: "Sign the term sheet?", options: [
         { label: "Sign the term sheet", mission: -3 },
@@ -82,7 +82,7 @@ export const STORY = {
 
   endings: {
     sellout: [
-      { type: "line", speaker: "THE BOARD", portrait: "boss",
+      { type: "line", speaker: "THE BOARD", portrait: "enemy_boss",
         text: "Welcome aboard. The logo stays; everything you meant by it does not." },
       { type: "line", speaker: "YOU", portrait: "player",
         text: "Rich. Done. Hollow. The community moved on the day the term sheet did." },
@@ -130,6 +130,8 @@ export function loadStory() {
     const level = parseInt(s.getItem(KEY.level), 10);
     const mission = parseInt(s.getItem(KEY.mission), 10);
     const character = s.getItem(KEY.character);
+    // Upper bound is 6 (the bonus/final rooftop level) — a run resumed past
+    // level 5 is still valid and should resolve, not reset to the fallback.
     if (!Number.isFinite(level) || level < 1 || level > 6) return fallback;
     return {
       mission: Number.isFinite(mission) ? mission : 0,
@@ -145,6 +147,9 @@ export function saveStory({ mission, level, character }) {
   try {
     s.setItem(KEY.mission, String(mission ?? 0));
     s.setItem(KEY.level, String(level ?? 1));
+    // Only overwrite the character when one is supplied — a null/omitted
+    // character preserves the previously-saved skin, so a mid-run progress
+    // save (mission/level only) doesn't wipe the chosen character.
     if (character) s.setItem(KEY.character, String(character));
   } catch {}
 }
