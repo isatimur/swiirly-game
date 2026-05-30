@@ -104,7 +104,7 @@ export class MenuScene extends Phaser.Scene {
     this.tweens.add({ targets: press, alpha: 0.3, duration: 700, yoyo: true, repeat: -1 });
 
     // Controls — updated to include slide.
-    this.add.text(width / 2, height - 30,
+    this.add.text(width / 2, height - 16,
       "← → move    SHIFT run    SPACE jump (×2 double)    SHIFT+↓ slide    R restart    M mute", {
       fontFamily: "system-ui, -apple-system, sans-serif",
       fontSize: "13px",
@@ -227,12 +227,12 @@ export class MenuScene extends Phaser.Scene {
       { id: "compromised", color: "#e8c98a" },
       { id: "true",        color: "#7bd389" },
     ];
-    const galleryY = height - 96;
+    const galleryY = height - 108;
     this.add.text(width / 2, galleryY - 8, "ENDINGS", {
       fontFamily: "system-ui, sans-serif", fontSize: "10px",
       color: "#b892e0", letterSpacing: 5,
     }).setOrigin(0.5);
-    const rowH = 16;             // vertical pitch per path row
+    const rowH = 15;             // vertical pitch per path row
     const labelX = width / 2 - 92;   // right-aligned path title
     const dotsX0 = width / 2 + 20;   // first dot center
     const dotGap = 22;
