@@ -3,6 +3,8 @@
 
 import { VIEW } from "../config.js";
 import { SFX, Music } from "../audio.js";
+import { hasStorySave, loadStory, clearStory, getEndingsSeen } from "../story.js";
+import { getCharacter } from "../characters.js";
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super("Menu"); }
@@ -155,23 +157,94 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    const start = () => {
-      // Pause overlay consumes Enter / × for menu navigation; don't advance
-      // the scene from underneath it.
-      if (window.__pauseModalOpen) return;
+    // --- Arcade start (existing behavior) ---
+    let starting = false;
+    const startArcade = () => {
+      if (window.__pauseModalOpen || starting) return;
+      starting = true;
+      this.registry.set("storyMode", false);
       SFX.collect();
       this.cameras.main.fadeOut(420, 26, 15, 46);
-      this.time.delayedCall(440, () => {
-        this.scene.start("CharacterSelect");
-      });
+      this.time.delayedCall(440, () => this.scene.start("CharacterSelect"));
     };
 
-    this.input.keyboard.once("keydown-SPACE", start);
-    this.input.keyboard.once("keydown-ENTER", start);
-    this.input.once("pointerdown", start);
-    // Gamepad: × button advances.
-    this.game.events.once("gamepad-cross", start);
-    this.events.once("shutdown", () => this.game.events.off("gamepad-cross", start));
+    // --- Story start / continue ---
+    const startStory = () => {
+      if (window.__pauseModalOpen || starting) return;
+      starting = true;
+      this.registry.set("storyMode", true);
+      SFX.collect();
+      if (hasStorySave()) {
+        const s = loadStory();
+        this.registry.set("storyMission", s.mission);
+        this.registry.set("character", getCharacter(s.character));
+        this.cameras.main.fadeOut(420, 26, 15, 46);
+        this.time.delayedCall(440, () => {
+          this.scene.start("Game", { level: s.level });
+          this.scene.launch("HUD");
+        });
+      } else {
+        clearStory();
+        this.registry.set("storyMission", 0);
+        this.cameras.main.fadeOut(420, 26, 15, 46);
+        this.time.delayedCall(440, () => this.scene.start("CharacterSelect"));
+      }
+    };
+
+    // SPACE / ENTER / gamepad-× = arcade. A pointer click counts as arcade
+    // ONLY when it doesn't land on an interactive button (e.g. the Story
+    // button or feedback prompt have their own handlers).
+    this.input.keyboard.once("keydown-SPACE", startArcade);
+    this.input.keyboard.once("keydown-ENTER", startArcade);
+    this.input.on("pointerdown", (pointer, currentlyOver) => {
+      if (currentlyOver && currentlyOver.length) return;
+      startArcade();
+    });
+    this.game.events.once("gamepad-cross", startArcade);
+    this.events.once("shutdown", () => this.game.events.off("gamepad-cross", startArcade));
+
+    // --- Story Mode button ---
+    const storyLabel = hasStorySave() ? "▶  CONTINUE  STORY" : "▶  STORY  MODE";
+    const sBtnY = height - 150;
+    const sBtn = this.add.rectangle(width / 2, sBtnY, 320, 52, 0x2a1850, 0.95)
+      .setStrokeStyle(3, 0xffd24a).setInteractive({ useHandCursor: true });
+    const sTxt = this.add.text(width / 2, sBtnY, storyLabel, {
+      fontFamily: "system-ui, sans-serif", fontSize: "18px", fontStyle: "900",
+      color: "#ffd24a", letterSpacing: 3,
+    }).setOrigin(0.5);
+    sBtn.on("pointerover", () => sBtn.setFillStyle(0x3a2470, 1));
+    sBtn.on("pointerout",  () => sBtn.setFillStyle(0x2a1850, 0.95));
+    sBtn.on("pointerdown", startStory);
+
+    // --- Endings gallery (3 badges, locked until earned) ---
+    const seen = getEndingsSeen();
+    const endingDefs = [
+      { id: "sellout",     label: "SELLOUT",       color: "#e0556b" },
+      { id: "compromised", label: "COMPROMISED",   color: "#e8c98a" },
+      { id: "true",        label: "TRUE BELIEVER", color: "#7bd389" },
+    ];
+    const galleryY = height - 100;
+    this.add.text(width / 2, galleryY - 18, "ENDINGS", {
+      fontFamily: "system-ui, sans-serif", fontSize: "10px",
+      color: "#b892e0", letterSpacing: 5,
+    }).setOrigin(0.5);
+    const badgeW = 130, bgap = 10;
+    const gTotalW = endingDefs.length * badgeW + (endingDefs.length - 1) * bgap;
+    const gStartX = (width - gTotalW) / 2 + badgeW / 2;
+    endingDefs.forEach((e, i) => {
+      const cx = gStartX + i * (badgeW + bgap);
+      const unlocked = seen.includes(e.id);
+      const color = unlocked ? e.color : "#3a2860";
+      this.add.rectangle(cx, galleryY + 6, badgeW, 26, 0x1a0f2e, 0.55)
+        .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(color).color);
+      this.add.text(cx, galleryY + 6, unlocked ? e.label : "🔒", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: unlocked ? "11px" : "13px",
+        fontStyle: "700",
+        color: unlocked ? color : "#5C3BA3",
+        letterSpacing: 2,
+      }).setOrigin(0.5);
+    });
 
     // One-time feedback prompt — surfaces after the player has completed
     // 3 full runs (i.e. beaten Level 5 three times). Shown as a Phaser
