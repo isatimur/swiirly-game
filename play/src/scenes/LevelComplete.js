@@ -413,7 +413,7 @@ export class LevelCompleteScene extends Phaser.Scene {
             // record it, clear the run save, then roll credits.
             const mission = this.registry.get("storyMission") ?? 0;
             const { endingId } = resolveEnding(path, mission);
-            markEndingSeen(endingId);
+            markEndingSeen(path, endingId);
             clearStory();
             this.scene.start("Cutscene", {
               beats: STORYLINES[path].endings[endingId], next: "Credits", nextData: {},

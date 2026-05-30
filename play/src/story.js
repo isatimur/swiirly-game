@@ -107,6 +107,272 @@ const idealistEndings = {
   ],
 };
 
+// --- THE HUSTLER ("Growth at any cost") ---------------------------------
+const hustlerOpening = [
+  { type: "line", speaker: "YOU", portrait: "player",
+    text: "Forget slow. Forget safe. We're building a rocket and lighting it tonight." },
+  { type: "line", speaker: "YOU", portrait: "player",
+    text: "Every chart goes up and to the right — or we don't ship it." },
+  { type: "line", speaker: "THE BRAND", portrait: "brand",
+    text: "Just promise me there's still a 'me' left at apogee." },
+];
+
+const hustlerInterludes = {
+  1: [
+    { type: "line", speaker: "LAUNCH WAR ROOM", portrait: "enemy_jargon_blob",
+      text: "Demo's at nine. Half the feature is held together with hope and a feature flag. Ship it anyway?" },
+    { type: "choice", prompt: "Ship the half-built feature?", options: [
+      { label: "Ship it tonight",     mission: -2 },
+      { label: "Delay for quality",   mission: +2 },
+    ] },
+  ],
+  2: [
+    { type: "line", speaker: "GROWTH HACKER", portrait: "enemy_paperwork",
+      text: "Slap a 'only 3 seats left!' countdown on it. There are nine thousand seats. Doubles conversions, guaranteed." },
+    { type: "choice", prompt: "Fake the scarcity timer?", options: [
+      { label: "Fake the urgency",    mission: -2 },
+      { label: "Sell on real value",  mission: +2 },
+    ] },
+  ],
+  3: [
+    { type: "line", speaker: "HYPE STRATEGIST", portrait: "enemy_ghost",
+      text: "One insane stunt. We torch a quarter of runway in 48 hours for a trending moment. Burn it all for hype?" },
+    { type: "choice", prompt: "Torch the runway for a viral stunt?", options: [
+      { label: "Burn it for hype",    mission: -2 },
+      { label: "Burn steady",         mission: +2 },
+    ] },
+  ],
+  4: [
+    { type: "line", speaker: "THE DECK", portrait: "enemy_paperwork",
+      text: "The raise deck needs to sing. Annualize the best week, hide the churn cohort. Investors never check. Juice it?" },
+    { type: "choice", prompt: "Inflate the metrics?", options: [
+      { label: "Juice the deck",      mission: -2 },
+      { label: "Honest numbers",      mission: +2 },
+    ] },
+  ],
+  5: [
+    { type: "line", speaker: "THE ACQUIRER", portrait: "enemy_boss",
+      text: "Acqui-hire. We flip you today, you cash out, the product becomes a tab nobody opens. Or you keep grinding alone." },
+    { type: "choice", prompt: "Flip now or keep scaling?", options: [
+      { label: "Flip for the bag",    mission: -3 },
+      { label: "Keep building",       mission: +3 },
+    ] },
+  ],
+};
+
+const hustlerEndings = {
+  sellout: [
+    { type: "line", speaker: "THE ACQUIRER", portrait: "enemy_boss",
+      text: "Great velocity. We'll sunset it next quarter. Your equity vests; the rocket was always a firework." },
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "Up and to the right — then straight down. Acquired, flamed out, forgotten by Q3." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  ACQUIRED FLAMEOUT" },
+  ],
+  compromised: [
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "Billion-dollar valuation. Twelve thousand customers who can't say what we actually do." },
+    { type: "line", speaker: "THE BRAND", portrait: "brand",
+      text: "We're a unicorn. We're also hollow. Nobody loves a number." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  SOULLESS UNICORN" },
+  ],
+  true: [
+    { type: "line", speaker: "THE MIRROR", portrait: "mirror",
+      text: "You wanted apogee. Funny — you got orbit instead. Stable. Recurring. Real." },
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "Grew it fast AND grew it true. Turns out the durable rocket beats the loud one." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  SUSTAINABLE SCALE" },
+  ],
+};
+
+// --- THE REBEL ("Tear down the incumbent") ------------------------------
+const rebelOpening = [
+  { type: "line", speaker: "YOU", portrait: "player",
+    text: "The incumbent is bloated, dishonest, and decades overdue for a fall. I'm the one who pushes." },
+  { type: "line", speaker: "YOU", portrait: "player",
+    text: "The only ethic is the fight. Everything else is negotiable... right?" },
+];
+
+const rebelInterludes = {
+  1: [
+    { type: "line", speaker: "THE RIVAL'S ENVOY", portrait: "enemy_jargon_blob",
+      text: "We hate the incumbent too. Here's a war chest — no strings, wink wink. Take the enemy's enemy's money?" },
+    { type: "choice", prompt: "Take the dirty money?", options: [
+      { label: "Take it",          mission: -2 },
+      { label: "Stay clean",       mission: +2 },
+    ] },
+  ],
+  2: [
+    { type: "line", speaker: "THE PLAYBOOK", portrait: "enemy_paperwork",
+      text: "We stole their manipulation playbook — the dark patterns, the manufactured FOMO. Beat them with their own tricks?" },
+    { type: "choice", prompt: "Co-opt their playbook?", options: [
+      { label: "Use their tricks", mission: -2 },
+      { label: "Fight clean",      mission: +2 },
+    ] },
+  ],
+  3: [
+    { type: "line", speaker: "THE LEAK", portrait: "enemy_ghost",
+      text: "Their CEO's private files just fell in our lap. Dox him, own the news cycle, end him by lunch. Burn him down?" },
+    { type: "choice", prompt: "Dox the corrupt exec?", options: [
+      { label: "Burn them",        mission: -2 },
+      { label: "Take the higher road", mission: +2 },
+    ] },
+  ],
+  4: [
+    { type: "line", speaker: "THE WAR-CHEST", portrait: "enemy_paperwork",
+      text: "We're out of runway. We're sitting on a user database worth millions. Sell it, fund the revolution. Cash out the people?" },
+    { type: "choice", prompt: "Sell user data to fund the fight?", options: [
+      { label: "Sell users out",   mission: -2 },
+      { label: "Protect them",     mission: +2 },
+    ] },
+  ],
+  5: [
+    { type: "line", speaker: "THE THRONE", portrait: "enemy_boss",
+      text: "The incumbent's falling. The seat is yours. Sit down, wear the crown, become the new king. Or burn the throne itself." },
+    { type: "choice", prompt: "Take the throne?", options: [
+      { label: "Seize power",      mission: -3 },
+      { label: "Burn the throne",  mission: +3 },
+    ] },
+  ],
+};
+
+const rebelEndings = {
+  sellout: [
+    { type: "line", speaker: "THE THRONE", portrait: "enemy_boss",
+      text: "You won. You also became exactly what you set out to kill. The throne fits you perfectly now." },
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "I tore down the system. Then I rebuilt it with my name on it. I AM the incumbent." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  YOU ARE THE SYSTEM" },
+  ],
+  compromised: [
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "The incumbent's gone. So is the part of me that knew why it mattered." },
+    { type: "line", speaker: "THE BRAND", portrait: "brand",
+      text: "We won the war. We lost the reason we declared it. Corrupted, but standing." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  WON BUT CORRUPTED" },
+  ],
+  true: [
+    { type: "line", speaker: "THE MIRROR", portrait: "mirror",
+      text: "You could have been king. Instead you burned the chair so no one ever sits there again." },
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "Clean hands, clean win. The fight was never about the throne — it was about ending it." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  CLEAN REVOLUTION" },
+  ],
+};
+
+// --- THE FOUNDER ("Legacy vs. liquidity") -------------------------------
+const founderOpening = [
+  { type: "line", speaker: "YOU", portrait: "player",
+    text: "My name is on the door. Every decision from here is personal — legacy or liquidity, never both." },
+  { type: "line", speaker: "YOU", portrait: "player",
+    text: "I started this with people I trust. I'd like to still trust them when it's over." },
+  { type: "line", speaker: "THE BRAND", portrait: "brand",
+    text: "Then don't sell the parts of us that can't be bought back." },
+];
+
+const founderInterludes = {
+  1: [
+    { type: "line", speaker: "THE CAP TABLE", portrait: "enemy_paperwork",
+      text: "Your co-founder's distracted lately. One clean re-grant and their stake shrinks, yours grows. Dilute them quietly?" },
+    { type: "choice", prompt: "Dilute your co-founder?", options: [
+      { label: "Dilute them",      mission: -2 },
+      { label: "Keep it fair",     mission: +2 },
+    ] },
+  ],
+  2: [
+    { type: "line", speaker: "THE RECRUITER", portrait: "enemy_jargon_blob",
+      text: "The scrappy early team got you here, but investors want 'real' execs with logos on their resumes. Swap them out?" },
+    { type: "choice", prompt: "Replace the loyal team?", options: [
+      { label: "Replace them",     mission: -2 },
+      { label: "Promote from within", mission: +2 },
+    ] },
+  ],
+  3: [
+    { type: "line", speaker: "THE LEAD INVESTOR", portrait: "enemy_ghost",
+      text: "Enormous check on the table. Price of entry: we control the board, and your votes. Sign away the wheel?" },
+    { type: "choice", prompt: "Give up board control?", options: [
+      { label: "Give up control",  mission: -2 },
+      { label: "Keep control",     mission: +2 },
+    ] },
+  ],
+  4: [
+    { type: "line", speaker: "THE PRESS TOUR", portrait: "enemy_paperwork",
+      text: "The breakthrough that's making headlines? It was the team's. The cameras only want one face — yours. Take the credit?" },
+    { type: "choice", prompt: "Take sole credit?", options: [
+      { label: "Take the spotlight", mission: -2 },
+      { label: "Share the credit",   mission: +2 },
+    ] },
+  ],
+  5: [
+    { type: "line", speaker: "THE BOARD", portrait: "enemy_boss",
+      text: "Golden parachute. Step down, take the payout, walk away rich while we steer your name. Or stay strapped to the ship." },
+    { type: "choice", prompt: "Take the parachute?", options: [
+      { label: "Take the chute",   mission: -3 },
+      { label: "Stay with the ship", mission: +3 },
+    ] },
+  ],
+};
+
+const founderEndings = {
+  sellout: [
+    { type: "line", speaker: "THE BOARD", portrait: "enemy_boss",
+      text: "Smart exit. The payout clears Friday. Your name stays on the door; you, however, do not." },
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "Rich and gone. They run my company now, with my face and none of my reasons." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  GOLDEN PARACHUTE" },
+  ],
+  compromised: [
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "Still CEO. Still on the door. But the people who made it mine are gone, and so is the weight behind the title." },
+    { type: "line", speaker: "THE BRAND", portrait: "brand",
+      text: "You kept the chair. You hollowed out the room around it." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  CEO OF A HOLLOW THING" },
+  ],
+  true: [
+    { type: "line", speaker: "THE MIRROR", portrait: "mirror",
+      text: "Legacy or liquidity — you found the third door. The team's still here. So am I." },
+    { type: "line", speaker: "YOU", portrait: "player",
+      text: "Founder-led and whole. My name on the door still means everyone who got us through it." },
+    { type: "line", speaker: "—", portrait: "brand", text: "ENDING:  FOUNDER-LED AND WHOLE" },
+  ],
+};
+
+// --- Per-path level flavor (banner overrides; data only) ----------------
+const idealistFlavor = {
+  1: { banner: "Act 1 — The Community Park",   acts: ["Act 2 — First Believers", "Act 3 — Hot-Money Hank"] },
+  2: { banner: "Act 1 — Into the Corporate Maze", acts: ["Act 2 — Red Tape", "Act 3 — The Growth Lead"] },
+  3: { banner: "Act 1 — Brand HQ",             acts: ["Act 2 — Optics Department", "Act 3 — The PR Chief"] },
+  4: { banner: "Act 1 — The Data Lake",        acts: ["Act 2 — The Feed", "Act 3 — The Algorithm"] },
+  5: { banner: "Act 1 — Executive Summit",     acts: ["Act 2 — The Antechamber", "Act 3 — The Board"] },
+  6: { banner: "Act 1 — Up and to the Right",  acts: ["Act 2 — The Rooftop", "Act 3 — The Reckoning"] },
+};
+
+const hustlerFlavor = {
+  1: { banner: "Act 1 — The Garage Launch",    acts: ["Act 2 — Ship It Tonight", "Act 3 — The War Room"] },
+  2: { banner: "Act 1 — The Growth Funnel",    acts: ["Act 2 — Conversion Optimized", "Act 3 — The Growth Hacker"] },
+  3: { banner: "Act 1 — The Hype Machine",     acts: ["Act 2 — Trending Now", "Act 3 — Burn the Runway"] },
+  4: { banner: "Act 1 — The Raise",            acts: ["Act 2 — Annualize Everything", "Act 3 — The Deck"] },
+  5: { banner: "Act 1 — The Term Sheet",       acts: ["Act 2 — Due Diligence", "Act 3 — The Acquirer"] },
+  6: { banner: "Act 1 — Apogee",               acts: ["Act 2 — Terminal Velocity", "Act 3 — The Burnout"] },
+};
+
+const rebelFlavor = {
+  1: { banner: "Act 1 — The Resistance",       acts: ["Act 2 — First Recruits", "Act 3 — The Rival's Envoy"] },
+  2: { banner: "Act 1 — Behind Enemy Lines",   acts: ["Act 2 — The Stolen Playbook", "Act 3 — Their Own Tricks"] },
+  3: { banner: "Act 1 — The Leak",             acts: ["Act 2 — News Cycle", "Act 3 — Burn Him Down"] },
+  4: { banner: "Act 1 — Out of Runway",        acts: ["Act 2 — The User Database", "Act 3 — The War-Chest"] },
+  5: { banner: "Act 1 — The Incumbent Falls",  acts: ["Act 2 — The Empty Throne", "Act 3 — The Crown"] },
+  6: { banner: "Act 1 — The New Order",        acts: ["Act 2 — Who You Became", "Act 3 — The Sellout You"] },
+};
+
+const founderFlavor = {
+  1: { banner: "Act 1 — Your Name on the Door", acts: ["Act 2 — The Cap Table", "Act 3 — The Co-Founder"] },
+  2: { banner: "Act 1 — The Loyal Team",        acts: ["Act 2 — The Recruiter", "Act 3 — Real Execs"] },
+  3: { banner: "Act 1 — The Big Check",         acts: ["Act 2 — The Term Sheet", "Act 3 — The Board Seat"] },
+  4: { banner: "Act 1 — The Press Tour",        acts: ["Act 2 — One Face", "Act 3 — The Spotlight"] },
+  5: { banner: "Act 1 — The Golden Parachute",  acts: ["Act 2 — The Payout", "Act 3 — The Board"] },
+  6: { banner: "Act 1 — Legacy or Liquidity",   acts: ["Act 2 — The Hollow Chair", "Act 3 — The Founder You Were"] },
+};
+
 export const STORYLINES = {
   idealist: {
     id: "idealist", title: "THE IDEALIST",
@@ -117,46 +383,40 @@ export const STORYLINES = {
     endings: idealistEndings,
     finaleBoss: { variant: "board" },
     finaleBossTrue: { variant: "mirror" },
-    flavor: {},          // filled in a later phase
+    flavor: idealistFlavor,
   },
-
-  // Placeholder paths — same shape, minimal stub content so the data is valid.
-  // They reuse the idealist beats by reference as temporary stubs; real content
-  // (distinct dialogue + flavor) is authored in a later phase. The shape still
-  // satisfies the test (opening + interludes 1..5 with one 2-option choice
-  // each, and three non-empty endings) per path.
   hustler: {
     id: "hustler", title: "THE HUSTLER",
     premise: "Growth at any cost — turn the brand into a rocket and see who's still strapped in at apogee.",
     accent: "#ffc24a",
-    opening: idealistOpening,
-    interludes: idealistInterludes,
-    endings: idealistEndings,
+    opening: hustlerOpening,
+    interludes: hustlerInterludes,
+    endings: hustlerEndings,
     finaleBoss: { variant: "termsheet" },
     finaleBossTrue: { variant: "burnout" },
-    flavor: {},
+    flavor: hustlerFlavor,
   },
   rebel: {
     id: "rebel", title: "THE REBEL",
     premise: "Tear down the incumbent — the only ethic is the fight.",
     accent: "#e0556b",
-    opening: idealistOpening,
-    interludes: idealistInterludes,
-    endings: idealistEndings,
+    opening: rebelOpening,
+    interludes: rebelInterludes,
+    endings: rebelEndings,
     finaleBoss: { variant: "incumbent" },
     finaleBossTrue: { variant: "selloutyou" },
-    flavor: {},
+    flavor: rebelFlavor,
   },
   founder: {
     id: "founder", title: "THE FOUNDER",
     premise: "It's personal — your name is on the door. Legacy vs. liquidity.",
     accent: "#6bb4ff",
-    opening: idealistOpening,
-    interludes: idealistInterludes,
-    endings: idealistEndings,
+    opening: founderOpening,
+    interludes: founderInterludes,
+    endings: founderEndings,
     finaleBoss: { variant: "directors" },
     finaleBossTrue: { variant: "founderyou" },
-    flavor: {},
+    flavor: founderFlavor,
   },
 };
 

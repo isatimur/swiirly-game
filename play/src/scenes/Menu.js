@@ -3,7 +3,7 @@
 
 import { VIEW } from "../config.js";
 import { SFX, Music } from "../audio.js";
-import { hasStorySave, loadStory, clearStory, getEndingsSeen } from "../story.js";
+import { hasStorySave, loadStory, clearStory, getEndingsSeen, PATHS, STORYLINES } from "../story.js";
 import { getCharacter } from "../characters.js";
 
 export class MenuScene extends Phaser.Scene {
@@ -217,34 +217,42 @@ export class MenuScene extends Phaser.Scene {
     sBtn.on("pointerout",  () => sBtn.setFillStyle(0x2a1850, 0.95));
     sBtn.on("pointerdown", startStory);
 
-    // --- Endings gallery (3 badges, locked until earned) ---
+    // --- Per-path endings gallery (4 rows × 3 dots, locked until earned) ---
+    // Each row = a story path; three small indicators (sellout / compromised /
+    // true). A dot lights in the ending's color when `${pathId}:${endingId}` is
+    // seen, else stays dim. Legacy bare ids (no namespace) count for idealist.
     const seen = getEndingsSeen();
-    const endingDefs = [
-      { id: "sellout",     label: "SELLOUT",       color: "#e0556b" },
-      { id: "compromised", label: "COMPROMISED",   color: "#e8c98a" },
-      { id: "true",        label: "TRUE BELIEVER", color: "#7bd389" },
+    const endingDots = [
+      { id: "sellout",     color: "#e0556b" },
+      { id: "compromised", color: "#e8c98a" },
+      { id: "true",        color: "#7bd389" },
     ];
-    const galleryY = height - 92;
-    this.add.text(width / 2, galleryY - 18, "ENDINGS", {
+    const galleryY = height - 96;
+    this.add.text(width / 2, galleryY - 8, "ENDINGS", {
       fontFamily: "system-ui, sans-serif", fontSize: "10px",
       color: "#b892e0", letterSpacing: 5,
     }).setOrigin(0.5);
-    const badgeW = 130, bgap = 10;
-    const gTotalW = endingDefs.length * badgeW + (endingDefs.length - 1) * bgap;
-    const gStartX = (width - gTotalW) / 2 + badgeW / 2;
-    endingDefs.forEach((e, i) => {
-      const cx = gStartX + i * (badgeW + bgap);
-      const unlocked = seen.includes(e.id);
-      const color = unlocked ? e.color : "#3a2860";
-      this.add.rectangle(cx, galleryY + 6, badgeW, 26, 0x1a0f2e, 0.55)
-        .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(color).color);
-      this.add.text(cx, galleryY + 6, unlocked ? e.label : "🔒", {
-        fontFamily: "system-ui, sans-serif",
-        fontSize: unlocked ? "11px" : "13px",
-        fontStyle: "700",
-        color: unlocked ? color : "#5C3BA3",
-        letterSpacing: 2,
-      }).setOrigin(0.5);
+    const rowH = 16;             // vertical pitch per path row
+    const labelX = width / 2 - 92;   // right-aligned path title
+    const dotsX0 = width / 2 + 20;   // first dot center
+    const dotGap = 22;
+    const dotR = 5;
+    PATHS.forEach((pid, i) => {
+      const sl = STORYLINES[pid];
+      const ry = galleryY + 8 + i * rowH;
+      this.add.text(labelX, ry, sl.title, {
+        fontFamily: "system-ui, sans-serif", fontSize: "10px",
+        fontStyle: "700", color: sl.accent, letterSpacing: 2,
+      }).setOrigin(1, 0.5);
+      endingDots.forEach((e, j) => {
+        const cx = dotsX0 + j * dotGap;
+        const lit = seen.includes(`${pid}:${e.id}`)
+          || (pid === "idealist" && seen.includes(e.id));  // legacy bare ids
+        const col = lit ? e.color : "#3a2860";
+        this.add.circle(cx, ry, dotR, lit
+          ? Phaser.Display.Color.HexStringToColor(col).color : 0x1a0f2e, lit ? 1 : 0.5)
+          .setStrokeStyle(1.5, Phaser.Display.Color.HexStringToColor(col).color);
+      });
     });
 
     // One-time feedback prompt — surfaces after the player has completed
