@@ -9,6 +9,7 @@ import { HUDScene } from "./scenes/HUD.js";
 import { LevelCompleteScene } from "./scenes/LevelComplete.js";
 import { GameOverScene } from "./scenes/GameOver.js";
 import { CreditsScene } from "./scenes/Credits.js";
+import { CutsceneScene } from "./scenes/Cutscene.js";
 
 const config = {
   type: Phaser.AUTO,
@@ -34,7 +35,7 @@ const config = {
       fps: 120,
     },
   },
-  scene: [BootScene, MenuScene, CharacterSelectScene, GameScene, HUDScene, LevelCompleteScene, GameOverScene, CreditsScene],
+  scene: [BootScene, MenuScene, CharacterSelectScene, CutsceneScene, GameScene, HUDScene, LevelCompleteScene, GameOverScene, CreditsScene],
 };
 
 initTouchControls();
