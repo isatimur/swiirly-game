@@ -968,14 +968,22 @@ export class GameScene extends Phaser.Scene {
    *  carry force is applied in update() via this.liftZones. */
   buildLift(x, y, hTiles, dir) {
     const cx = x + TILE_SIZE / 2;
+    // tile_platform's opaque block is only 51px tall (13px transparent on top),
+    // so stacking by 64px leaves a visible gap between tiles. Stack by the
+    // block height instead → a seamless column. The block bottom sits at the
+    // image center + (TILE_SIZE/2 - VIS/2); place the first block's top at y.
+    const VIS = 51;
+    const colTop = y;
     for (let i = 0; i < hTiles; i++) {
-      const ty = y + i * TILE_SIZE;
-      this.add.image(cx, ty + TILE_SIZE / 2, "tile_platform")
+      const blockTop = colTop + i * VIS;          // top of this block's opaque pixels
+      const blockMid = blockTop + VIS / 2;
+      const imgCenterY = blockTop - (TILE_SIZE / 2 - VIS); // align opaque bottom 51px to the block
+      this.add.image(cx, imgCenterY, "tile_platform")
         .setTint(0xffb45a)            // lighter orange so a lift reads apart from a belt
-        .setAlpha(0.92).setDepth(2);
+        .setAlpha(0.95).setDepth(2);
       // Marching arrow climbs/descends the column for a "moving lift" feel.
       const arrowChar = dir < 0 ? "▲" : "▼";
-      const arrow = this.add.text(cx, ty + TILE_SIZE / 2, arrowChar, {
+      const arrow = this.add.text(cx, blockMid, arrowChar, {
         fontFamily: "system-ui, sans-serif",
         fontSize: "16px",
         fontStyle: "900",
@@ -987,10 +995,10 @@ export class GameScene extends Phaser.Scene {
         duration: 600,
         repeat: -1,
         ease: "Linear",
-        onRepeat: () => { arrow.y = ty + TILE_SIZE / 2 - dir * 12; },
+        onRepeat: () => { arrow.y = blockMid - dir * 12; },
       });
     }
-    this.liftZones.push({ x, y, w: TILE_SIZE, h: hTiles * TILE_SIZE, dir });
+    this.liftZones.push({ x, y, w: TILE_SIZE, h: hTiles * VIS, dir });
   }
 
   /**
