@@ -193,9 +193,11 @@ function store() {
 export function hasStorySave() {
   const s = store();
   if (!s) return false;
+  // Only level + character are required so legacy saves (made before the
+  // story.path key existed) still resume. loadStory() defaults a missing/invalid
+  // path to "idealist".
   return s.getItem(KEY.level) != null
-    && s.getItem(KEY.character) != null
-    && s.getItem(KEY.path) != null;
+    && s.getItem(KEY.character) != null;
 }
 
 export function loadStory() {
@@ -257,14 +259,17 @@ export function getEndingsSeen() {
   } catch { return []; }
 }
 
-export function markEndingSeen(path, id) {
+export function markEndingSeen(pathOrId, maybeId) {
+  // Two call styles:
+  //   markEndingSeen(id)        -> legacy/bare id (current callers; idealist path)
+  //   markEndingSeen(path, id)  -> namespaced "path:id" (used once consumers migrate)
   const s = store();
   if (!s) return;
   try {
-    const key = `${path}:${id}`;
+    const entry = (maybeId === undefined) ? pathOrId : `${pathOrId}:${maybeId}`;
     const seen = getEndingsSeen();
-    if (!seen.includes(key)) {
-      seen.push(key);
+    if (!seen.includes(entry)) {
+      seen.push(entry);
       s.setItem(KEY.endings, JSON.stringify(seen));
     }
   } catch {}
