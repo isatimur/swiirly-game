@@ -541,6 +541,19 @@ export class TheMirror extends TheBoard {
   }
 }
 
+// Finale-boss variants. base "board" → TheBoard cadence; "mirror" → TheMirror
+// (skips the frame-1 phase flash). All reuse the L5/CEO art; only name+tint differ.
+const BOSS_VARIANTS = {
+  board:      { name: "THE BOARD",                tint: 0xff4040, base: "board"  },
+  mirror:     { name: "THE MIRROR",               tint: 0x6a7bbf, base: "mirror" },
+  termsheet:  { name: "THE TERM SHEET",           tint: 0xffc24a, base: "board"  },
+  burnout:    { name: "THE BURNOUT",              tint: 0xff7a3c, base: "mirror" },
+  incumbent:  { name: "THE INCUMBENT",            tint: 0x8a2e2e, base: "board"  },
+  selloutyou: { name: "THE SELLOUT YOU",          tint: 0x9a6abf, base: "mirror" },
+  directors:  { name: "THE BOARD OF DIRECTORS",   tint: 0x405a8a, base: "board"  },
+  founderyou: { name: "THE FOUNDER YOU WERE",     tint: 0x6abf9a, base: "mirror" },
+};
+
 export function makeBoss(scene, levelNum, x, y, health, variant = "board") {
   switch (levelNum) {
     case 1: return new HotTakeHank(scene, x, y, health);
@@ -548,9 +561,21 @@ export function makeBoss(scene, levelNum, x, y, health, variant = "board") {
     case 3: return new VPVibes(scene, x, y, health);
     case 4: return new TheAlgorithm(scene, x, y, health);
     case 5: return new TheCEO(scene, x, y, health);
-    case 6: return variant === "mirror"
-      ? new TheMirror(scene, x, y, health)
-      : new TheBoard(scene, x, y, health);
+    case 6: {
+      const v = BOSS_VARIANTS[variant] ?? BOSS_VARIANTS.board;
+      const boss = v.base === "mirror"
+        ? new TheMirror(scene, x, y, health)
+        : new TheBoard(scene, x, y, health);
+      boss.displayName = v.name;
+      boss.bossTint = v.tint;
+      boss.setTint(v.tint);
+      // Skip TheCEO's inherited frame-1 phase-1→3 transition, which re-writes
+      // bossTint to a hardcoded 0xff4040 and would clobber the custom tint of
+      // every board-base variant (TheMirror already sets this for the mirror
+      // base). Set for ALL case-6 variants so the custom tint survives.
+      boss._lastPhase = 3;
+      return boss;
+    }
     default: return new BossBase(scene, x, y, health);
   }
 }

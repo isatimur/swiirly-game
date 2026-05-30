@@ -4,7 +4,7 @@
 import { VIEW, PHYSICS, PLAYER, IS_MOBILE } from "../config.js";
 import { Player } from "../objects/Player.js";
 import { JargonBlob, GutFeelGhost, PaperworkPile, IncompetenceManager, DeadlineBot, BossBase, makeBoss } from "../objects/Enemies.js";
-import { resolveEnding } from "../story.js";
+import { resolveEnding, STORYLINES } from "../story.js";
 import { Insight, CommunitySignal } from "../objects/Collectibles.js";
 import { Brand } from "../objects/Brand.js";
 import { Effects } from "../objects/Effects.js";
@@ -41,6 +41,12 @@ export class GameScene extends Phaser.Scene {
     const lvl = LEVELS[this.levelNum] ?? level1;
     this.level = lvl;
     this._levelStartTime = this.time.now;
+
+    // Per-path level-flavor overlay (story mode only). Null in arcade or when a
+    // path has no flavor for this level → all overlay reads below are null-safe.
+    const storyPath = this.registry.get("storyMode") ? (this.registry.get("storyPath") ?? "idealist") : null;
+    this.flavor = storyPath ? (STORYLINES[storyPath].flavor?.[this.levelNum] ?? null) : null;
+    this._actFlavorIdx = 0;
 
     // VFX manager + combo state.
     this.effects = new Effects(this);
@@ -249,10 +255,13 @@ export class GameScene extends Phaser.Scene {
 
     for (const e of lvl.enemies) {
       let enemy;
-      if (e.type === "jargon_blob") enemy = new JargonBlob(this, e.x, e.y, e.range);
-      else if (e.type === "ghost") enemy = new GutFeelGhost(this, e.x, e.y, e.range);
-      else if (e.type === "paperwork") enemy = new PaperworkPile(this, e.x, e.y, this.projectiles);
-      else if (e.type === "deadline_bot") enemy = new DeadlineBot(this, e.x, e.y, null, e.range);
+      // Optional flavor-driven enemy-type SWAP (per-path theming). No tint swap —
+      // that conflicts with the hurt-flash. Identical to e.type when no swap.
+      const type = this.flavor?.enemySwap?.[e.type] ?? e.type;
+      if (type === "jargon_blob") enemy = new JargonBlob(this, e.x, e.y, e.range);
+      else if (type === "ghost") enemy = new GutFeelGhost(this, e.x, e.y, e.range);
+      else if (type === "paperwork") enemy = new PaperworkPile(this, e.x, e.y, this.projectiles);
+      else if (type === "deadline_bot") enemy = new DeadlineBot(this, e.x, e.y, null, e.range);
       if (enemy) this.enemies.add(enemy);
     }
 
@@ -260,12 +269,14 @@ export class GameScene extends Phaser.Scene {
     // Optional — the bonus level (L6) has no boss, lvl.miniBoss is null.
     this.boss = null;
     this.bossActive = false;
+    this._bossWarned = false;
     if (lvl.miniBoss) {
-      // Story mode picks the L6 boss from the Mission score: True path
-      // (mirror) unlocks THE MIRROR; every other path faces THE BOARD.
+      // Story mode picks the L6 boss from the path + Mission score: the True
+      // band unlocks the path's secret finale boss; lower bands face the
+      // path's standard finale boss. Arcade always faces THE BOARD.
       let variant = "board";
       if (this.registry.get("storyMode") && this.levelNum === 6) {
-        variant = resolveEnding(this.registry.get("storyMission") ?? 0).bossVariant;
+        variant = resolveEnding(this.registry.get("storyPath") ?? "idealist", this.registry.get("storyMission") ?? 0).bossVariant;
       }
       this.boss = makeBoss(this, this.levelNum, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3, variant);
       this.boss.setVisible(false);
@@ -744,7 +755,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => {
       this.physics.resume();
       this.player.body.allowGravity = true;
-      this.showActBanner("Act 1 — " + lvl.name);
+      this.showActBanner(this.flavor?.banner ?? ("Act 1 — " + lvl.name));
     });
 
     this.actTriggerIdx = 0;
@@ -1476,6 +1487,20 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // One-shot boss-approach warning, fired a bit BEFORE arena activation
+    // (the ±350 offset). Uses the same horizontal-vs-vertical geometry as the
+    // activation above. The boss is spawned (invisible) with its correct,
+    // variant/path-aware displayName, so the right name shows in both modes.
+    if (this.boss && !this.boss.dead && !this._bossWarned) {
+      const nearArena = this.level.bossArenaTop != null
+        ? this.player.y < this.level.bossArenaTop + 350
+        : this.player.x > this.level.bossArenaStart - 350;
+      if (nearArena) {
+        this._bossWarned = true;
+        this.showActBanner("⚠  BOSS AHEAD — " + (this.boss.displayName ?? "BOSS"));
+      }
+    }
+
     // Act banners from level data. Horizontal triggers compare player.x to
     // the trigger's .x; vertical triggers (act-marker has a .y) fire when
     // the player has climbed PAST the y (lower y = higher up). This lets
@@ -1487,7 +1512,11 @@ export class GameScene extends Phaser.Scene {
         : (this.player.x > next.x);
       if (fired) {
         this.actTriggerIdx++;
-        this.showActBanner(next.banner);
+        // Override the banner text positionally with the flavor's acts array
+        // (null-safe: falls back to the level's own banner when no flavor).
+        const txt = this.flavor?.acts?.[this._actFlavorIdx] ?? next.banner;
+        this._actFlavorIdx++;
+        this.showActBanner(txt);
       }
     }
 
