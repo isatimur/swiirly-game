@@ -534,6 +534,10 @@ export class TheMirror extends TheBoard {
     this.displayName = "THE MIRROR";
     this.bossTint = 0x6a7bbf;
     this.setTint(this.bossTint);
+    // Skip the inherited frame-1 phase-1→3 transition (TheCEO.preUpdate) that
+    // would otherwise overwrite our mirror tint with THE BOARD's crimson and
+    // fire a spurious entrance shake/flash. We're always phase 3.
+    this._lastPhase = 3;
   }
 }
 
