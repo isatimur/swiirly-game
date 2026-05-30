@@ -15,6 +15,7 @@
 
 import { VIEW } from "../config.js";
 import { Music } from "../audio.js";
+import { STORY, resolveEnding, markEndingSeen, clearStory, saveStory } from "../story.js";
 
 export class LevelCompleteScene extends Phaser.Scene {
   constructor() { super("LevelComplete"); }
@@ -401,13 +402,44 @@ export class LevelCompleteScene extends Phaser.Scene {
       if (window.__pauseModalOpen) return;
       this.cameras.main.fadeOut(400, 26, 15, 46);
       this.time.delayedCall(420, () => {
-        // After the bonus (Level 6), credits play, then back to menu.
-        if (this.payload.levelNum === 6) {
+        const storyMode = this.registry.get("storyMode");
+        const levelNum = this.payload.levelNum ?? 1;
+
+        if (storyMode) {
+          this.scene.stop("HUD");
+          if (levelNum >= 6) {
+            // Finale: resolve the ending from the Mission score, play it,
+            // record it, clear the run save, then roll credits.
+            const mission = this.registry.get("storyMission") ?? 0;
+            const { endingId } = resolveEnding(mission);
+            markEndingSeen(endingId);
+            clearStory();
+            this.scene.start("Cutscene", {
+              beats: STORY.endings[endingId], next: "Credits", nextData: {},
+            });
+            return;
+          }
+          // Between levels: play this level's interlude (with its moral
+          // choice), which then starts the next level (+ HUD).
+          const nextLevel = levelNum + 1;
+          saveStory({
+            mission: this.registry.get("storyMission") ?? 0,
+            level: nextLevel,
+            character: this.registry.get("character")?.id ?? null,
+          });
+          this.scene.start("Cutscene", {
+            beats: STORY.interludes[levelNum], next: "Game", nextData: { level: nextLevel },
+          });
+          return;
+        }
+
+        // --- Arcade (unchanged) ---
+        if (levelNum === 6) {
           this.scene.stop("HUD");
           this.scene.start("Credits");
           return;
         }
-        const nextLevel = isLastLevel ? 1 : this.payload.levelNum + 1;
+        const nextLevel = isLastLevel ? 1 : levelNum + 1;
         this.scene.start("Game", { level: nextLevel });
         this.scene.launch("HUD");
       });
