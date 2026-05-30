@@ -150,9 +150,10 @@ export class CutsceneScene extends Phaser.Scene {
     SFX.win();
     const mission = (this.registry.get("storyMission") ?? 0) + (opt.mission ?? 0);
     this.registry.set("storyMission", mission);
+    const path = this.nextData?.path ?? this.registry.get("storyPath") ?? "idealist";
     const level = this.nextData?.level ?? 1;       // the level this cutscene leads into
     const character = this.registry.get("character")?.id ?? null;
-    saveStory({ mission, level, character });
+    saveStory({ path, mission, level, character });
     this.clearChoices();
     this.idx++;
     this.showBeat();

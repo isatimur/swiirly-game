@@ -177,6 +177,7 @@ export class MenuScene extends Phaser.Scene {
       if (hasStorySave()) {
         const s = loadStory();
         this.registry.set("storyMission", s.mission);
+        this.registry.set("storyPath", s.path);
         this.registry.set("character", getCharacter(s.character));
         this.cameras.main.fadeOut(420, 26, 15, 46);
         this.time.delayedCall(440, () => {
@@ -187,7 +188,7 @@ export class MenuScene extends Phaser.Scene {
         clearStory();
         this.registry.set("storyMission", 0);
         this.cameras.main.fadeOut(420, 26, 15, 46);
-        this.time.delayedCall(440, () => this.scene.start("CharacterSelect"));
+        this.time.delayedCall(440, () => this.scene.start("StorySelect"));
       }
     };
 

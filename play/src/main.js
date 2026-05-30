@@ -4,6 +4,7 @@ import { initGamepad, rumble } from "./gamepad.js";
 import { BootScene } from "./scenes/Boot.js";
 import { MenuScene } from "./scenes/Menu.js";
 import { CharacterSelectScene } from "./scenes/CharacterSelect.js";
+import { StorySelectScene } from "./scenes/StorySelect.js";
 import { GameScene } from "./scenes/Game.js";
 import { HUDScene } from "./scenes/HUD.js";
 import { LevelCompleteScene } from "./scenes/LevelComplete.js";
@@ -35,7 +36,7 @@ const config = {
       fps: 120,
     },
   },
-  scene: [BootScene, MenuScene, CharacterSelectScene, CutsceneScene, GameScene, HUDScene, LevelCompleteScene, GameOverScene, CreditsScene],
+  scene: [BootScene, MenuScene, CharacterSelectScene, StorySelectScene, CutsceneScene, GameScene, HUDScene, LevelCompleteScene, GameOverScene, CreditsScene],
 };
 
 initTouchControls();

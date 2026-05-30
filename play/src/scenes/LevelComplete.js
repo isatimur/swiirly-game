@@ -15,7 +15,7 @@
 
 import { VIEW } from "../config.js";
 import { Music } from "../audio.js";
-import { STORY, resolveEnding, markEndingSeen, clearStory, saveStory } from "../story.js";
+import { STORYLINES, resolveEnding, markEndingSeen, clearStory, saveStory } from "../story.js";
 
 export class LevelCompleteScene extends Phaser.Scene {
   constructor() { super("LevelComplete"); }
@@ -407,15 +407,16 @@ export class LevelCompleteScene extends Phaser.Scene {
 
         if (storyMode) {
           this.scene.stop("HUD");
+          const path = this.registry.get("storyPath") ?? "idealist";
           if (levelNum >= 6) {
             // Finale: resolve the ending from the Mission score, play it,
             // record it, clear the run save, then roll credits.
             const mission = this.registry.get("storyMission") ?? 0;
-            const { endingId } = resolveEnding(mission);
+            const { endingId } = resolveEnding(path, mission);
             markEndingSeen(endingId);
             clearStory();
             this.scene.start("Cutscene", {
-              beats: STORY.endings[endingId], next: "Credits", nextData: {},
+              beats: STORYLINES[path].endings[endingId], next: "Credits", nextData: {},
             });
             return;
           }
@@ -426,9 +427,10 @@ export class LevelCompleteScene extends Phaser.Scene {
             mission: this.registry.get("storyMission") ?? 0,
             level: nextLevel,
             character: this.registry.get("character")?.id ?? null,
+            path,
           });
           this.scene.start("Cutscene", {
-            beats: STORY.interludes[levelNum], next: "Game", nextData: { level: nextLevel },
+            beats: STORYLINES[path].interludes[levelNum], next: "Game", nextData: { level: nextLevel, path },
           });
           return;
         }

@@ -13,7 +13,7 @@ import { VIEW } from "../config.js";
 import { SFX, Music } from "../audio.js";
 import { CHARACTERS } from "../characters.js";
 import { PAD } from "../gamepad.js";
-import { STORY, saveStory } from "../story.js";
+import { STORYLINES, saveStory } from "../story.js";
 
 const BOARDS = ["original", "swiirl"];
 const BOARD_LABELS = { original: "ORIGINAL", swiirl: "SWIIRL" };
@@ -296,10 +296,11 @@ export class CharacterSelectScene extends Phaser.Scene {
       if (this.registry.get("storyMode")) {
         // Begin a fresh story run: persist the starting state and play the
         // opening cutscene, which then starts Game level 1 (+ HUD).
-        saveStory({ mission: 0, level: 1, character: chosen.id });
+        const path = this.registry.get("storyPath") ?? "idealist";
+        saveStory({ path, mission: 0, level: 1, character: chosen.id });
         this.registry.set("storyMission", 0);
         this.scene.start("Cutscene", {
-          beats: STORY.opening, next: "Game", nextData: { level: 1 },
+          beats: STORYLINES[path].opening, next: "Game", nextData: { level: 1, path },
         });
       } else {
         this.scene.start("Game");
