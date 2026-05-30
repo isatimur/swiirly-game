@@ -108,6 +108,11 @@ export class CreditsScene extends Phaser.Scene {
     // CharacterSelect → Game (level 1, the default).
     const playAgain = () => {
       if (window.__pauseModalOpen) return;
+      // Credits are reached after a story ending or an arcade finish; the
+      // "play again" path is a fresh ARCADE run, so clear the story flag
+      // (a story run finished here already cleared its save) — otherwise the
+      // stale storyMode would re-enter the story branch in CharacterSelect.
+      this.registry.set("storyMode", false);
       this.cameras.main.fadeOut(420, 26, 15, 46);
       this.time.delayedCall(440, () => this.scene.start("CharacterSelect"));
     };

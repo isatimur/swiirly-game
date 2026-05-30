@@ -100,6 +100,14 @@ export class GameOverScene extends Phaser.Scene {
       if (window.__pauseModalOpen) return;
       this.cameras.main.fadeOut(400, 26, 15, 46);
       this.time.delayedCall(420, () => {
+        if (this.registry.get("storyMode")) {
+          // Story death: return to the menu. The run save still points at the
+          // level the player died on, so "Continue" resumes it with the
+          // Mission score intact (death doesn't alter the score).
+          this.scene.stop("HUD");
+          this.scene.start("Menu");
+          return;
+        }
         this.scene.start("Game");
         this.scene.launch("HUD");
       });
