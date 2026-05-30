@@ -524,14 +524,29 @@ export class TheBoard extends TheCEO {
   get phase() { return 3; }
 }
 
-export function makeBoss(scene, levelNum, x, y, health) {
+/** THE MIRROR — true-path secret final boss: your own would-be-sellout self.
+ *  Reuses THE BOARD's relentless always-phase-3 cadence; distinct name and a
+ *  cold mirror tint. (Stretch goal, not in v1: render the player's chosen skin
+ *  and mimic their attack style via ATTACK_TUNING.) */
+export class TheMirror extends TheBoard {
+  constructor(scene, x, y, health = 18) {
+    super(scene, x, y, health);
+    this.displayName = "THE MIRROR";
+    this.bossTint = 0x6a7bbf;
+    this.setTint(this.bossTint);
+  }
+}
+
+export function makeBoss(scene, levelNum, x, y, health, variant = "board") {
   switch (levelNum) {
     case 1: return new HotTakeHank(scene, x, y, health);
     case 2: return new ManagerMike(scene, x, y, health);
     case 3: return new VPVibes(scene, x, y, health);
     case 4: return new TheAlgorithm(scene, x, y, health);
     case 5: return new TheCEO(scene, x, y, health);
-    case 6: return new TheBoard(scene, x, y, health);
+    case 6: return variant === "mirror"
+      ? new TheMirror(scene, x, y, health)
+      : new TheBoard(scene, x, y, health);
     default: return new BossBase(scene, x, y, health);
   }
 }

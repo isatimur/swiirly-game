@@ -4,6 +4,7 @@
 import { VIEW, PHYSICS, PLAYER, IS_MOBILE } from "../config.js";
 import { Player } from "../objects/Player.js";
 import { JargonBlob, GutFeelGhost, PaperworkPile, IncompetenceManager, DeadlineBot, BossBase, makeBoss } from "../objects/Enemies.js";
+import { resolveEnding } from "../story.js";
 import { Insight, CommunitySignal } from "../objects/Collectibles.js";
 import { Brand } from "../objects/Brand.js";
 import { Effects } from "../objects/Effects.js";
@@ -260,7 +261,13 @@ export class GameScene extends Phaser.Scene {
     this.boss = null;
     this.bossActive = false;
     if (lvl.miniBoss) {
-      this.boss = makeBoss(this, this.levelNum, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3);
+      // Story mode picks the L6 boss from the Mission score: True path
+      // (mirror) unlocks THE MIRROR; every other path faces THE BOARD.
+      let variant = "board";
+      if (this.registry.get("storyMode") && this.levelNum === 6) {
+        variant = resolveEnding(this.registry.get("storyMission") ?? 0).bossVariant;
+      }
+      this.boss = makeBoss(this, this.levelNum, lvl.miniBoss.x, lvl.miniBoss.y, lvl.miniBoss.health ?? 3, variant);
       this.boss.setVisible(false);
       this.boss.body.enable = false;
     }
