@@ -93,18 +93,18 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Press-to-start prompt.
-    const press = this.add.text(width / 2, height - 110,
-      "press   SPACE   or   click   to   begin", {
+    // Arcade prompt — secondary to the STORY MODE button below the hero.
+    const press = this.add.text(width / 2, height - 132,
+      "or press   SPACE   /   click   for   Arcade", {
       fontFamily: "system-ui, -apple-system, sans-serif",
-      fontSize: "20px",
+      fontSize: "16px",
       color: "#ffffff",
-      letterSpacing: 4,
+      letterSpacing: 3,
     }).setOrigin(0.5).setAlpha(0.7);
-    this.tweens.add({ targets: press, alpha: 0.25, duration: 700, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: press, alpha: 0.3, duration: 700, yoyo: true, repeat: -1 });
 
     // Controls — updated to include slide.
-    this.add.text(width / 2, height - 58,
+    this.add.text(width / 2, height - 30,
       "← → move    SHIFT run    SPACE jump (×2 double)    SHIFT+↓ slide    R restart    M mute", {
       fontFamily: "system-ui, -apple-system, sans-serif",
       fontSize: "13px",
@@ -115,7 +115,7 @@ export class MenuScene extends Phaser.Scene {
     // Best run badge.
     const best = +(localStorage.getItem("swiirl.bestInsights") || 0);
     if (best > 0) {
-      const badge = this.add.text(width / 2, height / 2 + 180,
+      const badge = this.add.text(width / 2, 312,
         `★  BEST  ${best}  insights  ★`, {
         fontFamily: "system-ui, -apple-system, sans-serif",
         fontSize: "14px",
@@ -133,7 +133,7 @@ export class MenuScene extends Phaser.Scene {
     const RANK_COLORS = { S: "#ffd24a", A: "#7bd389", B: "#7dc4ff", C: "#b892e0" };
     const ranks = [1, 2, 3, 4, 5].map(n => localStorage.getItem(`swiirl.bestRank.${n}`));
     if (ranks.some(r => r != null)) {
-      const rowY = height / 2 + 220;
+      const rowY = 356;
       this.add.text(width / 2, rowY - 20, "YOUR  RANKS", {
         fontFamily: "system-ui, sans-serif",
         fontSize: "11px",
@@ -205,7 +205,7 @@ export class MenuScene extends Phaser.Scene {
 
     // --- Story Mode button ---
     const storyLabel = hasStorySave() ? "▶  CONTINUE  STORY" : "▶  STORY  MODE";
-    const sBtnY = height - 150;
+    const sBtnY = height - 175;
     const sBtn = this.add.rectangle(width / 2, sBtnY, 320, 52, 0x2a1850, 0.95)
       .setStrokeStyle(3, 0xffd24a).setInteractive({ useHandCursor: true });
     const sTxt = this.add.text(width / 2, sBtnY, storyLabel, {
@@ -223,7 +223,7 @@ export class MenuScene extends Phaser.Scene {
       { id: "compromised", label: "COMPROMISED",   color: "#e8c98a" },
       { id: "true",        label: "TRUE BELIEVER", color: "#7bd389" },
     ];
-    const galleryY = height - 100;
+    const galleryY = height - 92;
     this.add.text(width / 2, galleryY - 18, "ENDINGS", {
       fontFamily: "system-ui, sans-serif", fontSize: "10px",
       color: "#b892e0", letterSpacing: 5,

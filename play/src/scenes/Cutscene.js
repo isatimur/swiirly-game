@@ -87,11 +87,15 @@ export class CutsceneScene extends Phaser.Scene {
     const beat = this.beats[this.idx];
     if (!beat) { this.finish(); return; }
 
-    const key = this.portraitTexture(beat.portrait);
-    this.portrait.setTexture(key);
-    this.portrait.clearTint();
-    if (beat.portrait === "mirror") this.portrait.setTint(0x444466);
-    this.portrait.setScale(key === "brand_happy" ? 0.9 : 0.7);
+    // A beat without its own portrait (e.g. a choice) keeps the previous
+    // speaker's portrait rather than blanking to the cloud placeholder.
+    if (beat.portrait) {
+      const key = this.portraitTexture(beat.portrait);
+      this.portrait.setTexture(key);
+      this.portrait.clearTint();
+      if (beat.portrait === "mirror") this.portrait.setTint(0x444466);
+      this.portrait.setScale(key === "brand_happy" ? 0.9 : 0.7);
+    }
 
     if (beat.type === "choice") { this.showChoice(beat); return; }
 
