@@ -142,8 +142,8 @@ export const SFX = {
 // Direct access for advanced callers (kept stable as part of the public surface).
 export { blip as _blip, noiseBurst as _noiseBurst, chord as _chord };
 
-export function setMuted(m) { muted = m; }
-export function toggleMuted() { muted = !muted; return muted; }
+export function setMuted(m) { muted = m; refreshFileMute(); }
+export function toggleMuted() { muted = !muted; refreshFileMute(); return muted; }
 export function isMuted() { return muted; }
 
 // ============================================================================
@@ -172,6 +172,22 @@ let currentTrack = null;
 let nextStepTime = 0;
 let stepIndex = 0;
 let schedulerId = null;
+
+// File-backed tracks (Suno exports) override the step-sequencer for these ids.
+// Any track id WITHOUT a file here falls back to the synth above, so the game
+// stays fully playable while only some tracks have real music.
+const FILES = {
+  menu:   "assets/audio/menu.mp3",
+  level1: "assets/audio/level1.mp3",
+  level2: "assets/audio/level2.mp3",
+  level3: "assets/audio/level3.mp3",
+  level4: "assets/audio/level4.mp3",
+};
+const MUSIC_FILE_LEVEL = 1.0;  // file loudness vs the music bus (tunable by ear)
+const fileBuffers = {};        // trackId -> decoded AudioBuffer (cached)
+let fileGain = null;           // mute gate: source -> fileGain -> musicGain
+let fileSource = null;         // current looping AudioBufferSourceNode
+let filePending = false;       // a file track is fetching/decoding/starting
 
 // Persist music-mute preference across sessions.
 try { musicMuted = localStorage.getItem("swiirl.musicMuted") === "1"; } catch {}
@@ -325,23 +341,72 @@ function tickScheduler() {
   }
 }
 
+// --- File-backed playback (decoded mp3 looped through the music bus) ---------
+
+function refreshFileMute() {
+  if (fileGain) fileGain.gain.value = (muted || musicMuted) ? 0 : MUSIC_FILE_LEVEL;
+}
+
+function stopFileSource() {
+  if (fileSource) {
+    try { fileSource.stop(); } catch {}
+    try { fileSource.disconnect(); } catch {}
+    fileSource = null;
+  }
+}
+
+// Start (or queue) the looping buffer for a file-backed track. Decodes on first
+// use and caches. Guards against a track switch mid-decode.
+function startFileTrack(trackId) {
+  if (!fileGain) {
+    fileGain = ctx.createGain();
+    fileGain.connect(musicGain);
+  }
+  refreshFileMute();
+  filePending = true;
+  const begin = (buf) => {
+    if (currentTrackId !== trackId) { filePending = false; return; }
+    stopFileSource();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.connect(fileGain);
+    src.start();
+    fileSource = src;
+    filePending = false;
+  };
+  if (fileBuffers[trackId]) { begin(fileBuffers[trackId]); return; }
+  fetch(FILES[trackId])
+    .then(r => r.arrayBuffer())
+    .then(arr => ctx.decodeAudioData(arr))
+    .then(buf => { fileBuffers[trackId] = buf; begin(buf); })
+    .catch(() => { filePending = false; });
+}
+
 export const Music = {
   /** Start (or switch to) a track. No-op if same track already playing. */
   play(trackId) {
-    if (!TRACKS[trackId]) return;
+    if (!TRACKS[trackId] && !FILES[trackId]) return;
     ensureMusicGraph();
-    if (currentTrackId === trackId && schedulerId) return;
+    if (currentTrackId === trackId && (schedulerId || fileSource || filePending)) return;
     currentTrackId = trackId;
-    currentTrack = TRACKS[trackId];
-    stepIndex = 0;
-    nextStepTime = ctx.currentTime + 0.08;
-    // Fade in.
+    currentTrack = TRACKS[trackId] || null;
+    // Fade the shared music bus in (covers the file's decode latency too).
     const t = ctx.currentTime;
     musicGain.gain.cancelScheduledValues(t);
     musicGain.gain.setValueAtTime(musicGain.gain.value, t);
     musicGain.gain.linearRampToValueAtTime(MUSIC_MASTER, t + 0.6);
-    if (!schedulerId) {
-      schedulerId = setInterval(tickScheduler, SCHED_INTERVAL_MS);
+    if (FILES[trackId]) {
+      // File-backed: stop the synth sequencer, start the looping buffer.
+      if (schedulerId) { clearInterval(schedulerId); schedulerId = null; }
+      startFileTrack(trackId);
+    } else {
+      // Synth track: stop any file loop, run the step sequencer.
+      stopFileSource();
+      filePending = false;
+      stepIndex = 0;
+      nextStepTime = ctx.currentTime + 0.08;
+      if (!schedulerId) schedulerId = setInterval(tickScheduler, SCHED_INTERVAL_MS);
     }
   },
   /** Fade out and stop the scheduler. */
@@ -353,6 +418,8 @@ export const Music = {
     musicGain.gain.linearRampToValueAtTime(0, t + 0.5);
     setTimeout(() => {
       if (schedulerId) { clearInterval(schedulerId); schedulerId = null; }
+      stopFileSource();
+      filePending = false;
       currentTrack = null;
       currentTrackId = null;
     }, 540);
@@ -371,6 +438,7 @@ export const Music = {
 
 export function setMusicMuted(m) {
   musicMuted = !!m;
+  refreshFileMute();
   try { localStorage.setItem("swiirl.musicMuted", musicMuted ? "1" : "0"); } catch {}
   return musicMuted;
 }
