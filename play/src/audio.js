@@ -182,6 +182,11 @@ const FILES = {
   level2: "assets/audio/level2.mp3",
   level3: "assets/audio/level3.mp3",
   level4: "assets/audio/level4.mp3",
+  // No dedicated tracks yet for these — reuse mood-matched files so the whole
+  // game stays on real music (no synth pop-in). Swap to dedicated exports later.
+  level5: "assets/audio/level3.mp3",  // tense, pre-summit
+  boss:   "assets/audio/level4.mp3",  // edgy / menacing
+  level6: "assets/audio/level1.mp3",  // bright finale callback
 };
 const MUSIC_FILE_LEVEL = 1.0;  // file loudness vs the music bus (tunable by ear)
 const fileBuffers = {};        // trackId -> decoded AudioBuffer (cached)
@@ -364,6 +369,7 @@ function startFileTrack(trackId) {
   }
   refreshFileMute();
   filePending = true;
+  const url = FILES[trackId];   // cache by URL so aliased tracks share a decode
   const begin = (buf) => {
     if (currentTrackId !== trackId) { filePending = false; return; }
     stopFileSource();
@@ -375,11 +381,11 @@ function startFileTrack(trackId) {
     fileSource = src;
     filePending = false;
   };
-  if (fileBuffers[trackId]) { begin(fileBuffers[trackId]); return; }
-  fetch(FILES[trackId])
+  if (fileBuffers[url]) { begin(fileBuffers[url]); return; }
+  fetch(url)
     .then(r => r.arrayBuffer())
     .then(arr => ctx.decodeAudioData(arr))
-    .then(buf => { fileBuffers[trackId] = buf; begin(buf); })
+    .then(buf => { fileBuffers[url] = buf; begin(buf); })
     .catch(() => { filePending = false; });
 }
 
