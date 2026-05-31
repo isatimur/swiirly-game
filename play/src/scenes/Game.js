@@ -567,6 +567,10 @@ export class GameScene extends Phaser.Scene {
         : this.combo.powerTier >= 1 ? COMBO_POWER.knockbackMulT1 : 1;
       if (kbMul !== 1 && enemy.body) enemy.body.velocity.x *= kbMul;
       const killed = result === "killed";
+      // Universal hit feedback — every confirmed hit, not just heavy ones.
+      this.effects.hitFlash(enemy);
+      this.effects.punchZoom(0.02, 120);
+      this.effects.cameraPunch(Math.sign(enemy.x - this.player.x) || 1);
       this.effects.stompPoof(enemy.x, enemy.y - 24);
       this.combo.bump(killed ? "stomp" : "hit");
       const c = this.combo.count;
@@ -602,6 +606,9 @@ export class GameScene extends Phaser.Scene {
         if (!atk.pierce) atk.destroy();
         return;
       }
+      // Universal hit feedback — every confirmed hit, not just heavy ones.
+      this.effects.hitFlash(boss);
+      this.effects.cameraPunch(Math.sign(boss.x - this.player.x) || 1);
       this.effects.sparkleBurst(boss.x, boss.y - 60, 5, 0xffd24a);
       this.effects.punchZoom(0.04, 180);
       // Heavy hits chunk the boss with hit-stop on top of punchZoom; empowered
@@ -707,6 +714,8 @@ export class GameScene extends Phaser.Scene {
     const onPlayerHurt = (lives) => {
       if (!this.cameras?.main) return;
       this.cameras.main.shake(220, 0.008);
+      // Nudge the camera toward the threat (boss if present, else away-left).
+      this.effects.cameraPunch(Math.sign(this.player.x - (this.boss?.x ?? this.player.x)) || -1, 12, 80);
       if (lives > 0) this.cameras.main.flash(180, 255, 60, 60);
       this.combo?.reset();
       this.game.events.emit("damage-flash");
@@ -756,6 +765,33 @@ export class GameScene extends Phaser.Scene {
     this.game.events.on("request-restart", onRestart);
     this.game.events.on("request-quit", onQuit);
 
+    // ----- FRENZY MODE-SHIFT -----
+    // Surge feedback when the combo crosses into Frenzy: flash, brief slow-mo,
+    // a faint gold vignette over the world, and gold-tinted enemies.
+    const onFrenzyStart = () => {
+      this.effects.radialFlash(0xffd24a, 0.35, 420);
+      this.effects.slowMo(0.5, 90, 160, 360);
+      const w = this.scale.width, h = this.scale.height;
+      if (!this._frenzyVignette || !this._frenzyVignette.active) {
+        this._frenzyVignette = this.add
+          .rectangle(w / 2, h / 2, w, h, 0xffd24a, 0)
+          .setScrollFactor(0)
+          .setDepth(50);
+      }
+      this.tweens.killTweensOf(this._frenzyVignette);
+      this.tweens.add({ targets: this._frenzyVignette, alpha: 0.10, duration: 280, ease: "Quad.easeOut" });
+      this.enemies?.getChildren().forEach((e) => e.setTint?.(0xffe08a));
+    };
+    const onFrenzyEnd = () => {
+      if (this._frenzyVignette?.active) {
+        this.tweens.killTweensOf(this._frenzyVignette);
+        this.tweens.add({ targets: this._frenzyVignette, alpha: 0, duration: 320, ease: "Quad.easeIn" });
+      }
+      this.enemies?.getChildren().forEach((e) => e.clearTint?.());
+    };
+    this.game.events.on("frenzy-start", onFrenzyStart);
+    this.game.events.on("frenzy-end", onFrenzyEnd);
+
     // Clean up when this scene instance shuts down so stale handlers don't fire.
     this.events.once("shutdown", () => {
       this.game.events.off("player-hurt", onPlayerHurt);
@@ -763,6 +799,8 @@ export class GameScene extends Phaser.Scene {
       this.game.events.off("boss-defeated", onBossDefeated);
       this.game.events.off("request-restart", onRestart);
       this.game.events.off("request-quit", onQuit);
+      this.game.events.off("frenzy-start", onFrenzyStart);
+      this.game.events.off("frenzy-end", onFrenzyEnd);
     });
 
     // ----- LEVEL INTRO CINEMATIC -----

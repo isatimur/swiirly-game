@@ -7,6 +7,7 @@ export class Effects {
     this.scene = scene;
     this._punchActive = false;
     this._slowMoActive = false;
+    this._cameraPunching = false;
   }
 
   // -------------------------------------------------------------------------
@@ -317,6 +318,44 @@ export class Effects {
   /** Wraps cameras.main.shake with consistent defaults. */
   shake(intensity = 0.005, ms = 120) {
     this.scene.cameras.main.shake(ms, intensity);
+  }
+
+  /** Brief white tint-fill on a sprite to sell a confirmed hit. */
+  hitFlash(sprite, ms = 90) {
+    if (!sprite?.active || typeof sprite.setTintFill !== "function") return;
+    sprite.setTintFill(0xffffff);
+    this.scene.time.delayedCall(ms, () => {
+      // Sprite may have been destroyed (killed) before the timer fires.
+      if (sprite?.active && typeof sprite.clearTint === "function") sprite.clearTint();
+    });
+  }
+
+  /**
+   * Small horizontal camera kick toward a threat. Tweens the active
+   * follow-offset so it composes with the normal follow. No-ops if the
+   * camera isn't following a target (followOffset would have no effect).
+   */
+  cameraPunch(dirX = 1, px = 10, ms = 70) {
+    if (this._cameraPunching) return;
+    const cam = this.scene.cameras?.main;
+    if (!cam || !cam._follow || !cam.followOffset) return;
+    this._cameraPunching = true;
+    const baseX = cam.followOffset.x;
+    this.scene.tweens.add({
+      targets: cam.followOffset,
+      x: baseX - dirX * px,
+      duration: ms,
+      ease: "Quad.easeOut",
+      onComplete: () => {
+        this.scene.tweens.add({
+          targets: cam.followOffset,
+          x: baseX,
+          duration: ms,
+          ease: "Quad.easeIn",
+          onComplete: () => { this._cameraPunching = false; },
+        });
+      },
+    });
   }
 
   // -------------------------------------------------------------------------
