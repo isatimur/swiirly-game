@@ -1455,6 +1455,30 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // Distinct, menacing banner for the boss-approach warning — crimson strip,
+  // gold text, a short camera shake and a pulse. Sized to the text.
+  showBossWarning(name) {
+    const cont = this.add.container(this.scale.width / 2, 96)
+      .setScrollFactor(0).setDepth(101).setAlpha(0);
+    const warn = this.add.text(0, 0, "⚠  BOSS AHEAD  —  " + name, {
+      fontFamily: "system-ui, sans-serif", fontSize: "26px", fontStyle: "900",
+      color: "#ffd24a", stroke: "#1a0f2e", strokeThickness: 5, letterSpacing: 2,
+    }).setOrigin(0.5);
+    const w = warn.width + 64, h = 60;
+    const strip = this.add.graphics();
+    strip.fillStyle(0x2a0a0a, 0.88);
+    strip.fillRoundedRect(-w / 2, -h / 2, w, h, 12);
+    strip.lineStyle(3, 0xff4040, 1);
+    strip.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
+    cont.add([strip, warn]);
+    this.cameras.main.shake(220, 0.006);
+    this.tweens.add({ targets: cont, alpha: 1, y: 116, duration: 360, ease: "Back.easeOut" });
+    this.tweens.add({ targets: cont, scale: { from: 1, to: 1.03 }, duration: 460, yoyo: true, repeat: 2, ease: "Sine.easeInOut" });
+    this.time.delayedCall(2200, () => {
+      this.tweens.add({ targets: cont, alpha: 0, y: 86, duration: 380, onComplete: () => cont.destroy() });
+    });
+  }
+
   update(time, dt) {
     // Parallax scroll factors via tilePosition.
     const cam = this.cameras.main;
@@ -1497,7 +1521,7 @@ export class GameScene extends Phaser.Scene {
         : this.player.x > this.level.bossArenaStart - 350;
       if (nearArena) {
         this._bossWarned = true;
-        this.showActBanner("⚠  BOSS AHEAD — " + (this.boss.displayName ?? "BOSS"));
+        this.showBossWarning(this.boss.displayName ?? "BOSS");
       }
     }
 

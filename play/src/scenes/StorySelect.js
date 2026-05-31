@@ -14,11 +14,14 @@ import { PAD } from "../gamepad.js";
 import { PATHS, STORYLINES } from "../story.js";
 
 // Card geometry — shared between layout and highlight.
-const CARD_W = 380;
-const CARD_H = 188;
-const H_SPACING = 40;
-const V_SPACING = 32;
+const CARD_W = 392;
+const CARD_H = 192;
+const H_SPACING = 44;
+const V_SPACING = 34;
 const COLS = 2;
+
+// A glyph per path, themed to the premise.
+const ICONS = { idealist: "🌱", hustler: "🚀", rebel: "🔥", founder: "👑" };
 
 export class StorySelectScene extends Phaser.Scene {
   constructor() { super("StorySelect"); }
@@ -34,34 +37,35 @@ export class StorySelectScene extends Phaser.Scene {
 
     for (let i = 0; i < 3; i++) {
       const c = this.add.image(Phaser.Math.Between(120, width - 120), Phaser.Math.Between(60, 180), "cloud")
-        .setAlpha(0.65).setScale(Phaser.Math.FloatBetween(0.7, 1.2));
+        .setAlpha(0.6).setScale(Phaser.Math.FloatBetween(0.7, 1.2));
       this.tweens.add({
         targets: c, x: c.x + 60, duration: 12000 + Math.random() * 4000,
         yoyo: true, repeat: -1,
       });
     }
 
-    const title = this.add.text(width / 2, 78, "CHOOSE YOUR PATH", {
+    const title = this.add.text(width / 2, 74, "CHOOSE YOUR PATH", {
       fontFamily: "system-ui, -apple-system, sans-serif",
-      fontSize: "44px", fontStyle: "900",
+      fontSize: "46px", fontStyle: "900",
       color: "#ffffff", stroke: "#5C3BA3", strokeThickness: 8,
-      shadow: { offsetX: 0, offsetY: 6, color: "#1a0f2e", blur: 12, fill: true },
+      shadow: { offsetX: 0, offsetY: 6, color: "#1a0f2e", blur: 14, fill: true },
     }).setOrigin(0.5);
-    this.tweens.add({ targets: title, y: 84, duration: 1800, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    this.tweens.add({ targets: title, y: 80, duration: 1800, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
 
-    // Persistent highlight rect — drawn above the cards.
-    this.highlight = this.add.rectangle(0, 0, CARD_W + 8, CARD_H + 8, 0xffd24a, 0)
-      .setStrokeStyle(5, 0xffd24a);
+    this.add.text(width / 2, 118, "Four ways to build a brand. Same six levels — a different soul.", {
+      fontFamily: "system-ui, sans-serif",
+      fontSize: "16px", fontStyle: "600", color: "#dcc7f2", letterSpacing: 1,
+    }).setOrigin(0.5).setAlpha(0.92);
 
     this.buildCards();
 
     this.selectedIdx = 0;
     this.applyHighlight();
 
-    this.add.text(width / 2, height - 56,
+    this.add.text(width / 2, height - 52,
       "↑ ↓ ← →  /  D-pad  choose      SPACE  /  ENTER  /  ×  confirm", {
       fontFamily: "system-ui, sans-serif",
-      fontSize: "13px", color: "#dcc7f2", letterSpacing: 3,
+      fontSize: "13px", color: "#b892e0", letterSpacing: 3,
     }).setOrigin(0.5);
 
     this.input.keyboard.on("keydown-LEFT",  () => this.moveHorizontal(-1));
@@ -96,6 +100,9 @@ export class StorySelectScene extends Phaser.Scene {
     this._padPrevDown  = PAD.down;
   }
 
+  // One card = a container (so it can scale/dim as a unit) holding an accent
+  // glow (shown only when selected), a rounded body with an accent header bar,
+  // a themed glyph, the path title, and the premise.
   buildCards() {
     const { width, height } = this.scale;
     const ROWS = Math.ceil(PATHS.length / COLS);
@@ -103,8 +110,10 @@ export class StorySelectScene extends Phaser.Scene {
     const gridWidth = COLS * CARD_W + (COLS - 1) * H_SPACING;
     const gridHeight = ROWS * CARD_H + (ROWS - 1) * V_SPACING;
     const startX = (width - gridWidth) / 2 + CARD_W / 2;
-    const centerY = height / 2 + 40;
+    const centerY = height / 2 + 48;
     const firstRowY = centerY - gridHeight / 2 + CARD_H / 2;
+
+    const hw = CARD_W / 2, hh = CARD_H / 2;
 
     this.cards = PATHS.map((pathId, i) => {
       const row = Math.floor(i / COLS);
@@ -113,34 +122,48 @@ export class StorySelectScene extends Phaser.Scene {
       const cy = firstRowY + row * (CARD_H + V_SPACING);
 
       const sl = STORYLINES[pathId];
-      const accentColor = Phaser.Display.Color.HexStringToColor(sl.accent).color;
+      const accent = Phaser.Display.Color.HexStringToColor(sl.accent).color;
 
-      const cardBg = this.add.rectangle(cx, cy, CARD_W, CARD_H, 0x1a0f2e, 0.6)
-        .setStrokeStyle(3, accentColor);
-      const titleTxt = this.add.text(cx, cy - CARD_H / 2 + 38, sl.title, {
-        fontFamily: "system-ui, sans-serif",
-        fontSize: "26px", fontStyle: "900",
-        color: sl.accent, stroke: "#1a0f2e", strokeThickness: 4,
-        letterSpacing: 2,
+      const container = this.add.container(cx, cy);
+
+      const glow = this.add.graphics();
+      glow.fillStyle(accent, 0.18);
+      glow.fillRoundedRect(-hw - 11, -hh - 11, CARD_W + 22, CARD_H + 22, 24);
+      glow.setVisible(false);
+
+      const body = this.add.graphics();
+      body.fillStyle(0x140a26, 0.94);
+      body.fillRoundedRect(-hw, -hh, CARD_W, CARD_H, 18);
+      // accent header bar
+      body.fillStyle(accent, 1);
+      body.fillRoundedRect(-hw + 20, -hh + 16, CARD_W - 40, 4, 2);
+      body.lineStyle(2, accent, 0.7);
+      body.strokeRoundedRect(-hw, -hh, CARD_W, CARD_H, 18);
+
+      const icon = this.add.text(0, -hh + 50, ICONS[pathId] ?? "•", {
+        fontSize: "34px",
       }).setOrigin(0.5);
-      const premiseTxt = this.add.text(cx, cy + 18, sl.premise, {
-        fontFamily: "system-ui, sans-serif",
-        fontSize: "14px", color: "#dcc7f2",
-        align: "center", lineSpacing: 4,
-        wordWrap: { width: CARD_W - 44 },
+      const titleTxt = this.add.text(0, -hh + 92, sl.title, {
+        fontFamily: "system-ui, sans-serif", fontSize: "27px", fontStyle: "900",
+        color: sl.accent, stroke: "#1a0f2e", strokeThickness: 4, letterSpacing: 2,
+      }).setOrigin(0.5);
+      const premiseTxt = this.add.text(0, 38, sl.premise, {
+        fontFamily: "system-ui, sans-serif", fontSize: "14px", color: "#cdbce8",
+        align: "center", lineSpacing: 5, wordWrap: { width: CARD_W - 56 },
       }).setOrigin(0.5);
 
-      cardBg.setInteractive({ useHandCursor: true });
-      cardBg.on("pointerdown", () => this.selectIndex(i, true));
+      // Invisible hit zone (graphics aren't interactive; a transparent rect is).
+      const hit = this.add.rectangle(0, 0, CARD_W, CARD_H, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+      hit.on("pointerover", () => { if (this.selectedIdx !== i) this.selectIndex(i); });
+      hit.on("pointerdown", () => this.selectIndex(i, true));
 
-      return { pathId, cardBg, titleTxt, premiseTxt };
+      container.add([glow, body, icon, titleTxt, premiseTxt, hit]);
+      return { pathId, container, glow };
     });
-
-    this.children.bringToTop(this.highlight);
   }
 
   moveHorizontal(delta) {
-    // Horizontal wraps within the full list (2 cols → step of 1).
     this.selectIndex(this.selectedIdx + delta);
   }
 
@@ -159,12 +182,14 @@ export class StorySelectScene extends Phaser.Scene {
   }
 
   applyHighlight() {
-    const card = this.cards[this.selectedIdx];
-    this.tweens.add({
-      targets: this.highlight,
-      x: card.cardBg.x,
-      y: card.cardBg.y,
-      duration: 220, ease: "Cubic.easeOut",
+    this.cards.forEach((card, i) => {
+      const sel = i === this.selectedIdx;
+      card.glow.setVisible(sel);
+      card.container.setAlpha(sel ? 1 : 0.82);
+      this.tweens.add({
+        targets: card.container, scale: sel ? 1.04 : 1.0,
+        duration: 180, ease: "Cubic.easeOut",
+      });
     });
   }
 

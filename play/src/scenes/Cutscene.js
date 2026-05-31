@@ -35,16 +35,21 @@ export class CutsceneScene extends Phaser.Scene {
     this.add.image(width / 2, height - 100, "bg_near")
       .setOrigin(0.5, 1).setScale(0.7).setAlpha(0.4);
 
-    // Portrait (left of the dialogue panel).
+    // Portrait (left of the dialogue panel) on a soft spotlight backdrop.
+    this.add.ellipse(width * 0.26, height * 0.5 + 6, 212, 224, 0x140a26, 0.5)
+      .setStrokeStyle(3, 0x5C3BA3, 0.8);
     this.portrait = this.add.image(width * 0.26, height * 0.5, "cloud").setScale(0.7);
 
     // Dialogue panel (bottom band).
     const panelTop = height - 190;
     const panel = this.add.graphics();
-    panel.fillStyle(0x1a0f2e, 0.92);
+    panel.fillStyle(0x140a26, 0.94);
     panel.lineStyle(3, 0x5C3BA3, 1);
     panel.fillRoundedRect(60, panelTop, width - 120, 150, 16);
     panel.strokeRoundedRect(60, panelTop, width - 120, 150, 16);
+    // Gold accent bar beside the speaker/body text.
+    panel.fillStyle(0xffd24a, 0.9);
+    panel.fillRoundedRect(74, panelTop + 16, 4, 118, 2);
 
     this.speakerText = this.add.text(86, panelTop + 16, "", {
       fontFamily: "system-ui, sans-serif", fontSize: "16px", fontStyle: "900",

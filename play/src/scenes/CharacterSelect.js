@@ -60,9 +60,11 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     this.buildTabs();
 
-    // Persistent highlight rect — lives across board rebuilds.
-    this.highlight = this.add.rectangle(0, 0, CARD_W + 8, CARD_H + 8, 0xffd24a, 0)
-      .setStrokeStyle(5, 0xffd24a);
+    // Persistent highlight — a rounded gold outline that tweens to the
+    // selected card; drawn centered at (0,0) and moved via setPosition.
+    this.highlight = this.add.graphics();
+    this.highlight.lineStyle(4, 0xffd24a, 1);
+    this.highlight.strokeRoundedRect(-(CARD_W + 10) / 2, -(CARD_H + 10) / 2, CARD_W + 10, CARD_H + 10, 18);
 
     this.cards = [];
     this.buildBoard();
@@ -112,48 +114,53 @@ export class CharacterSelectScene extends Phaser.Scene {
     this._padPrevDown  = PAD.down;
   }
 
-  // Segmented tab control under the title: two side-by-side buttons.
+  // Segmented tab control under the title: a rounded track with a sliding
+  // gold "active pill" behind the two labels (each shows its card count).
   buildTabs() {
     const { width } = this.scale;
-    const tabW = 200;
-    const tabH = 44;
-    const gap = 14;
-    const tabY = 138;
-    const totalW = tabW * BOARDS.length + gap * (BOARDS.length - 1);
-    const startX = (width - totalW) / 2 + tabW / 2;
+    const tabW = 196, tabH = 48, tabY = 140;
+    const trackW = tabW * BOARDS.length;
+    const startX = (width - trackW) / 2;     // left edge of the track
+    this.tabW = tabW; this.tabH = tabH; this.tabY = tabY;
+
+    const track = this.add.graphics();
+    track.fillStyle(0x140a26, 0.9);
+    track.fillRoundedRect(startX - 6, tabY - tabH / 2 - 6, trackW + 12, tabH + 12, 16);
+    track.lineStyle(2, 0x5C3BA3, 0.8);
+    track.strokeRoundedRect(startX - 6, tabY - tabH / 2 - 6, trackW + 12, tabH + 12, 16);
+
+    // Sliding active-pill indicator (positioned in updateTabVisuals).
+    this.tabPill = this.add.graphics();
 
     this.tabs = BOARDS.map((boardId, i) => {
-      const tx = startX + i * (tabW + gap);
-      const rect = this.add.rectangle(tx, tabY, tabW, tabH, 0x1a0f2e, 0.55)
-        .setStrokeStyle(3, 0x5C3BA3);
-      const label = this.add.text(tx, tabY, BOARD_LABELS[boardId], {
+      const cxTab = startX + i * tabW + tabW / 2;
+      const count = CHARACTERS.filter(c => c.board === boardId).length;
+      const label = this.add.text(cxTab, tabY, `${BOARD_LABELS[boardId]}   ${count}`, {
         fontFamily: "system-ui, sans-serif",
         fontSize: "18px", fontStyle: "900",
         color: "#dcc7f2", letterSpacing: 3,
       }).setOrigin(0.5);
 
-      rect.setInteractive({ useHandCursor: true });
-      rect.on("pointerover", () => { if (this.activeBoard !== boardId) rect.setFillStyle(0x2a1a44, 0.7); });
-      rect.on("pointerout",  () => this.styleTab(boardId, rect));
-      rect.on("pointerdown", () => this.switchBoard(boardId));
+      const hit = this.add.rectangle(cxTab, tabY, tabW, tabH, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => this.switchBoard(boardId));
 
-      return { boardId, rect, label };
+      return { boardId, label, hit, cxTab };
     });
 
     this.updateTabVisuals();
   }
 
-  styleTab(boardId, rect) {
-    if (this.activeBoard === boardId) rect.setFillStyle(0x3a2560, 0.85);
-    else rect.setFillStyle(0x1a0f2e, 0.55);
-  }
-
   updateTabVisuals() {
-    for (const { boardId, rect, label } of this.tabs) {
-      const active = this.activeBoard === boardId;
-      rect.setStrokeStyle(active ? 4 : 3, active ? 0xffd24a : 0x5C3BA3);
-      rect.setFillStyle(active ? 0x3a2560 : 0x1a0f2e, active ? 0.85 : 0.55);
-      label.setColor(active ? "#ffd24a" : "#dcc7f2");
+    const { tabW, tabH, tabY } = this;
+    const active = this.tabs.find(t => t.boardId === this.activeBoard);
+    this.tabPill.clear();
+    if (active) {
+      this.tabPill.fillStyle(0xffd24a, 0.95);
+      this.tabPill.fillRoundedRect(active.cxTab - tabW / 2 + 4, tabY - tabH / 2 + 4, tabW - 8, tabH - 8, 12);
+    }
+    for (const t of this.tabs) {
+      t.label.setColor(t.boardId === this.activeBoard ? "#1a0f2e" : "#dcc7f2");
     }
   }
 
@@ -187,10 +194,19 @@ export class CharacterSelectScene extends Phaser.Scene {
       const cx = rowStartX + col * (CARD_W + H_SPACING);
       const cy = firstRowY + row * (CARD_H + V_SPACING);
 
-      const cardBg = this.add.rectangle(cx, cy, CARD_W, CARD_H, 0x1a0f2e, 0.55)
-        .setStrokeStyle(3, 0x5C3BA3);
+      // Rounded card panel (graphics) with a character-accent header bar; a
+      // transparent rect supplies the click hit-area (graphics aren't interactive).
+      const accent = char.color;
+      const body = this.add.graphics();
+      body.fillStyle(0x140a26, 0.9);
+      body.fillRoundedRect(cx - CARD_W / 2, cy - CARD_H / 2, CARD_W, CARD_H, 14);
+      body.fillStyle(accent, 1);
+      body.fillRoundedRect(cx - CARD_W / 2 + 12, cy - CARD_H / 2 + 10, CARD_W - 24, 3, 2);
+      body.lineStyle(2, 0x5C3BA3, 0.8);
+      body.strokeRoundedRect(cx - CARD_W / 2, cy - CARD_H / 2, CARD_W, CARD_H, 14);
+
       const portraitKey = `${char.spriteKey}_idle`;
-      const sprite = this.add.image(cx, cy - CARD_H / 2 + 64, portraitKey).setScale(0.42);
+      const sprite = this.add.image(cx, cy - CARD_H / 2 + 70, portraitKey).setScale(0.42);
       const name = this.add.text(cx, cy + 28, char.name, {
         fontFamily: "system-ui, sans-serif",
         fontSize: "15px", fontStyle: "900",
@@ -213,10 +229,11 @@ export class CharacterSelectScene extends Phaser.Scene {
         yoyo: true, repeat: -1, ease: "Sine.easeInOut",
       });
 
-      cardBg.setInteractive({ useHandCursor: true });
-      cardBg.on("pointerdown", () => this.selectIndex(i, true));
+      const hit = this.add.rectangle(cx, cy, CARD_W, CARD_H, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => this.selectIndex(i, true));
 
-      return { char, cardBg, sprite, name, perk, attackHint, bob };
+      return { char, body, hit, sprite, name, perk, attackHint, bob, cx, cy };
     });
 
     // Keep the highlight drawn above the freshly created cards.
@@ -228,7 +245,8 @@ export class CharacterSelectScene extends Phaser.Scene {
     for (const card of this.cards) {
       card.bob?.remove();
       this.tweens.killTweensOf(card.sprite);
-      card.cardBg.destroy();
+      card.body.destroy();
+      card.hit.destroy();
       card.sprite.destroy();
       card.name.destroy();
       card.perk.destroy();
@@ -252,7 +270,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.buildBoard();
     this.selectedIdx = 0;
     this.updateTabVisuals();
-    this.highlight.setPosition(this.cards[0].cardBg.x, this.cards[0].cardBg.y);
+    this.highlight.setPosition(this.cards[0].cx, this.cards[0].cy);
     this.applyHighlight();
     SFX.collect();
   }
@@ -276,8 +294,8 @@ export class CharacterSelectScene extends Phaser.Scene {
     const card = this.cards[this.selectedIdx];
     this.tweens.add({
       targets: this.highlight,
-      x: card.cardBg.x,
-      y: card.cardBg.y,
+      x: card.cx,
+      y: card.cy,
       duration: 220, ease: "Cubic.easeOut",
     });
     this.tweens.add({
