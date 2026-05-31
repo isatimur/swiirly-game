@@ -532,6 +532,9 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.enemies, (player, enemy) => this.handleEnemyCollision(enemy));
     if (this.boss) this.physics.add.overlap(this.player, this.boss, () => this.handleBossCollision());
     this.physics.add.overlap(this.player, this.projectiles, (player, p) => {
+      // Reflected (parried) projectiles are now player-owned — they hit enemies,
+      // never the player. Skip them here so a deflected shot can't boomerang.
+      if (p.reflected) return;
       p.destroy();
       this.player.takeDamage(p.x);
     });
@@ -619,12 +622,64 @@ export class GameScene extends Phaser.Scene {
       this.player.onAttackConfirm(boss.x);
       if (!atk.pierce) atk.destroy();
     });
-    // Guardian parry: shieldBash hitboxes destroy incoming projectiles on touch.
+    // Guardian parry: shieldBash hitboxes now FREEZE, REFLECT, and build combo
+    // instead of merely destroying the incoming projectile. A reflected shot
+    // becomes player-owned (proj.reflected = true) and is redirected at the
+    // nearest enemy/boss; the player↔projectiles overlap above early-returns on
+    // reflected shots so it can never hurt the player.
     this.physics.add.overlap(this.playerAttacks, this.projectiles, (atk, proj) => {
       if (!atk.parry || !atk.active || !proj.active) return;
-      this.effects.sparkleBurst(proj.x, proj.y, 8, 0xffd24a);
-      proj.destroy();
+      if (proj.reflected) return; // already deflected — don't re-parry our own shot
+      // Juice.
+      this.effects.freezeFrame(90);
+      this.effects.sparkleBurst(proj.x, proj.y, 12, 0xffd24a);
+      this.effects.shake(0.006, 160);
       SFX.parry?.();
+      this.combo.bump("parry");
+      // Reflect: aim at the nearest live target, else reverse + send upward.
+      const target = this.nearestTarget(proj.x, proj.y);
+      const REFLECT_SPEED = 460;
+      if (proj.body) proj.body.setAllowGravity(false);
+      if (target) {
+        const ang = Math.atan2(target.y - proj.y, target.x - proj.x);
+        proj.setVelocity(Math.cos(ang) * REFLECT_SPEED, Math.sin(ang) * REFLECT_SPEED);
+      } else {
+        const vx = (proj.body?.velocity.x ?? 0);
+        proj.setVelocity(-(vx || 1) * 1.3 - Math.sign(vx || 1) * 120, -260);
+      }
+      proj.reflected = true;
+      proj.setTint?.(0xffd24a);
+    });
+    // Reflected projectiles damage enemies. Guarded on proj.reflected so normal
+    // enemy shots passing near other enemies are ignored.
+    this.physics.add.overlap(this.projectiles, this.enemies, (proj, enemy) => {
+      if (!proj.reflected || !proj.active || !enemy.active || enemy.dead) return;
+      if (typeof enemy.takePlayerHit !== "function") return;
+      const id = `reflect#${proj.name || Math.floor(proj.x)}`;
+      const result = enemy.takePlayerHit(2, proj.x, id);
+      if (!result) return;
+      this.effects.hitFlash(enemy);
+      this.effects.stompPoof(enemy.x, enemy.y - 24);
+      this.combo.bump("hit");
+      this.addScore((result === "killed" ? 80 : 30) * this.combo.multiplier, enemy.x, enemy.y - 24);
+      if (result === "killed") SFX.stompAt(this.combo.count); else SFX.attackConfirm?.();
+      proj.destroy();
+    });
+    // Reflected projectiles damage the boss.
+    if (this.boss) this.physics.add.overlap(this.projectiles, this.boss, (a, b) => {
+      const proj = a?.reflected ? a : (b?.reflected ? b : null);
+      if (!proj) return;
+      const boss = proj === a ? b : a;
+      if (!proj.active || !boss || boss.dead || !this.bossActive) return;
+      if (typeof boss.takePlayerHit !== "function") return;
+      const result = boss.takePlayerHit(2, proj.x, `reflect#${proj.name || Math.floor(proj.x)}`);
+      if (!result) return;
+      this.effects.hitFlash(boss);
+      this.effects.sparkleBurst(boss.x, boss.y - 60, 6, 0xffd24a);
+      this.combo.bump("hit");
+      this.addScore(result === "killed" ? 2000 : 250, boss.x, boss.y - 60);
+      SFX.attackConfirm?.();
+      proj.destroy();
     });
     // Stop player attacks at solid walls (looks unfair if they pass through).
     this.physics.add.collider(this.playerAttacks, this.platforms, (atk) => {
@@ -1259,6 +1314,23 @@ export class GameScene extends Phaser.Scene {
     if (newTier > prevTier && newTier > 0) {
       this._celebrateScoreMilestone(newTier * 5000, x, y);
     }
+  }
+
+  /** Nearest live enemy or active boss to (x, y) for parry-reflect aiming.
+   *  Returns the target sprite or null. */
+  nearestTarget(x, y) {
+    let best = null;
+    let bestD = Infinity;
+    this.enemies?.getChildren?.().forEach((e) => {
+      if (!e.active || e.dead) return;
+      const d = Phaser.Math.Distance.Squared(x, y, e.x, e.y);
+      if (d < bestD) { bestD = d; best = e; }
+    });
+    if (this.boss && this.bossActive && !this.boss.dead) {
+      const d = Phaser.Math.Distance.Squared(x, y, this.boss.x, this.boss.y);
+      if (d < bestD) { bestD = d; best = this.boss; }
+    }
+    return best;
   }
 
   updateBrandMeter() {
