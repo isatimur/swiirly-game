@@ -3,6 +3,8 @@
 // Call `combo.bump("insight"|"stomp"|"hit")` on each scoring event,
 // `combo.update(time)` once per frame to handle decay and frenzy timer.
 
+import { COMBO_POWER } from "../config.js";
+
 const FRENZY_THRESHOLD = 10;   // count at which Frenzy fires
 const FRENZY_DURATION  = 5000; // ms — duration after entering Frenzy
 const FRENZY_COOLDOWN  = 8000; // ms — block re-trigger right after a Frenzy ends
@@ -23,6 +25,26 @@ export class Combo {
   get multiplier() {
     const base = Math.min(5, 1 + Math.floor(this.count / 3));
     return this.frenzyActive ? Math.min(10, base * 2) : base;
+  }
+
+  // ----- Combo → power (pure: no Phaser, no side effects) -----
+  // Power scales off the live `count`, so a decayed/reset combo (count → 0)
+  // automatically drops power back to tier 0. Frenzy implies at least tier 2.
+  get powerTier() {
+    if (this.frenzyActive) return 2;
+    if (this.count >= COMBO_POWER.tier2) return 2;
+    if (this.count >= COMBO_POWER.tier1) return 1;
+    return 0;
+  }
+
+  // +bonusDamageT1 once we hit tier 1 or higher; otherwise none.
+  get bonusDamage() {
+    return this.powerTier >= 1 ? COMBO_POWER.bonusDamageT1 : 0;
+  }
+
+  // Tier 2 lets attacks chunk through the per-attackId hit dedupe.
+  get pierce() {
+    return this.powerTier >= 2;
   }
 
   bump(/* kind */) {

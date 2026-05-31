@@ -80,3 +80,16 @@ export const SIGNAL_DURATIONS = {
   shield: 12000,
   growth: 11000,
 };
+
+// Combo → power. The combo count grants real combat power, not just score.
+//   tier1 / tier2  — combo `count` thresholds for power tiers 1 and 2.
+//   bonusDamageT1  — extra damage added at tier >= 1.
+//   knockbackMulT1 / knockbackMulT2 — knockback velocity multipliers per tier.
+// Frenzy implies at least tier 2 (see Combo.powerTier).
+export const COMBO_POWER = {
+  tier1: 5,
+  tier2: 10,
+  bonusDamageT1: 1,
+  knockbackMulT1: 1.4,
+  knockbackMulT2: 1.8,
+};

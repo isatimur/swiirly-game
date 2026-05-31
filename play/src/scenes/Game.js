@@ -1,7 +1,7 @@
 // Main gameplay scene — Community Park.
 // Builds the world from level1 data, runs physics, dispatches collisions.
 
-import { VIEW, PHYSICS, PLAYER, IS_MOBILE } from "../config.js";
+import { VIEW, PHYSICS, PLAYER, IS_MOBILE, COMBO_POWER } from "../config.js";
 import { Player } from "../objects/Player.js";
 import { JargonBlob, GutFeelGhost, PaperworkPile, IncompetenceManager, DeadlineBot, BossBase, makeBoss } from "../objects/Enemies.js";
 import { resolveEnding, STORYLINES } from "../story.js";
@@ -544,12 +544,28 @@ export class GameScene extends Phaser.Scene {
     // would re-pause physics on every resume and hang the boss fight.
     this.physics.add.overlap(this.playerAttacks, this.enemies, (atk, enemy) => {
       if (!atk.active || !enemy.active || enemy.dead) return;
-      const result = enemy.takePlayerHit(atk.damage ?? 1, this.player.x, atk.attackId ?? "atk");
+      // Combo → power: bonus damage, and at tier 2 the combo lets even a normal
+      // hit bypass the per-attackId dedupe. We do that by appending the frame
+      // time to the attackId ONLY when the combo pierces — existing pierce
+      // attacks keep their stable id so their 200ms dedupe stays sane.
+      const dmg = (atk.damage ?? 1) + this.combo.bonusDamage;
+      const baseId = atk.attackId ?? "atk";
+      // Only single-hit (non-pierce) attacks get the per-frame unique id. Real
+      // pierce hitboxes (shield bash / shockwave) keep their stable id so their
+      // existing 200ms dedupe still throttles them — combo must not make them
+      // chunk every frame.
+      const hitId = (this.combo.pierce && !atk.pierce)
+        ? `${baseId}#${Math.floor(this.time.now)}` : baseId;
+      const result = enemy.takePlayerHit(dmg, this.player.x, hitId);
       if (!result) {
         // Pierce hitbox that's already hit this enemy — destroy non-pierce as before.
         if (!atk.pierce) atk.destroy();
         return;
       }
+      // Scale the knockback that takePlayerHit just applied to the enemy body.
+      const kbMul = this.combo.powerTier >= 2 ? COMBO_POWER.knockbackMulT2
+        : this.combo.powerTier >= 1 ? COMBO_POWER.knockbackMulT1 : 1;
+      if (kbMul !== 1 && enemy.body) enemy.body.velocity.x *= kbMul;
       const killed = result === "killed";
       this.effects.stompPoof(enemy.x, enemy.y - 24);
       this.combo.bump(killed ? "stomp" : "hit");
@@ -560,8 +576,8 @@ export class GameScene extends Phaser.Scene {
       this.player.onAttackConfirm(enemy.x);
       // Hit-stop on heavy hits — brief freeze sells the impact. Damage >= 2
       // catches chain-heavy and ground-pound; the pierce flag catches the
-      // shockwave. Light attacks stay snappy.
-      if ((atk.damage ?? 1) >= 2 || atk.pierce) this.effects.freezeFrame(60);
+      // shockwave; combo bonusDamage makes empowered light hits feel heavy too.
+      if ((atk.damage ?? 1) >= 2 || atk.pierce || this.combo.bonusDamage > 0) this.effects.freezeFrame(60);
       if (!atk.pierce) atk.destroy();
     });
     if (this.boss) this.physics.add.overlap(this.playerAttacks, this.boss, (a, b) => {
@@ -573,15 +589,24 @@ export class GameScene extends Phaser.Scene {
       const boss = atk === a ? b : a;
       if (!atk || !atk.active || !boss || boss.dead || !this.bossActive) return;
       if (typeof boss.takePlayerHit !== "function") return; // defensive
-      const result = boss.takePlayerHit(atk.damage ?? 1, this.player.x, atk.attackId ?? "atk");
+      // Combo → power: bonus damage + tier-2 pierce bypasses the boss's 250ms
+      // per-attackId dedupe (unique frame id only when the combo pierces).
+      const dmg = (atk.damage ?? 1) + this.combo.bonusDamage;
+      const baseId = atk.attackId ?? "atk";
+      // Only single-hit attacks get a per-frame unique id; real pierce hitboxes
+      // keep their stable id so the 250ms boss dedupe still throttles them.
+      const hitId = (this.combo.pierce && !atk.pierce)
+        ? `${baseId}#${Math.floor(this.time.now)}` : baseId;
+      const result = boss.takePlayerHit(dmg, this.player.x, hitId);
       if (!result) {
         if (!atk.pierce) atk.destroy();
         return;
       }
       this.effects.sparkleBurst(boss.x, boss.y - 60, 5, 0xffd24a);
       this.effects.punchZoom(0.04, 180);
-      // Heavy hits chunk the boss with hit-stop on top of punchZoom.
-      if ((atk.damage ?? 1) >= 2 || atk.pierce) this.effects.freezeFrame(70);
+      // Heavy hits chunk the boss with hit-stop on top of punchZoom; empowered
+      // light hits (combo bonusDamage) also get the freeze.
+      if ((atk.damage ?? 1) >= 2 || atk.pierce || this.combo.bonusDamage > 0) this.effects.freezeFrame(70);
       SFX.attackConfirm?.();
       this.addScore(result === "killed" ? 2000 : 250, boss.x, boss.y - 60);
       this.player.onAttackConfirm(boss.x);
