@@ -369,7 +369,18 @@ function mkBtn(cls, label, aria) {
   b.textContent = label;
   b.setAttribute("aria-label", aria);
   b.setAttribute("type", "button");
+  preventFocusSteal(b);
   return b;
+}
+
+// Keep injected control buttons from grabbing keyboard focus on click. A
+// focused <button> is activated by Space/Enter natively — which, with Space
+// also being the jump key, meant clicking the 🔊/⏸ icon left it focused and
+// every jump re-fired it (sound flipping on/off). preventDefault on mousedown
+// stops the click from moving focus off the game; the click still fires.
+function preventFocusSteal(b) {
+  b.addEventListener("mousedown", (e) => e.preventDefault());
+  b.setAttribute("tabindex", "-1");
 }
 
 function mkIcon(cls, label, aria) {
@@ -383,6 +394,7 @@ function mkPill(cls, label) {
   b.type = "button";
   b.className = "tc-pill " + cls;
   b.textContent = label;
+  preventFocusSteal(b);
   return b;
 }
 
