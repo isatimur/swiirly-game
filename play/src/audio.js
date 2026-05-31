@@ -158,6 +158,11 @@ export function isMuted() { return muted; }
 const MUSIC_MASTER = 0.18;       // sits under SFX (0.45) — Mario-style mix
 const SCHED_INTERVAL_MS = 25;    // scheduler tick rate
 const SCHED_LOOKAHEAD_S = 0.10;  // schedule notes up to 100 ms ahead
+// Shuffle: how far the off-beat 16th notes are nudged late, as a fraction of a
+// step. Downbeats (kick + walking bass land on even steps) stay locked, so the
+// groove reads "measured but lively" — the Mario overworld bounce. Per-track
+// `swing` overrides this. 0 = straight/robotic, ~0.25 = a relaxed shuffle.
+const DEFAULT_SWING = 0.22;
 
 let musicGain = null;
 let musicLowpass = null;
@@ -230,7 +235,7 @@ const V_BASS = { type: "triangle", gain: 0.20, attack: 0.005 };
 const TRACKS = {
   // Mellow C-major loop for the title / character select. Walking bass.
   menu: {
-    bpm: 96,
+    bpm: 84,
     lead:    [0, null, 4, null, 7, null, 12, null,    11, null, 7, null, 4, null, 0, null],
     harmony: [null, null, null, 4, null, null, 9, null,  null, null, null, 4, null, null, 5, null],
     bass:    [-12, null, null, null, -8, null, null, null, -5, null, null, null, -8, null, null, null],
@@ -238,7 +243,7 @@ const TRACKS = {
   },
   // Bright F-major overworld bounce.
   level1: {
-    bpm: 132,
+    bpm: 112,
     lead:    [8, null, 12, 15, 12, null, 8, 12,    15, 17, 15, 12, 8, null, 5, null],
     harmony: [null, null, null, null, 5, null, null, null,    null, null, 3, null, null, null, null, null],
     bass:    [-16, null, null, null, -16, null, null, null,    -9, null, null, null, -9, null, null, null],
@@ -246,7 +251,7 @@ const TRACKS = {
   },
   // Cool A-minor — slower, mellow with quarter-note hits.
   level2: {
-    bpm: 116,
+    bpm: 102,
     lead:    [0, null, 3, null, 7, null, 12, null,    10, null, 7, null, 3, null, 0, null],
     harmony: [-5, null, null, null, 3, null, null, null,  -7, null, null, null, 0, null, null, null],
     bass:    [-12, null, null, null, -10, null, null, null, -17, null, null, null, -10, null, null, null],
@@ -254,7 +259,7 @@ const TRACKS = {
   },
   // D-dorian, pulsing arpeggios — tense.
   level3: {
-    bpm: 144,
+    bpm: 124,
     lead:    [5, 8, 12, 14, 12, 8, 5, 8,    7, 10, 14, 17, 14, 10, 7, 10],
     harmony: [null, null, null, null, 12, null, null, null,    null, null, null, null, 14, null, null, null],
     bass:    [-7, null, null, null, -7, null, null, null,  -5, null, null, null, -5, null, null, null],
@@ -262,7 +267,7 @@ const TRACKS = {
   },
   // E-phrygian, syncopated, stuttering.
   level4: {
-    bpm: 160,
+    bpm: 132,
     lead:    [7, null, 7, 8, 10, null, 12, null,    14, 12, 10, 8, 7, null, 5, 7],
     harmony: [null, null, null, null, null, null, 15, null,    null, null, null, null, 12, null, null, null],
     bass:    [-5, null, -5, null, -5, null, -5, null,  -10, null, -10, null, -10, null, -10, null],
@@ -270,7 +275,7 @@ const TRACKS = {
   },
   // G-minor, broad chord stabs — summit / ominous.
   level5: {
-    bpm: 156,
+    bpm: 128,
     lead:    [10, null, 13, null, 17, null, 22, null,    20, null, 17, null, 13, null, 10, null],
     harmony: [10, null, null, null, 13, null, null, null,  10, null, null, null, 13, null, null, null],
     bass:    [-14, null, null, null, -14, null, null, null,    -7, null, null, null, -7, null, null, null],
@@ -278,7 +283,8 @@ const TRACKS = {
   },
   // Boss — chromatic descent, heavy bass on every beat.
   boss: {
-    bpm: 168,
+    bpm: 150,
+    swing: 0.08,
     lead:    [12, 11, 10, 9, 8, 7, 6, 5,    4, 3, 4, 5, 6, 7, 8, 9],
     harmony: [null, null, null, null, 3, null, null, null,    null, null, null, null, 0, null, null, null],
     bass:    [-12, null, -12, null, -12, null, -12, null,  -14, null, -14, null, -14, null, -14, null],
@@ -286,7 +292,8 @@ const TRACKS = {
   },
   // Bonus — fast ascending arpeggios, F-lydian. Reflects the climb.
   level6: {
-    bpm: 148,
+    bpm: 130,
+    swing: 0.12,
     lead:    [8, 12, 15, 19, 22, 19, 15, 12,   10, 14, 17, 21, 24, 21, 17, 14],
     harmony: [null, null, null, 8, null, null, null, null,    null, null, null, 10, null, null, null, null],
     bass:    [-16, null, null, null, -9, null, null, null,    -14, null, null, null, -7, null, null, null],
@@ -297,16 +304,21 @@ const TRACKS = {
 function tickScheduler() {
   if (!currentTrack || !ctx) return;
   const stepDur = 60 / currentTrack.bpm / 4;
+  const swing = currentTrack.swing ?? DEFAULT_SWING;
   while (nextStepTime < ctx.currentTime + SCHED_LOOKAHEAD_S) {
     const step = stepIndex % currentTrack.lead.length;
+    // Shuffle: delay the off-beat 16ths (odd steps) a touch. The grid
+    // (nextStepTime) still advances by a full step, so downbeats never drift —
+    // only the note's start within its step is nudged late, giving the bounce.
+    const when = nextStepTime + ((step % 2 === 1) ? stepDur * swing : 0);
     // Mute check is per-tick so toggling pauses audio mid-bar without
     // tearing down the schedule. Re-unmute resumes mid-bar (correct).
     if (!muted && !musicMuted) {
       const noteDur = stepDur * 0.9;
-      scheduleVoice(nextStepTime, currentTrack.lead[step],    V_LEAD, noteDur);
-      scheduleVoice(nextStepTime, currentTrack.harmony[step], V_HARM, noteDur * 1.3);
-      scheduleVoice(nextStepTime, currentTrack.bass[step],    V_BASS, noteDur * 1.5);
-      scheduleDrum(nextStepTime, currentTrack.drum[step]);
+      scheduleVoice(when, currentTrack.lead[step],    V_LEAD, noteDur);
+      scheduleVoice(when, currentTrack.harmony[step], V_HARM, noteDur * 1.3);
+      scheduleVoice(when, currentTrack.bass[step],    V_BASS, noteDur * 1.5);
+      scheduleDrum(when, currentTrack.drum[step]);
     }
     nextStepTime += stepDur;
     stepIndex++;
