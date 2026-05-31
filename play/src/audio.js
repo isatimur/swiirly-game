@@ -235,7 +235,7 @@ const V_BASS = { type: "triangle", gain: 0.20, attack: 0.005 };
 const TRACKS = {
   // Mellow C-major loop for the title / character select. Walking bass.
   menu: {
-    bpm: 84,
+    bpm: 74,
     lead:    [0, null, 4, null, 7, null, 12, null,    11, null, 7, null, 4, null, 0, null],
     harmony: [null, null, null, 4, null, null, 9, null,  null, null, null, 4, null, null, 5, null],
     bass:    [-12, null, null, null, -8, null, null, null, -5, null, null, null, -8, null, null, null],
@@ -243,7 +243,7 @@ const TRACKS = {
   },
   // Bright F-major overworld bounce.
   level1: {
-    bpm: 112,
+    bpm: 98,
     lead:    [8, null, 12, 15, 12, null, 8, 12,    15, 17, 15, 12, 8, null, 5, null],
     harmony: [null, null, null, null, 5, null, null, null,    null, null, 3, null, null, null, null, null],
     bass:    [-16, null, null, null, -16, null, null, null,    -9, null, null, null, -9, null, null, null],
@@ -251,7 +251,7 @@ const TRACKS = {
   },
   // Cool A-minor — slower, mellow with quarter-note hits.
   level2: {
-    bpm: 102,
+    bpm: 90,
     lead:    [0, null, 3, null, 7, null, 12, null,    10, null, 7, null, 3, null, 0, null],
     harmony: [-5, null, null, null, 3, null, null, null,  -7, null, null, null, 0, null, null, null],
     bass:    [-12, null, null, null, -10, null, null, null, -17, null, null, null, -10, null, null, null],
@@ -259,7 +259,7 @@ const TRACKS = {
   },
   // D-dorian, pulsing arpeggios — tense.
   level3: {
-    bpm: 124,
+    bpm: 108,
     lead:    [5, 8, 12, 14, 12, 8, 5, 8,    7, 10, 14, 17, 14, 10, 7, 10],
     harmony: [null, null, null, null, 12, null, null, null,    null, null, null, null, 14, null, null, null],
     bass:    [-7, null, null, null, -7, null, null, null,  -5, null, null, null, -5, null, null, null],
@@ -267,7 +267,7 @@ const TRACKS = {
   },
   // E-phrygian, syncopated, stuttering.
   level4: {
-    bpm: 132,
+    bpm: 116,
     lead:    [7, null, 7, 8, 10, null, 12, null,    14, 12, 10, 8, 7, null, 5, 7],
     harmony: [null, null, null, null, null, null, 15, null,    null, null, null, null, 12, null, null, null],
     bass:    [-5, null, -5, null, -5, null, -5, null,  -10, null, -10, null, -10, null, -10, null],
@@ -275,7 +275,7 @@ const TRACKS = {
   },
   // G-minor, broad chord stabs — summit / ominous.
   level5: {
-    bpm: 128,
+    bpm: 112,
     lead:    [10, null, 13, null, 17, null, 22, null,    20, null, 17, null, 13, null, 10, null],
     harmony: [10, null, null, null, 13, null, null, null,  10, null, null, null, 13, null, null, null],
     bass:    [-14, null, null, null, -14, null, null, null,    -7, null, null, null, -7, null, null, null],
@@ -283,7 +283,7 @@ const TRACKS = {
   },
   // Boss — chromatic descent, heavy bass on every beat.
   boss: {
-    bpm: 150,
+    bpm: 132,
     swing: 0.08,
     lead:    [12, 11, 10, 9, 8, 7, 6, 5,    4, 3, 4, 5, 6, 7, 8, 9],
     harmony: [null, null, null, null, 3, null, null, null,    null, null, null, null, 0, null, null, null],
@@ -292,7 +292,7 @@ const TRACKS = {
   },
   // Bonus — fast ascending arpeggios, F-lydian. Reflects the climb.
   level6: {
-    bpm: 130,
+    bpm: 116,
     swing: 0.12,
     lead:    [8, 12, 15, 19, 22, 19, 15, 12,   10, 14, 17, 21, 24, 21, 17, 14],
     harmony: [null, null, null, 8, null, null, null, null,    null, null, null, 10, null, null, null, null],
