@@ -9,6 +9,7 @@ import { Insight, CommunitySignal } from "../objects/Collectibles.js";
 import { Brand } from "../objects/Brand.js";
 import { Effects } from "../objects/Effects.js";
 import { Combo } from "../objects/Combo.js";
+import { setGameplayControlsVisible } from "../touchControls.js";
 import { level1, TILE_SIZE, GROUND_TOP_Y } from "../levels/level1.js";
 import { level2 } from "../levels/level2.js";
 import { level3 } from "../levels/level3.js";
@@ -51,6 +52,9 @@ export class GameScene extends Phaser.Scene {
     // VFX manager + combo state.
     this.effects = new Effects(this);
     this.combo = new Combo(this, 2200);
+    // Touch gameplay buttons show only during play (hidden on menus / results
+    // so they can't swallow the level-complete "tap to continue").
+    setGameplayControlsVisible(true);
     // Score system — accumulates across the level, persists best in
     // localStorage. addScore() emits "score-changed" so HUD updates and
     // a floating "+N" pop spawns at the event's world coords.
@@ -849,6 +853,7 @@ export class GameScene extends Phaser.Scene {
 
     // Clean up when this scene instance shuts down so stale handlers don't fire.
     this.events.once("shutdown", () => {
+      setGameplayControlsVisible(false);
       this.game.events.off("player-hurt", onPlayerHurt);
       this.game.events.off("player-died", onPlayerDied);
       this.game.events.off("boss-defeated", onBossDefeated);

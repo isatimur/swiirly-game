@@ -38,6 +38,14 @@ const _allReleases = new Set();
 // after Phaser boot (wireGamepadPause).
 let _togglePauseFn = () => {};
 export function togglePause() { _togglePauseFn(); }
+
+// Gameplay-only touch buttons (d-pad / jump / attack). Shown during the Game
+// scene and hidden everywhere else so they can't intercept taps — e.g. the
+// level-complete "tap to continue" prompt — or clutter menus/cutscenes.
+let _gameplayEls = [];
+export function setGameplayControlsVisible(visible) {
+  for (const el of _gameplayEls) el.style.display = visible ? "" : "none";
+}
 export function wireGamepadPause(game) {
   // Gamepad-options button (PS5 = Options) toggles pause from any scene.
   game.events.on("gamepad-options", () => _togglePauseFn());
@@ -70,6 +78,9 @@ export function initTouchControls() {
     overlay.appendChild(dpad);
     overlay.appendChild(btnJ);
     overlay.appendChild(btnA);
+    // Track the gameplay cluster and start it hidden — the Game scene shows it.
+    _gameplayEls = [dpad, btnJ, btnA];
+    _gameplayEls.forEach((el) => { el.style.display = "none"; });
 
     wire(btnL,    () => { TOUCH.left = true; },  () => { TOUCH.left = false; });
     wire(btnR,    () => { TOUCH.right = true; }, () => { TOUCH.right = false; });
